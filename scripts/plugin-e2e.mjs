@@ -28,17 +28,20 @@ console.log(`OK  plugin name: ${huntianling.name}`)
 // 2. Root plugin can be applied to a fresh cordis Context without
 //    throwing. This proves the plugin's apply() body is well-formed
 //    and that the sub-plugin registrations (agile, board) compile and
-//    import without runtime errors.
+//    import without runtime errors. cordis 4 returns the plugin's
+//    fiber from `ctx.plugin()`; awaiting it settles the startup phase,
+//    and the fiber's `dispose()` unloads the plugin.
 const ctx = new Context()
+let fiber
 try {
-  ctx.plugin(huntianling)
-  await ctx.fiber.start()
+  fiber = ctx.plugin(huntianling)
+  await fiber
   console.log('OK  plugin applied; fiber started')
 } catch (err) {
   console.error('FAIL: plugin.apply threw:', err.message)
   process.exit(1)
 } finally {
-  await ctx.fiber.dispose()
+  if (fiber) await fiber.dispose()
 }
 
 // 3. Public package entry point re-exports the same Plugin, so the

@@ -15,7 +15,7 @@
  *   `requirement/submitted` and `workflow/state-changed`.
  */
 
-import type { Context, Plugin, Service } from '@deepseek-ai/cordis;
+import type { Context, Plugin, Service } from '@deepseek-ai/cordis';
 
 /**
  * Public Service contract for the agile capability.
