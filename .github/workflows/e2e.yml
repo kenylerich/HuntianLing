@@ -37,6 +37,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
 
       - name: Build vendored cordis family
         run: |
@@ -74,8 +78,6 @@ jobs:
             mv tsconfig.json.bak tsconfig.json
             cd "$GITHUB_WORKSPACE"
           done
-
-      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
