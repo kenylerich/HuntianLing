@@ -146,6 +146,17 @@ The probe series also established that the package scripts (`test`, `test:e2e`, 
 
 `ISSUE_TEMPLATE/` ships five templates (`bug`, `feature`, `idea`, `research`, `task`) plus `config.yml` with `blank_issues_enabled: false`. The templates are generic Chinese Markdown with a 50-unit body limit and a collapsed `<details>` block — they match the rules `policy.validateBody` checks for and pass when run locally against each file. The picker therefore surfaces them at the New Issue page.
 
-`issue-management/` (policy.mjs + config.json + policy.test.mjs) is dead code on HuntianLing. `config.json` points at the `deepseek-ai/deepseek-harness` GitHub org and project #1, so the runtime half (`issueSnapshot`, `validateIssue`, `validatePullRequest`) cannot talk to a real project. The unit tests in `policy.test.mjs` pass because they mock the GraphQL response. The previous `issue-policy.yml` and `issue-lifecycle.yml` workflows were the only entry points; both were removed in the right-sizing commit.
+`issue-management/` is live. `config.json` points at user `kenylerich`, repository `HuntianLing`, and user Project #2 titled `HuntianLing Issue Management`. `policy.mjs` reads the Project through `repository.owner` so the same query works for a User-owned board. `issue-lifecycle.yml` is the write path (open → Inbox, close → Done / No action, add the Issue to the board). `issue-policy.yml` is the PR check.
+
+Those workflows cannot use `github.token` to mutate a user-owned Project V2. They mint a GitHub App token when `HUNTIANLING_ISSUE_APP_CLIENT_ID` is set; otherwise they use repository secret `HUNTIANLING_PROJECT_TOKEN`. Without one of those two credentials, lifecycle fails at "Resolve board token" with a pointer back here. A fine-grained PAT is not sufficient: GitHub does not grant user-Project write to that token type.
+
+Operator setup, once:
+
+1. Create a classic PAT at https://github.com/settings/tokens/new with scopes `repo` and `project` (that `project` checkbox is read/write).
+2. Store it as repository secret `HUNTIANLING_PROJECT_TOKEN`.
+3. Provision the board fields: `GH_TOKEN=<classic-pat> node scripts/setup-project-board.mjs`. The script creates Status / Priority / Start Date when missing and links the repository to Project #2.
+4. Open a templated Issue. `issue-lifecycle.yml` should add it to the board at Inbox.
+
+A GitHub App (`HUNTIANLING_ISSUE_APP_CLIENT_ID` + `HUNTIANLING_ISSUE_APP_PRIVATE_KEY`) is the longer-lived alternative to the classic PAT; the workflows accept either.
 
 `dependabot.yml` no longer declares a `uv` ecosystem. The original entry pointed at `/python/sdk`, a directory that does not exist in this repo, so the daily cron kept opening PRs that could not merge. HuntianLing's only registries are `npm` (root) and `github-actions`.

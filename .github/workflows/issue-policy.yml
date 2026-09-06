@@ -21,9 +21,10 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
-      - name: Create Project read token
+
+      - name: Create GitHub App token
         id: app-token
-        if: ${{ github.event.pull_request.user.type != 'Bot' && github.event.pull_request.user.type != 'App' }}
+        if: ${{ vars.HUNTIANLING_ISSUE_APP_CLIENT_ID != '' && github.event.pull_request.user.type != 'Bot' && github.event.pull_request.user.type != 'App' }}
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.HUNTIANLING_ISSUE_APP_CLIENT_ID }}
@@ -32,9 +33,26 @@ jobs:
           repositories: HuntianLing
           permission-issues: read
           permission-user-projects: read
+
+      - name: Resolve board token
+        id: board-token
+        if: ${{ github.event.pull_request.user.type != 'Bot' && github.event.pull_request.user.type != 'App' }}
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          PROJECT_TOKEN: ${{ secrets.HUNTIANLING_PROJECT_TOKEN }}
+        run: |
+          if [ -n "$APP_TOKEN" ]; then
+            echo "token=$APP_TOKEN" >> "$GITHUB_OUTPUT"
+          elif [ -n "$PROJECT_TOKEN" ]; then
+            echo "token=$PROJECT_TOKEN" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Issue policy cannot read the user-owned Project. Set HUNTIANLING_ISSUE_APP_CLIENT_ID / HUNTIANLING_ISSUE_APP_PRIVATE_KEY, or HUNTIANLING_PROJECT_TOKEN. See AGENTS.md § Issue assets."
+            exit 1
+          fi
+
       - name: Validate pull request
         if: ${{ github.event.pull_request.user.type != 'Bot' && github.event.pull_request.user.type != 'App' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          PROJECT_TOKEN: ${{ steps.app-token.outputs.token }}
+          PROJECT_TOKEN: ${{ steps.board-token.outputs.token }}
         run: node .github/issue-management/policy.mjs pr
