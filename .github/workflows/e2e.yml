@@ -6,20 +6,16 @@ name: Plugin e2e
 # the DeepSeek API — HuntianLing is a cordis plugin consumed BY dsh,
 # not a product that calls dsh. Real-API coverage belongs in dsh.
 #
-# The cordis family is vendored under ./vendor/ in this repo. Each
-# vendored package's tsconfig extends `../../tsconfig.base.json`, which
-# only exists in the host dsh repo. To build them in isolation we
-# synthesise a minimal local base at the workspace root and rewrite
-# the `extends` path in every vendored tsconfig to point at it. The
-# original tsconfig.json is restored after each build so the commit
-# is not modified. cordis's package.json points `main` / `types` at
-# lib/* so the lib/ trees must exist before HuntianLing's TypeScript
-# sources can resolve cordis's types.
+# The cordis family is vendored under ./vendor/ in this repo. The
+# build step (scripts/build-vendored-cordis.sh) synthesises a
+# minimal local base, runs tsc + tsdown per package in topological
+# order, and restores the vendored tsconfig so the commit is not
+# modified.
 
 on:
-  workflow_dispatch:
   push:
     branches: [master]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -42,73 +38,8 @@ jobs:
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
 
-      - name: Synthesise a stand-in for dsh's tsconfig.base.json
-        run: |
-          cat > .tsconfig.cordis-base.json <<'BASE'
-          {
-            "compilerOptions": {
-              "target": "es2024",
-              "module": "esnext",
-              "moduleResolution": "bundler",
-              "declaration": true,
-              "composite": true,
-              "skipLibCheck": true,
-              "esModuleInterop": true,
-              "allowImportingTsExtensions": true,
-              "rewriteRelativeImportExtensions": true,
-              "strict": true,
-              "noUncheckedIndexedAccess": true,
-              "exactOptionalPropertyTypes": true,
-              "noImplicitOverride": true,
-              "noFallthroughCasesInSwitch": true,
-              "noUnusedLocals": true,
-              "noUnusedParameters": true,
-              "types": ["node"]
-            }
-          }
-          BASE
-
       - name: Build vendored cordis family
-        run: |
-          for pkg in cosmokit cordis include loader; do
-            echo "=== vendor/$pkg ==="
-            cd "vendor/$pkg"
-            # Rewrite the extends path with a Python one-liner rather
-            # than sed to keep the embedded JSON paths readable. The
-            # original tsconfig is restored by `git checkout --` at the
-            # end of the loop.
-            python3 - <<'PY'
-import json, pathlib
-p = pathlib.Path("tsconfig.json")
-cfg = json.loads(p.read_text())
-cfg["extends"] = "../../.tsconfig.cordis-base.json"
-p.write_text(json.dumps(cfg, indent=2) + "\n")
-PY
-
-            pnpm install --ignore-scripts --no-frozen-lockfile
-
-            # The vendored packages carry no devDependencies. We pull
-            # TypeScript in via `pnpm dlx`. TypeScript 5.7 is the first
-            # version that recognises `target: es2024` and
-            # `rewriteRelativeImportExtensions`, both of which the
-            # synthesised base uses. @types/node is added to the
-            # HuntianLing root devDependencies so node module resolution
-            # finds it from the vendored packages.
-            pnpm dlx --package typescript@5.7 -- tsc -b tsconfig.json
-
-            # The packages that ship a tsdown config (loader, today)
-            # need tsdown to roll up the .js output.
-            if [ -f tsdown.config.ts ] || [ -f tsdown.config.js ]; then
-              pnpm dlx tsdown@latest
-            fi
-
-            # Restore the original tsconfig so the commit is not modified.
-            git checkout -- tsconfig.json
-            cd "$GITHUB_WORKSPACE"
-          done
-
-      - name: Remove synthesised base
-        run: rm -f .tsconfig.cordis-base.json
+        run: bash scripts/build-vendored-cordis.sh
 
       - uses: actions/setup-node@v4
         with:
