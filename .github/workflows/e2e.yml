@@ -68,7 +68,7 @@ jobs:
             cd "vendor/$pkg"
             sed -i.bak "s|\"\\.\\./\\.\\./tsconfig\\.base\\.json\"|\"$BASE_DIR/tsconfig.base.json\"|" tsconfig.json
 
-            pnpm install --ignore-scripts
+            pnpm install --ignore-scripts --no-frozen-lockfile
 
             pnpm exec tsc -b tsconfig.json
             if [ -f tsdown.config.ts ] || [ -f tsdown.config.js ]; then
