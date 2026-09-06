@@ -492,30 +492,12 @@ async function projectContext(number, includeStatusActor = false, includeStartDa
       $priorityField: String!
       $startDateField: String!
     ) {
-      organization(login: $organization) {
-        projectV2(number: $project) {
-          id
-          title
-          fields(first: 50) {
-            nodes {
-              ... on ProjectV2Field {
-                id
-                name
-                dataType
-                isIssueField
-              }
-              ... on ProjectV2SingleSelectField {
-                id
-                name
-                dataType
-                isIssueField
-                options { id name }
-              }
-            }
-          }
-        }
-      }
       repository(owner: $organization, name: $repository) {
+        owner {
+          __typename
+          ... on User { login projectV2(number: $project) { id title fields(first: 50) { nodes { ... on ProjectV2Field { id name dataType isIssueField } ... on ProjectV2SingleSelectField { id name dataType isIssueField options { id name } } } } } }
+          ... on Organization { login projectV2(number: $project) { id title fields(first: 50) { nodes { ... on ProjectV2Field { id name dataType isIssueField } ... on ProjectV2SingleSelectField { id name dataType isIssueField options { id name } } } } } }
+        }
         issue(number: $number) {
           id
           timelineItems(last: 100, itemTypes: [PROJECT_V2_ITEM_STATUS_CHANGED_EVENT])
@@ -558,7 +540,7 @@ async function projectContext(number, includeStatusActor = false, includeStartDa
       startDateField: config.startDateField,
     },
   )
-  const project = data.organization?.projectV2
+  const project = data.repository?.owner?.projectV2
   const issue = data.repository?.issue
   if (!project || project.title !== config.projectTitle) throw new Error('目标 Project 不存在或标题不匹配')
   if (!issue) throw new Error(`#${number} 不存在`)

@@ -28,45 +28,51 @@ const projectGraphqlData = ({
   startDateType = 'DATE',
   startDateIsIssueField = false,
 } = {}) => ({
-  organization: {
-    projectV2: {
-      id: 'project-id',
-      title: 'DSH Issue Management',
-      fields: {
-        nodes: [
-          {
-            id: 'status-field-id',
-            name: 'Status',
-            dataType: 'SINGLE_SELECT',
-            isIssueField: false,
-            options: [],
-          },
-          ...(priorityField
-            ? [
-                {
-                  id: 'priority-project-field-id',
-                  name: 'Priority',
-                  dataType: priorityType,
-                  isIssueField: priorityIsIssueField,
-                  options: [],
-                },
-              ]
-            : []),
-          ...(startDateField
-            ? [
-                {
-                  id: 'start-date-field-id',
-                  name: 'Start Date',
-                  dataType: startDateType,
-                  isIssueField: startDateIsIssueField,
-                },
-              ]
-            : []),
-        ],
+  // HuntianLing's issue-management Project is a user-level ProjectV2, not
+  // an organization-level one. policy.mjs queries the owner through a
+  // union node nested under `repository`, so the mock here mirrors
+  // `repository.owner.<User|Organization>.projectV2`.
+  repository: {
+    owner: {
+      __typename: 'User',
+      login: 'kenylerich',
+      projectV2: {
+        id: 'project-id',
+        title: 'HuntianLing Issue Management',
+        fields: {
+          nodes: [
+            {
+              id: 'status-field-id',
+              name: 'Status',
+              dataType: 'SINGLE_SELECT',
+              isIssueField: false,
+              options: [],
+            },
+            ...(priorityField
+              ? [
+                  {
+                    id: 'priority-project-field-id',
+                    name: 'Priority',
+                    dataType: priorityType,
+                    isIssueField: priorityIsIssueField,
+                    options: [],
+                  },
+                ]
+              : []),
+            ...(startDateField
+              ? [
+                  {
+                    id: 'start-date-field-id',
+                    name: 'Start Date',
+                    dataType: startDateType,
+                    isIssueField: startDateIsIssueField,
+                  },
+                ]
+              : []),
+          ],
+        },
       },
     },
-  },
-  repository: {
     issue: {
       id: 'issue-id',
       projectItems: {
@@ -330,8 +336,11 @@ test('reads Priority and Status from Project custom fields', async (t) => {
 
   assert.equal(issue.priority, 'P1')
   assert.equal(issue.status, 'Inbox')
+  // The first URL is the REST lookup of the issue itself, which policy.mjs
+  // composes from config.organization / config.repository. The second is
+  // the GraphQL endpoint that retrieves the Project state.
   assert.deepEqual(urls, [
-    'https://api.github.com/repos/deepseek-harness/deepseek-harness/issues/42',
+    'https://api.github.com/repos/kenylerich/HuntianLing/issues/42',
     'https://api.github.com/graphql',
   ])
 })
@@ -546,7 +555,7 @@ test('toggles automation-owned work on request changes and repeated review reque
   let status = nextResolvingIssueStatus(
     'In review',
     'changes-requested',
-    'dsh-issue-management',
+    'kenylerich',
   )
   assert.equal(status, 'In progress')
   status = nextResolvingIssueStatus(status, 'review-requested')
