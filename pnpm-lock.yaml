@@ -10,13 +10,16 @@ importers:
     dependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:^
-        version: link:../deepseek-harness/vendor/cordis
+        version: link:vendor/cordis
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
       typescript:
         specifier: ^5.6.0
         version: 5.6.2
 
-  ../deepseek-harness/vendor/cordis:
+  vendor/cordis:
     dependencies:
       '@deepseek-ai/cordis-plugin-include':
         specifier: workspace:^
@@ -31,9 +34,9 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
 
-  ../deepseek-harness/vendor/cosmokit: {}
+  vendor/cosmokit: {}
 
-  ../deepseek-harness/vendor/include:
+  vendor/include:
     dependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:^
@@ -48,7 +51,7 @@ importers:
         specifier: ^4.1.0
         version: 4.3.2
 
-  ../deepseek-harness/vendor/loader:
+  vendor/loader:
     dependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:^
@@ -64,6 +67,9 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@types/node@22.20.1':
+    resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -129,9 +135,16 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
 snapshots:
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@types/node@22.20.1':
+    dependencies:
+      undici-types: 6.21.0
 
   argparse@2.0.1: {}
 
@@ -189,3 +202,5 @@ snapshots:
       node-addon-require-builtin-win32-x64-msvc: 0.1.5
 
   typescript@5.6.2: {}
+
+  undici-types@6.21.0: {}

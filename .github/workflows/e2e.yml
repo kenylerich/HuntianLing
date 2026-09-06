@@ -72,13 +72,22 @@ jobs:
 
             # The vendored packages carry no devDependencies. They expect
             # the host dsh repo to install TypeScript and tsdown at the
-            # workspace root. We pull the same versions in via `pnpm dlx`
-            # so the per-package tsc and tsdown commands resolve.
+            # workspace root. We pull the same versions in via `pnpm dlx`.
+            #
             # TypeScript 5.7 is the first version that recognises
             # `target: es2024` and `rewriteRelativeImportExtensions`,
             # both of which the dsh root tsconfig.base.json uses.
-            pnpm dlx --package typescript@5.7 --package @types/node@22 \
-              -- tsc -b tsconfig.json
+            #
+            # @types/node is added at the HuntianLing workspace root
+            # (see package.json devDependencies) so the vendored tsc
+            # resolves its `types: ["node"]` entry through normal node
+            # module resolution up to the root node_modules/.
+            pnpm dlx --package typescript@5.7 -- tsc -b tsconfig.json
+
+            # After the per-package tsc emits .d.ts under lib/types/,
+            # the packages that ship a tsdown config (loader, today)
+            # need tsdown to roll up the .js output. tsdown picks up
+            # the same d.ts input it already built.
             if [ -f tsdown.config.ts ] || [ -f tsdown.config.js ]; then
               pnpm dlx tsdown@latest
             fi
