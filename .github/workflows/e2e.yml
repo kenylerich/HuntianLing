@@ -74,7 +74,10 @@ jobs:
             # the host dsh repo to install TypeScript and tsdown at the
             # workspace root. We pull the same versions in via `pnpm dlx`
             # so the per-package tsc and tsdown commands resolve.
-            pnpm dlx --package typescript@5.6 --package @types/node@22 \
+            # TypeScript 5.7 is the first version that recognises
+            # `target: es2024` and `rewriteRelativeImportExtensions`,
+            # both of which the dsh root tsconfig.base.json uses.
+            pnpm dlx --package typescript@5.7 --package @types/node@22 \
               -- tsc -b tsconfig.json
             if [ -f tsdown.config.ts ] || [ -f tsdown.config.js ]; then
               pnpm dlx tsdown@latest
