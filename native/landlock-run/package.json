@@ -1,8 +1,0 @@
-{
-  "name": "@kenylerich/dsh-huntianling-landlock-placeholder",
-  "version": "0.0.0",
-  "private": true,
-  "description": "HUNTIANLING_PROBE_STUB. See ../README.md — this directory exists only so the dsh-copied landlock-run.yml workflow has a working-directory to enter.",
-  "type": "module",
-  "license": "UNLICENSED"
-}

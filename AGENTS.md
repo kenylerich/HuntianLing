@@ -135,8 +135,9 @@ This file is the real source for repository guidance. Keep each rule self-contai
 
 ## GitHub workflow probe history
 
-This repository carries a small set of placeholder files (`scripts/prepare-ci-bubblewrap.sh`, `scripts/github-matrix.mjs`, `native/landlock-run/`) marked `HUNTIANLING_PROBE_STUB`. They exist only because the dsh-copied `.github/workflows/*.yml` files assume these paths; the stubs let those workflows step past their first failing line so we can see which workflow really applies to HuntianLing.
+The HuntianLing `.github/workflows/` originally shipped as a verbatim copy of the host dsh repo's workflow set. Three probe commits (`git log --grep="Probe"`) and one right-sizing commit reduced the set to two workflows that fit the plugin:
 
-The probe series is recorded in commit messages (search `git log --grep="Probe"`). Each probe added one missing piece (`packageManager`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, the stub scripts) and observed which workflows moved forward and which still failed.
+- `ci.yml` — pull-request gate: `pnpm install` + `typecheck` + `build` + `test`.
+- `e2e.yml` — push-to-master + manual dispatch: real-API smoke test against `DEEPSEEK_API_KEY`.
 
-These stubs are not plugin code. They will be removed once the workflow set is right-sized for HuntianLing (see [Editing these instructions](#editing-these-instructions) — the workflow selection is itself a TODO).
+The probe series also established that the package scripts (`test`, `test:e2e`, `lint`, `hygiene`) and the HuntianLing workflow tree must be filled in before those workflows report green. Each script currently exits 1 with a `HUNTIANLING_PROBE:` prefix; replace each one with a real runner as the corresponding capability lands.

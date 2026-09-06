@@ -31,9 +31,10 @@
     "build": "tsc -p tsconfig.src.json",
     "typecheck": "tsc -p tsconfig.src.json --noEmit",
     "clean": "rm -rf lib *.tsbuildinfo",
-    "test": "echo \"TODO: add test runner\" && exit 0",
-    "lint": "echo \"TODO: add lint config\" && exit 0",
-    "hygiene": "echo \"TODO: add hygiene gate\" && exit 0"
+    "test": "echo \"HUNTIANLING_PROBE: no tests yet; see AGENTS.md Quality gates\" && exit 1",
+    "test:e2e": "echo \"HUNTIANLING_PROBE: no e2e tests yet; see AGENTS.md Quality gates\" && exit 1",
+    "lint": "echo \"HUNTIANLING_PROBE: no lint yet; see AGENTS.md Quality gates\" && exit 1",
+    "hygiene": "echo \"HUNTIANLING_PROBE: no hygiene yet; see AGENTS.md Quality gates\" && exit 1"
   },
   "dependencies": {
     "@deepseek-ai/cordis": "workspace:^"
