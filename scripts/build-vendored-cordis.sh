@@ -50,12 +50,18 @@ for pkg in cosmokit cordis include loader; do
   echo "=== vendor/$pkg ==="
   cd "vendor/$pkg"
 
-  # Rewrite `extends` to the synthesised base.
+  # Rewrite `extends` to the synthesised base, and force
+  # `composite: true`. The dsh root tsconfig.base.json relies on
+  # tsc -b to detect references, and that requires every member of
+  # the chain to opt in to composite. The vendored cosmokit tsconfig
+  # does not set composite itself, so tsc refuses cordis's project
+  # reference with TS6306.
   python3 -c '
-import json, pathlib, sys
+import json, pathlib
 p = pathlib.Path("tsconfig.json")
 cfg = json.loads(p.read_text())
 cfg["extends"] = "../../.tsconfig.cordis-base.json"
+cfg.setdefault("compilerOptions", {})["composite"] = True
 p.write_text(json.dumps(cfg, indent=2) + "\n")
 '
 
