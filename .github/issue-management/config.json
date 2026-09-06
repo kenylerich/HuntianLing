@@ -2,10 +2,10 @@
   "organization": "kenylerich",
   "repository": "HuntianLing",
   "projectNumber": 2,
-  "projectTitle": "HuntianLing Issue Management",
+  "projectTitle": "HuntianLing project",
   "lifecycleActor": "kenylerich",
   "priorityField": "Priority",
-  "startDateField": "Start Date",
+  "startDateField": "Start date",
   "projectTimeZone": "Asia/Shanghai",
   "allowUnassignedOwner": true,
   "statuses": [

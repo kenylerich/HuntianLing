@@ -146,7 +146,7 @@ The probe series also established that the package scripts (`test`, `test:e2e`, 
 
 `ISSUE_TEMPLATE/` ships five templates (`bug`, `feature`, `idea`, `research`, `task`) plus `config.yml` with `blank_issues_enabled: false`. The templates are generic Chinese Markdown with a 50-unit body limit and a collapsed `<details>` block — they match the rules `policy.validateBody` checks for and pass when run locally against each file. The picker therefore surfaces them at the New Issue page.
 
-`issue-management/` is live. `config.json` points at user `kenylerich`, repository `HuntianLing`, and user Project #2 titled `HuntianLing Issue Management`. `policy.mjs` reads the Project through `repository.owner` so the same query works for a User-owned board. `issue-lifecycle.yml` is the write path (open → Inbox, close → Done / No action, add the Issue to the board). `issue-policy.yml` is the PR check.
+`issue-management/` is live. `config.json` points at user `kenylerich`, repository `HuntianLing`, and user Project #2 titled `HuntianLing project`. `policy.mjs` reads the Project through `repository.owner` so the same query works for a User-owned board. `issue-lifecycle.yml` is the write path (open → Inbox, close → Done / No action, add the Issue to the board). `issue-policy.yml` is the PR check.
 
 Those workflows cannot use `github.token` to mutate a user-owned Project V2. They mint a GitHub App token when `HUNTIANLING_ISSUE_APP_CLIENT_ID` is set; otherwise they use repository secret `HUNTIANLING_PROJECT_TOKEN`. Without one of those two credentials, lifecycle fails at "Resolve board token" with a pointer back here. A fine-grained PAT is not sufficient: GitHub does not grant user-Project write to that token type.
 

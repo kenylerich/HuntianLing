@@ -38,7 +38,7 @@ const projectGraphqlData = ({
       login: 'kenylerich',
       projectV2: {
         id: 'project-id',
-        title: 'HuntianLing Issue Management',
+        title: 'HuntianLing project',
         fields: {
           nodes: [
             {
@@ -63,7 +63,7 @@ const projectGraphqlData = ({
               ? [
                   {
                     id: 'start-date-field-id',
-                    name: 'Start Date',
+                    name: 'Start date',
                     dataType: startDateType,
                     isIssueField: startDateIsIssueField,
                   },
@@ -402,13 +402,13 @@ test('rejects a missing, non-Date, or Issue-level Start Date field', async (t) =
   let response = projectGraphqlData({ startDateField: false })
   const requests = mockGraphql(t, () => response)
 
-  await assert.rejects(initializeIssueStartDate(42, '2026-08-28'), /Project 缺少 Start Date 字段/)
+  await assert.rejects(initializeIssueStartDate(42, '2026-08-28'), /Project 缺少 Start date 字段/)
   response = projectGraphqlData({ startDateType: 'TEXT' })
-  await assert.rejects(initializeIssueStartDate(42, '2026-08-28'), /Start Date 字段必须为 Date/)
+  await assert.rejects(initializeIssueStartDate(42, '2026-08-28'), /Start date 字段必须为 Date/)
   response = projectGraphqlData({ startDateIsIssueField: true })
   await assert.rejects(
     initializeIssueStartDate(42, '2026-08-28'),
-    /Start Date 字段必须为 Project Date 字段/,
+    /Start date 字段必须为 Project Date 字段/,
   )
   assert.equal(requests.length, 3)
 })
