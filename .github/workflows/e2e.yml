@@ -1,4 +1,4 @@
-name: E2E
+name: Plugin e2e
 
 # HuntianLing plugin integration test. Confirms the package builds,
 # the cordis host composition loads, and the plugin contributes the
