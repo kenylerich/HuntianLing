@@ -6,6 +6,7 @@ node_modules/
 lib/
 dist/
 *.tsbuildinfo
+.tsconfig.cordis-base.json
 
 # Logs
 *.log

@@ -9,12 +9,12 @@ name: E2E
 # The cordis family is vendored under ./vendor/ in this repo. Each
 # vendored package's tsconfig extends `../../tsconfig.base.json`, which
 # only exists in the host dsh repo. To build them in isolation we
-# synthesise a minimal local base, rewrite the extends path before
-# running `tsc -b`, then run the per-package `tsdown` step that
-# produces the .js files alongside the .d.ts that tsc emits. cordis's
-# package.json points `main` / `types` at lib/* so the lib/ trees must
-# exist before HuntianLing's TypeScript sources can resolve cordis's
-# types.
+# synthesise a minimal local base at the workspace root and rewrite
+# the `extends` path in every vendored tsconfig to point at it. The
+# original tsconfig.json is restored after each build so the commit
+# is not modified. cordis's package.json points `main` / `types` at
+# lib/* so the lib/ trees must exist before HuntianLing's TypeScript
+# sources can resolve cordis's types.
 
 on:
   workflow_dispatch:
@@ -42,10 +42,9 @@ jobs:
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
 
-      - name: Build vendored cordis family
+      - name: Synthesise a stand-in for dsh's tsconfig.base.json
         run: |
-          BASE_DIR="$(mktemp -d)"
-          cat > "$BASE_DIR/tsconfig.base.json" <<'BASE'
+          cat > .tsconfig.cordis-base.json <<'BASE'
           {
             "compilerOptions": {
               "target": "es2024",
@@ -58,43 +57,49 @@ jobs:
               "allowImportingTsExtensions": true,
               "rewriteRelativeImportExtensions": true,
               "strict": true,
+              "noUncheckedIndexedAccess": true,
+              "exactOptionalPropertyTypes": true,
+              "noImplicitOverride": true,
+              "noFallthroughCasesInSwitch": true,
+              "noUnusedLocals": true,
+              "noUnusedParameters": true,
               "types": ["node"]
             }
           }
           BASE
 
+      - name: Build vendored cordis family
+        run: |
           for pkg in cosmokit cordis include loader; do
             echo "=== vendor/$pkg ==="
             cd "vendor/$pkg"
-            sed -i.bak "s|\"\\.\\./\\.\\./tsconfig\\.base\\.json\"|\"$BASE_DIR/tsconfig.base.json\"|" tsconfig.json
+            # Rewrite the extends path to the synthesised base.
+            sed -i.bak "s|\"\\.\\./\\.\\./tsconfig\\.base\\.json\"|\"../../.tsconfig.cordis-base.json\"|" tsconfig.json
 
             pnpm install --ignore-scripts --no-frozen-lockfile
 
-            # The vendored packages carry no devDependencies. They expect
-            # the host dsh repo to install TypeScript and tsdown at the
-            # workspace root. We pull the same versions in via `pnpm dlx`.
-            #
-            # TypeScript 5.7 is the first version that recognises
-            # `target: es2024` and `rewriteRelativeImportExtensions`,
-            # both of which the dsh root tsconfig.base.json uses.
-            #
-            # @types/node is added at the HuntianLing workspace root
-            # (see package.json devDependencies) so the vendored tsc
-            # resolves its `types: ["node"]` entry through normal node
-            # module resolution up to the root node_modules/.
+            # The vendored packages carry no devDependencies. We pull
+            # TypeScript in via `pnpm dlx`. TypeScript 5.7 is the first
+            # version that recognises `target: es2024` and
+            # `rewriteRelativeImportExtensions`, both of which the
+            # synthesised base uses. @types/node is added to the
+            # HuntianLing root devDependencies so node module resolution
+            # finds it from the vendored packages.
             pnpm dlx --package typescript@5.7 -- tsc -b tsconfig.json
 
-            # After the per-package tsc emits .d.ts under lib/types/,
-            # the packages that ship a tsdown config (loader, today)
-            # need tsdown to roll up the .js output. tsdown picks up
-            # the same d.ts input it already built.
+            # The packages that ship a tsdown config (loader, today)
+            # need tsdown to roll up the .js output.
             if [ -f tsdown.config.ts ] || [ -f tsdown.config.js ]; then
               pnpm dlx tsdown@latest
             fi
 
+            # Restore the original tsconfig so the commit is not modified.
             mv tsconfig.json.bak tsconfig.json
             cd "$GITHUB_WORKSPACE"
           done
+
+      - name: Remove synthesised base
+        run: rm -f .tsconfig.cordis-base.json
 
       - uses: actions/setup-node@v4
         with:
