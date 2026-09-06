@@ -141,3 +141,11 @@ The HuntianLing `.github/workflows/` originally shipped as a verbatim copy of th
 - `e2e.yml` — push-to-master + manual dispatch: real-API smoke test against `DEEPSEEK_API_KEY`.
 
 The probe series also established that the package scripts (`test`, `test:e2e`, `lint`, `hygiene`) and the HuntianLing workflow tree must be filled in before those workflows report green. Each script currently exits 1 with a `HUNTIANLING_PROBE:` prefix; replace each one with a real runner as the corresponding capability lands.
+
+## Issue assets
+
+`ISSUE_TEMPLATE/` ships five templates (`bug`, `feature`, `idea`, `research`, `task`) plus `config.yml` with `blank_issues_enabled: false`. The templates are generic Chinese Markdown with a 50-unit body limit and a collapsed `<details>` block — they match the rules `policy.validateBody` checks for and pass when run locally against each file. The picker therefore surfaces them at the New Issue page.
+
+`issue-management/` (policy.mjs + config.json + policy.test.mjs) is dead code on HuntianLing. `config.json` points at the `deepseek-ai/deepseek-harness` GitHub org and project #1, so the runtime half (`issueSnapshot`, `validateIssue`, `validatePullRequest`) cannot talk to a real project. The unit tests in `policy.test.mjs` pass because they mock the GraphQL response. The previous `issue-policy.yml` and `issue-lifecycle.yml` workflows were the only entry points; both were removed in the right-sizing commit.
+
+`dependabot.yml` no longer declares a `uv` ecosystem. The original entry pointed at `/python/sdk`, a directory that does not exist in this repo, so the daily cron kept opening PRs that could not merge. HuntianLing's only registries are `npm` (root) and `github-actions`.

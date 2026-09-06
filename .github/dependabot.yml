@@ -16,17 +16,9 @@ updates:
       - "kind/dependency"
       - "area/infra"
 
-  - package-ecosystem: "uv"
-    directory: "/python/sdk"
-    schedule:
-      interval: "cron"
-      cronjob: "0 4 * * *"
-      timezone: "Asia/Shanghai"
-    cooldown:
-      default-days: 30
-    labels:
-      - "kind/dependency"
-      - "area/infra"
+  # No `uv` ecosystem here: HuntianLing does not ship a Python SDK. The
+  # previous config pointed at /python/sdk which does not exist, so the
+  # daily cron opened dependabot PRs that could never merge.
 
   - package-ecosystem: "github-actions"
     directory: "/"
