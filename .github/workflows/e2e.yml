@@ -1,13 +1,20 @@
 name: E2E
 
-# HuntianLing's real-API smoke test. Runs `pnpm run test:e2e` against the
-# DeepSeek API when DEEPSEEK_API_KEY is present and the event is trusted
-# (push to master or workflow_dispatch). Skipped — never failed — when the
-# key is absent or the event is untrusted (forked PR, dependabot).
+# HuntianLing plugin integration test. Confirms the package builds,
+# the cordis host composition loads, and the plugin contributes the
+# Services / Plugin shape that the dsh harness expects. Does NOT call
+# the DeepSeek API — HuntianLing is a cordis plugin consumed BY dsh,
+# not a product that calls dsh. Real-API coverage belongs in dsh.
 #
-# SECURITY — Never change `pull_request` to `pull_request_target`: the
-# latter runs in the base repo's context WITH secrets while still able to
-# check out untrusted fork code, which is a textbook key-leak vector.
+# The cordis family is vendored under ./vendor/ in this repo. Each
+# vendored package's tsconfig extends `../../tsconfig.base.json`, which
+# only exists in the host dsh repo. To build them in isolation we
+# synthesise a minimal local base, rewrite the extends path before
+# running `tsc -b`, then run the per-package `tsdown` step that
+# produces the .js files alongside the .d.ts that tsc emits. cordis's
+# package.json points `main` / `types` at lib/* so the lib/ trees must
+# exist before HuntianLing's TypeScript sources can resolve cordis's
+# types.
 
 on:
   workflow_dispatch:
@@ -24,17 +31,49 @@ env:
   PRIMARY_NODE_VERSION: '24'
 
 jobs:
-  e2e:
-    name: e2e
+  plugin-e2e:
+    name: plugin-e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # Run only on trusted events (push to master, manual dispatch). PRs from
-    # forks and dependabot PRs withhold secrets, so the preflight would
-    # otherwise hard-fail — a job skipped by `if:` reports as a SUCCESSFUL
-    # check, which is what we want.
-    if: github.event_name != 'pull_request'
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build vendored cordis family
+        run: |
+          BASE_DIR="$(mktemp -d)"
+          cat > "$BASE_DIR/tsconfig.base.json" <<'BASE'
+          {
+            "compilerOptions": {
+              "target": "es2024",
+              "module": "esnext",
+              "moduleResolution": "bundler",
+              "declaration": true,
+              "composite": true,
+              "skipLibCheck": true,
+              "esModuleInterop": true,
+              "allowImportingTsExtensions": true,
+              "rewriteRelativeImportExtensions": true,
+              "strict": true,
+              "types": ["node"]
+            }
+          }
+          BASE
+
+          for pkg in cosmokit cordis include loader; do
+            echo "=== vendor/$pkg ==="
+            cd "vendor/$pkg"
+            sed -i.bak "s|\"\\.\\./\\.\\./tsconfig\\.base\\.json\"|\"$BASE_DIR/tsconfig.base.json\"|" tsconfig.json
+
+            pnpm install --ignore-scripts
+
+            pnpm exec tsc -b tsconfig.json
+            if [ -f tsdown.config.ts ] || [ -f tsdown.config.js ]; then
+              pnpm dlx tsdown@latest
+            fi
+
+            mv tsconfig.json.bak tsconfig.json
+            cd "$GITHUB_WORKSPACE"
+          done
 
       - uses: pnpm/action-setup@v4
 
@@ -46,16 +85,11 @@ jobs:
       - name: Install (immutable)
         run: pnpm install --frozen-lockfile
 
-      - name: Preflight (require DEEPSEEK_API_KEY)
-        run: |
-          if [ -z "$DEEPSEEK_API_KEY" ]; then
-            echo "DEEPSEEK_API_KEY is not set; this run is trusted but the key is absent." >&2
-            echo "Set the DEEPSEEK_API_KEY repository secret and re-run." >&2
-            exit 1
-          fi
-
       - name: Build
         run: pnpm run build
 
-      - name: E2E tests
+      - name: Unit tests
+        run: pnpm run test
+
+      - name: Plugin integration test
         run: pnpm run test:e2e
