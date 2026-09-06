@@ -73,8 +73,17 @@ jobs:
           for pkg in cosmokit cordis include loader; do
             echo "=== vendor/$pkg ==="
             cd "vendor/$pkg"
-            # Rewrite the extends path to the synthesised base.
-            sed -i.bak "s|\"\\.\\./\\.\\./tsconfig\\.base\\.json\"|\"../../.tsconfig.cordis-base.json\"|" tsconfig.json
+            # Rewrite the extends path with a Python one-liner rather
+            # than sed to keep the embedded JSON paths readable. The
+            # original tsconfig is restored by `git checkout --` at the
+            # end of the loop.
+            python3 - <<'PY'
+import json, pathlib
+p = pathlib.Path("tsconfig.json")
+cfg = json.loads(p.read_text())
+cfg["extends"] = "../../.tsconfig.cordis-base.json"
+p.write_text(json.dumps(cfg, indent=2) + "\n")
+PY
 
             pnpm install --ignore-scripts --no-frozen-lockfile
 
@@ -94,7 +103,7 @@ jobs:
             fi
 
             # Restore the original tsconfig so the commit is not modified.
-            mv tsconfig.json.bak tsconfig.json
+            git checkout -- tsconfig.json
             cd "$GITHUB_WORKSPACE"
           done
 
