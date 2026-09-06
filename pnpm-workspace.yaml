@@ -1,0 +1,23 @@
+# HuntianLing pnpm workspace.
+#
+# Re-uses the Cordis family vendored at ../deepseek-harness/vendor/ by
+# declaring each as a workspace package. We do not fork or copy the vendored
+# sources; pnpm only links them.
+#
+# This workspace exists so that cordis's own `workspace:^` deps
+# (cordis-plugin-include, cordis-plugin-loader, cosmokit) resolve inside
+# this repo. Once the cordis family is published to npm, drop this file
+# and pin @deepseek-ai/cordis to that version in package.json.
+#
+# See LOCAL_DEV_NOTES.md for the sandbox caveat.
+
+packages:
+  - .
+
+  # Cordis family — read-only link from the dsh vendor tree.
+  - '../deepseek-harness/vendor/cordis'
+  - '../deepseek-harness/vendor/cosmokit'
+  - '../deepseek-harness/vendor/include'
+  - '../deepseek-harness/vendor/loader'
+
+linkWorkspacePackages: true

@@ -132,3 +132,11 @@ The dsh repository owns the following. Do not restate them in this `AGENTS.md`; 
 ## Editing these instructions
 
 This file is the real source for repository guidance. Keep each rule self-contained while linking high-level docs. Condense when clarity survives.
+
+## GitHub workflow probe history
+
+This repository carries a small set of placeholder files (`scripts/prepare-ci-bubblewrap.sh`, `scripts/github-matrix.mjs`, `native/landlock-run/`) marked `HUNTIANLING_PROBE_STUB`. They exist only because the dsh-copied `.github/workflows/*.yml` files assume these paths; the stubs let those workflows step past their first failing line so we can see which workflow really applies to HuntianLing.
+
+The probe series is recorded in commit messages (search `git log --grep="Probe"`). Each probe added one missing piece (`packageManager`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, the stub scripts) and observed which workflows moved forward and which still failed.
+
+These stubs are not plugin code. They will be removed once the workflow set is right-sized for HuntianLing (see [Editing these instructions](#editing-these-instructions) — the workflow selection is itself a TODO).
