@@ -5,7 +5,8 @@
 # minimal `.tsconfig.cordis-base.json` at the workspace root, rewrites
 # each vendored tsconfig's `extends` to point at it, runs `tsc -b` and
 # (for packages that ship one) `tsdown`, and restores the original
-# tsconfig from a snapshot so the commit is not modified.
+# tsconfig content from an in-memory snapshot so the commit is not
+# modified.
 #
 # Required:
 #   - pnpm on PATH (run pnpm/action-setup before invoking this script)
@@ -16,9 +17,10 @@
 #     node module resolution finds it from the vendored packages)
 #
 # Notes:
-#   - We use a snapshot file rather than `git checkout --` so the
-#     restoration is reliable even when the working tree is dirty or
-#     when CI caches have made `git status` report changes.
+#   - We use a Python script that reads the original tsconfig, writes
+#     a modified copy, and prints the original to stdout. The shell
+#     captures the printed original into a variable and restores it
+#     after the build, so we never have to write a second file.
 #   - We force `composite: true` on every vendored tsconfig because
 #     cordis references cosmokit, and tsc -b refuses a project
 #     reference whose target is not composite.
@@ -58,18 +60,18 @@ for pkg in cosmokit cordis include loader; do
   echo "=== vendor/$pkg ==="
   cd "vendor/$pkg"
 
-  # Snapshot the original tsconfig and rewrite the extends target.
-  # The original file is restored from the snapshot after the build.
-  cp tsconfig.json "tsconfig.json.orig"
-  python3 -c '
+  # Capture the original tsconfig content, write a modified copy.
+  # The original is restored from the captured string after the
+  # build so the commit is not modified.
+  ORIGINAL=$(cat tsconfig.json)
+  python3 -c "
 import json, pathlib
-p = pathlib.Path("tsconfig.json")
+p = pathlib.Path('tsconfig.json')
 cfg = json.loads(p.read_text())
-cfg["extends"] = "../../.tsconfig.cordis-base.json"
-cfg.setdefault("compilerOptions", {})["composite"] = True
-p.write_text(json.dumps(cfg, indent=2) + "\n")
-'
-  trap 'mv "tsconfig.json.orig" tsconfig.json' EXIT
+cfg['extends'] = '../../.tsconfig.cordis-base.json'
+cfg.setdefault('compilerOptions', {})['composite'] = True
+p.write_text(json.dumps(cfg, indent=2) + '\n')
+"
 
   pnpm install --ignore-scripts --no-frozen-lockfile
   # --force ensures tsc re-reads the rewritten tsconfig rather than
@@ -79,11 +81,8 @@ p.write_text(json.dumps(cfg, indent=2) + "\n")
     pnpm dlx tsdown@latest
   fi
 
-  # Restore the original tsconfig and clean up the snapshot. The
-  # trap above is a safety net for the rest of the loop; the explicit
-  # restore here is the primary path.
-  trap - EXIT
-  mv "tsconfig.json.orig" tsconfig.json
+  # Restore the original tsconfig verbatim.
+  printf '%s' "$ORIGINAL" > tsconfig.json
 
   cd "$REPO_ROOT"
 done
