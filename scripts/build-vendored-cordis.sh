@@ -60,7 +60,12 @@ p.write_text(json.dumps(cfg, indent=2) + "\n")
 '
 
   pnpm install --ignore-scripts --no-frozen-lockfile
-  pnpm dlx --package typescript@5.7 -- tsc -b tsconfig.json
+  # --force ensures tsc re-reads the rewritten tsconfig rather than
+  # serving the previous build from its .tsbuildinfo cache. Without
+  # --force, the second package in the loop builds against the
+  # original `../../tsconfig.base.json` extends target that exists
+  # only in the host dsh repo.
+  pnpm dlx --package typescript@5.7 -- tsc -b --force tsconfig.json
   if [ -f tsdown.config.ts ] || [ -f tsdown.config.js ]; then
     pnpm dlx tsdown@latest
   fi
