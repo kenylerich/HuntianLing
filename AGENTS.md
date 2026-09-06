@@ -8,7 +8,7 @@ This repository is currently a placeholder skeleton: the plugin package, tests, 
 
 - Repository name: `HuntianLing`
 - Remote: `https://github.com/kenylerich/HuntianLing.git`
-- Default branch: `main`
+- Default branch: `master`
 - Package scope (planned): `@kenylerich/dsh-huntianling` — TODO until `package.json` is added
 - Loader target: a `bundle/` plugin or a host composition overlay consumed by `dsh` — TODO until the loader mechanism is chosen
 
