@@ -38,6 +38,6 @@
     "@deepseek-ai/cordis": "file:../deepseek-harness/vendor/cordis"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "typescript": "^7.0.2"
   }
 }
