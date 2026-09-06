@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+lib/
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+logs/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Test output
+coverage/
+.nyc_output/
+
+# Recorder / local fixture diff
+fixtures/.recordings.local/

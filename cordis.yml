@@ -1,0 +1,24 @@
+# HuntianLing host composition.
+# Loaded by DeepSeek Harness (dsh) at startup when this bundle is on the
+# --profile path. This file declares the top-level plugin and which
+# capability sub-plugins it composes. Sub-plugins are local `!!js/function`
+# entries that return the Plugin defined in src/host/*.
+#
+# Conventions enforced by AGENTS.md:
+#   - every contribution goes through `ctx.effect()` / `ctx.on()`
+#   - inject only for hard Service dependencies
+#   - configurable values live here, not in DEFAULT_* constants
+#
+# Schema reference: dsh docs/cordis-primer.md#loader-configuration.
+
+plugin:
+  name: huntianling
+  description: Agile project-management capability for dsh.
+  # Resolver manifest dependencies — verify-cordis-config enforces that every
+  # bare plugin reference is declared here.
+  dependencies:
+    - "@kenylerich/dsh-huntianling"
+
+  # Top-level entry. Returns the root Plugin; its `apply` walks the sub-plugins.
+  apply: !!js/function |-
+    () => import('@kenylerich/dsh-huntianling/host').then((m) => m.default)

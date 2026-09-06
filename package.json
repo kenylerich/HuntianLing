@@ -1,0 +1,43 @@
+{
+  "name": "@kenylerich/dsh-huntianling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "HuntianLing — an agile project-management capability for DeepSeek Harness. Loaded via `dsh --profile huntianling` to add requirement intake, board, and workflow orchestration.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "^22.19 || >=24"
+  },
+  "files": [
+    "lib",
+    "cordis.yml",
+    "README.md"
+  ],
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.yml": "./cordis.yml",
+    "./host": {
+      "types": "./lib/host/plugin.d.ts",
+      "default": "./lib/host/plugin.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.src.json",
+    "typecheck": "tsc -p tsconfig.src.json --noEmit",
+    "clean": "rm -rf lib *.tsbuildinfo",
+    "test": "echo \"TODO: add test runner\" && exit 0",
+    "lint": "echo \"TODO: add lint config\" && exit 0",
+    "hygiene": "echo \"TODO: add hygiene gate\" && exit 0"
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "file:../deepseek-harness/vendor/cordis"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
