@@ -24,6 +24,7 @@
     "verbatimModuleSyntax": true,
 
     "paths": {
+      "@deepseek-ai/cordis": ["./src/host/cordis-ambient.ts"],
       "@kenylerich/dsh-huntianling": ["./src/index.ts"],
       "@kenylerich/dsh-huntianling/*": ["./src/*"]
     }

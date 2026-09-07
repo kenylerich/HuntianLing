@@ -1,37 +1,50 @@
 /**
- * Board capability — Service Definition stub.
+ * Board capability — Service Definition.
  *
- * Models a GitHub Projects-style board: projects → milestones → lanes →
- * cards. Skeleton declares the Service interface; the read/write methods
- * will be added once ./store.ts and the agile link are in place.
- *
- * Conventions (see AGENTS.md):
- *   - the Plugin's `apply` body owns all contributions via ctx.effect()
- *   - hard Service dependencies go in `inject`
+ * Provides `huntianling.board` for card CRUD and role claim. Persistence
+ * is a JSON file under the workspace (see store.ts).
  */
 
-import type { Context, Plugin, Service } from '@deepseek-ai/cordis';
+import type { Context, Plugin } from '@deepseek-ai/cordis';
 
-/**
- * Public Service contract for the board capability.
- *
- * Future shape (skeleton only declares the empty interface):
- *   - projects.create / projects.list / projects.get
- *   - milestones.create / milestones.get
- *   - lanes.configure / lanes.move
- *   - cards.create / cards.move / cards.link-requirement
- */
-export interface BoardService extends Service {
-  // TODO
+import { BoardStore } from './store.js';
+import type { Card, CardId, Project, ProjectId, RoleId, WorkItemType } from './types.js';
+
+export interface BoardService {
+  listProjects(): readonly Project[];
+  listCards(projectId?: ProjectId): readonly Card[];
+  getCard(cardId: CardId): Card | undefined;
+  createProject(input: { name: string; description?: string }): Project;
+  createCard(input: {
+    projectId: ProjectId;
+    title: string;
+    body?: string;
+    type?: WorkItemType;
+  }): Card;
+  claimCard(cardId: CardId, input: { roleId: RoleId; actorId: string }): Card;
+  unclaimCard(cardId: CardId, actorId: string): Card;
+}
+
+export function createBoardService(workspaceRoot: string): BoardService {
+  const store = new BoardStore(workspaceRoot);
+  return {
+    listProjects: () => store.listProjects(),
+    listCards: (projectId) => store.listCards(projectId),
+    getCard: (cardId) => store.getCard(cardId),
+    createProject: (input) => store.createProject(input),
+    createCard: (input) => store.createCard(input),
+    claimCard: (cardId, input) => store.claimCard(cardId, input),
+    unclaimCard: (cardId, actorId) => store.unclaimCard(cardId, actorId),
+  };
 }
 
 const BoardPlugin: Plugin = {
   name: 'huntianling:board',
-  // inject: [], // TODO once the board depends on the agile Service
 
   apply(ctx: Context): void {
-    // Future: ctx.effect(() => { ctx.register('board', { ... }); });
-    void ctx;
+    const root = ctx.get('huntianling.workspaceRoot') as string | undefined;
+    const service = createBoardService(root ?? process.cwd());
+    ctx.provide('huntianling.board', service);
   },
 };
 

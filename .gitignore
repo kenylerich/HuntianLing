@@ -24,6 +24,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Local board engine data
+.huntianling/
+
 # Test output
 coverage/
 .nyc_output/
