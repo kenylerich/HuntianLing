@@ -6,10 +6,16 @@
 # Publication is a manual workflow_dispatch of release-vendor-publish.yml from a
 # vendor-* tag; a vendor release can carry several versions, so each package has
 # its own tag.
+#
+# The pull_request trigger has been disabled on this HuntianLing instance
+# (commit history: 992f7bd follow-up cleanup, see AGENTS.md #18 follow-up).
+# The workflow remains in the repository as a reference asset that matches
+# the upstream dsh shape; re-enable by restoring the `pull_request:` block.
+# Manual dispatch remains possible.
 name: Release (vendor)
 
 on:
-  pull_request:
+  # pull_request:
   push:
     branches: [master]
   workflow_dispatch:

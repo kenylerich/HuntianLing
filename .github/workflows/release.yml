@@ -5,10 +5,16 @@
 # Pack and dependency-layout verification run without credentials on every pull
 # request and master push. Publication is a manual workflow_dispatch of
 # release-publish.yml from a dsh-v* tag.
+#
+# The pull_request trigger has been disabled on this HuntianLing instance
+# (commit history: 992f7bd follow-up cleanup, see AGENTS.md #18 follow-up).
+# The workflow remains in the repository as a reference asset that matches
+# the upstream dsh shape; re-enable by restoring the `pull_request:` block.
+# Manual dispatch remains possible.
 name: Release (dsh)
 
 on:
-  pull_request:
+  # pull_request:
   push:
     branches: [master]
   workflow_dispatch:
