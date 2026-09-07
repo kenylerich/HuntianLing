@@ -9,6 +9,7 @@ import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import { BoardStore } from './store.js';
 import type { Card, CardId, Project, ProjectId, RoleId, WorkItemType } from './types.js';
+import { resolveWorkspaceRoot } from './workspace.js';
 
 export interface BoardService {
   listProjects(): readonly Project[];
@@ -42,8 +43,12 @@ const BoardPlugin: Plugin = {
   name: 'huntianling:board',
 
   apply(ctx: Context): void {
-    const root = ctx.get('huntianling.workspaceRoot') as string | undefined;
-    const service = createBoardService(root ?? process.cwd());
+    const configured = ctx.get('huntianling.workspaceRoot');
+    const root = resolveWorkspaceRoot({
+      ...(typeof configured === 'string' ? { explicit: configured } : {}),
+      env: process.env,
+    });
+    const service = createBoardService(root);
     ctx.provide('huntianling.board', service);
   },
 };
