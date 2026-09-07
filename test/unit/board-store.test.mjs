@@ -90,6 +90,32 @@ test('transitionCard rejects delivered back to inbox', () => {
   assert.throws(() => store.transitionCard(card.id, 'inbox'), /forbidden transition/);
 });
 
+test('failing gate blocks transition and leaves status unchanged', () => {
+  const store = tempStore();
+  const project = store.createProject({ name: 'p' });
+  const card = readyCard(store, project.id);
+  store.registerGate({
+    id: 'block-delivered',
+    to: 'delivered',
+    run: () => ({ ok: false, reason: 'no evidence' }),
+  });
+  assert.throws(() => store.transitionCard(card.id, 'delivered'), /gate block-delivered/);
+  assert.equal(store.getCard(card.id)?.status, 'inbox');
+});
+
+test('passing gate allows the transition', () => {
+  const store = tempStore();
+  const project = store.createProject({ name: 'p' });
+  const card = readyCard(store, project.id);
+  store.registerGate({
+    id: 'allow-triaged',
+    to: 'triaged',
+    run: () => ({ ok: true }),
+  });
+  const moved = store.transitionCard(card.id, 'triaged');
+  assert.equal(moved.status, 'triaged');
+});
+
 test('requirement cannot leave inbox without acceptance', () => {
   const store = tempStore();
   const project = store.createProject({ name: 'p' });

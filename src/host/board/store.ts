@@ -20,6 +20,7 @@ import {
   type WorkItemType,
   type WorkItemStatus,
 } from './types.js';
+import { runTransitionGates, type TransitionGate } from './gates.js';
 import { validateWorkItemTransition, type WorkItemError } from './work-item.js';
 
 export interface BoardSnapshot {
@@ -63,9 +64,14 @@ export function boardFilePath(workspaceRoot: string): string {
 
 export class BoardStore {
   private snapshot: BoardSnapshot;
+  private gates: TransitionGate[] = [];
 
   constructor(private readonly workspaceRoot: string) {
     this.snapshot = this.read();
+  }
+
+  registerGate(gate: TransitionGate): void {
+    this.gates = [...this.gates, gate];
   }
 
   listProjects(): readonly Project[] {
@@ -168,6 +174,10 @@ export class BoardStore {
     const error = validateWorkItemTransition(card, to);
     if (error !== null) {
       throw new Error(formatTransitionError(error));
+    }
+    const gate = runTransitionGates(this.gates, card, card.status, to);
+    if (!gate.ok) {
+      throw new Error(`gate ${gate.id} blocked ${card.status} → ${to}: ${gate.reason}`);
     }
     return this.replaceCard({ ...card, status: to });
   }

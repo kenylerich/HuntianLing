@@ -7,6 +7,7 @@
 
 import type { Context, Plugin } from '@deepseek-ai/cordis';
 
+import type { TransitionGate } from './gates.js';
 import { BoardStore } from './store.js';
 import type { Card, CardId, Project, ProjectId, RoleId, WorkItemStatus, WorkItemType } from './types.js';
 import { resolveWorkspaceRoot } from './workspace.js';
@@ -25,6 +26,7 @@ export interface BoardService {
   claimCard(cardId: CardId, input: { roleId: RoleId; actorId: string }): Card;
   unclaimCard(cardId: CardId, actorId: string): Card;
   transitionCard(cardId: CardId, to: WorkItemStatus): Card;
+  registerGate(gate: TransitionGate): void;
 }
 
 export function createBoardService(workspaceRoot: string): BoardService {
@@ -38,6 +40,9 @@ export function createBoardService(workspaceRoot: string): BoardService {
     claimCard: (cardId, input) => store.claimCard(cardId, input),
     unclaimCard: (cardId, actorId) => store.unclaimCard(cardId, actorId),
     transitionCard: (cardId, to) => store.transitionCard(cardId, to),
+    registerGate: (gate) => {
+      store.registerGate(gate);
+    },
   };
 }
 
