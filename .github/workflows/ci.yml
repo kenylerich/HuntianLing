@@ -33,6 +33,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+      # The cordis family is vendored under ./vendor/. tsc and the
+      # Cordis runtime both need the bundled lib/index.js that this
+      # script synthesises from the source under src/. Without it the
+      # `@deepseek-ai/cordis` import in the host/ sub-plugin is
+      # unresolvable, the e2e smoke fails, and a re-based PR
+      # re-deriving a dependency bump would fail typecheck on master.
+      # The script restores the vendored tsconfig so the commit is
+      # not modified.
+      - name: Build vendored cordis family
+        run: bash scripts/build-vendored-cordis.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
           cache: pnpm
 
       - name: Install (immutable)
