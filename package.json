@@ -31,7 +31,7 @@
     "build": "tsc -p tsconfig.src.json",
     "typecheck": "tsc -p tsconfig.src.json --noEmit",
     "clean": "rm -rf lib *.tsbuildinfo",
-    "test": "node --test test/unit",
+    "test": "node --test test/unit/contract.test.mjs test/unit/work-item.test.mjs",
     "test:e2e": "node scripts/plugin-e2e.mjs",
     "lint": "echo \"HUNTIANLING_PROBE: no lint yet; see AGENTS.md Quality gates\" && exit 1",
     "hygiene": "echo \"HUNTIANLING_PROBE: no hygiene yet; see AGENTS.md Quality gates\" && exit 1"
