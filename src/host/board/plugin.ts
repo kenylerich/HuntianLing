@@ -8,7 +8,7 @@
 import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import { BoardStore } from './store.js';
-import type { Card, CardId, Project, ProjectId, RoleId, WorkItemType } from './types.js';
+import type { Card, CardId, Project, ProjectId, RoleId, WorkItemStatus, WorkItemType } from './types.js';
 import { resolveWorkspaceRoot } from './workspace.js';
 
 export interface BoardService {
@@ -24,6 +24,7 @@ export interface BoardService {
   }): Card;
   claimCard(cardId: CardId, input: { roleId: RoleId; actorId: string }): Card;
   unclaimCard(cardId: CardId, actorId: string): Card;
+  transitionCard(cardId: CardId, to: WorkItemStatus): Card;
 }
 
 export function createBoardService(workspaceRoot: string): BoardService {
@@ -36,6 +37,7 @@ export function createBoardService(workspaceRoot: string): BoardService {
     createCard: (input) => store.createCard(input),
     claimCard: (cardId, input) => store.claimCard(cardId, input),
     unclaimCard: (cardId, actorId) => store.unclaimCard(cardId, actorId),
+    transitionCard: (cardId, to) => store.transitionCard(cardId, to),
   };
 }
 

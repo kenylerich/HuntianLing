@@ -20,6 +20,7 @@ import {
   type WorkItemType,
   type WorkItemStatus,
 } from './types.js';
+import { validateWorkItemTransition, type WorkItemError } from './work-item.js';
 
 export interface BoardSnapshot {
   readonly schemaVersion: number;
@@ -32,6 +33,29 @@ const EMPTY: BoardSnapshot = {
   projects: [],
   cards: [],
 };
+
+function formatTransitionError(
+  error: WorkItemError | { readonly kind: 'forbidden_transition'; readonly from: WorkItemStatus; readonly to: WorkItemStatus },
+): string {
+  switch (error.kind) {
+    case 'forbidden_transition':
+      return `forbidden transition: ${error.from} → ${error.to}`;
+    case 'missing_acceptance_for_requirement':
+      return `requirement ${error.id} cannot leave inbox without acceptance`;
+    case 'missing_title':
+      return `card ${error.id} is missing a title`;
+    case 'missing_body':
+      return `card ${error.id} is missing a body`;
+    case 'cycle_in_parent_chain':
+      return `card ${error.id} parent chain cycles`;
+    case 'parent_is_child':
+      return `card ${error.id} parent is itself a child`;
+    default: {
+      const _never: never = error;
+      return `transition rejected: ${JSON.stringify(_never)}`;
+    }
+  }
+}
 
 export function boardFilePath(workspaceRoot: string): string {
   return join(workspaceRoot, '.huntianling', 'board.json');
@@ -78,6 +102,7 @@ export class BoardStore {
     body?: string;
     type?: WorkItemType;
     stateGroup?: WorkItemStatus;
+    acceptance?: readonly string[];
   }): Card {
     const project = this.snapshot.projects.find((item) => item.id === input.projectId);
     if (!project) throw new Error(`project not found: ${input.projectId}`);
@@ -96,7 +121,7 @@ export class BoardStore {
       parentId: null,
       startDate: null,
       dueDate: null,
-      acceptance: [],
+      acceptance: input.acceptance ? [...input.acceptance] : [],
       sourceRequirementId: null,
       sortOrder,
       claimedRoleId: null,
@@ -130,6 +155,21 @@ export class BoardStore {
       claimedBy: input.actorId,
       claimedAt: Date.now(),
     });
+  }
+
+  /**
+   * The only write path for status (#52). UI and hooks must call this;
+   * patching `status` on disk is ignored on the next load only if we
+   * never expose a setter — callers go through this method.
+   */
+  transitionCard(cardId: CardId, to: WorkItemStatus): Card {
+    const card = this.requireCard(cardId);
+    if (card.status === to) return card;
+    const error = validateWorkItemTransition(card, to);
+    if (error !== null) {
+      throw new Error(formatTransitionError(error));
+    }
+    return this.replaceCard({ ...card, status: to });
   }
 
   unclaimCard(cardId: CardId, actorId: string): Card {

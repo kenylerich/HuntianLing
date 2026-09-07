@@ -64,3 +64,39 @@ test('claim persists across store reload', () => {
   assert.equal(loaded?.claimedBy, 'dev-1');
   assert.equal(loaded?.claimedRoleId, 'developer');
 });
+
+function readyCard(store, projectId) {
+  return store.createCard({
+    projectId,
+    title: '薄片',
+    body: '可验证的一小步。',
+    acceptance: ['Given x When y Then z'],
+  });
+}
+
+test('transitionCard is the only status write path and allows inbox to triaged', () => {
+  const store = tempStore();
+  const project = store.createProject({ name: 'p' });
+  const card = readyCard(store, project.id);
+  const moved = store.transitionCard(card.id, 'triaged');
+  assert.equal(moved.status, 'triaged');
+});
+
+test('transitionCard rejects delivered back to inbox', () => {
+  const store = tempStore();
+  const project = store.createProject({ name: 'p' });
+  const card = readyCard(store, project.id);
+  store.transitionCard(card.id, 'delivered');
+  assert.throws(() => store.transitionCard(card.id, 'inbox'), /forbidden transition/);
+});
+
+test('requirement cannot leave inbox without acceptance', () => {
+  const store = tempStore();
+  const project = store.createProject({ name: 'p' });
+  const card = store.createCard({
+    projectId: project.id,
+    title: '无验收',
+    body: '缺验收。',
+  });
+  assert.throws(() => store.transitionCard(card.id, 'triaged'), /without acceptance/);
+});
