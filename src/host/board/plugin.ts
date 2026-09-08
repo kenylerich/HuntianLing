@@ -8,6 +8,7 @@
 import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import type { TransitionGate } from './gates.js';
+import { loadGateManifest } from './gate-manifest.js';
 import { BoardStore } from './store.js';
 import type { Card, CardId, Project, ProjectId, RoleId, WorkItemStatus, WorkItemType } from './types.js';
 import { resolveWorkspaceRoot } from './workspace.js';
@@ -31,6 +32,9 @@ export interface BoardService {
 
 export function createBoardService(workspaceRoot: string): BoardService {
   const store = new BoardStore(workspaceRoot);
+  for (const gate of loadGateManifest(workspaceRoot)) {
+    store.registerGate(gate);
+  }
   return {
     listProjects: () => store.listProjects(),
     listCards: (projectId) => store.listCards(projectId),
