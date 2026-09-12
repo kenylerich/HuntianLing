@@ -34,7 +34,7 @@ console.log(`OK  plugin name: ${huntianling.name}`)
 const ctx = new Context()
 let fiber
 try {
-  fiber = ctx.plugin(huntianling)
+  fiber = ctx.plugin(huntianling, { web: { autoStart: false } })
   await fiber
   console.log('OK  plugin applied; fiber started')
 } catch (err) {

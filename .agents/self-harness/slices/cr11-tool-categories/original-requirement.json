@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR11",
+      "source": "user"
+    }
+  ],
+  "goal": "The harness tool registry covers browser, image analysis, document parsing, database migration, and web-api tools with allow/deny by role and task and records calls that affect delivery as evidence",
+  "actors": ["developer"],
+  "scenarios": [
+    "a caller lists browser, image, document-parse, database-migration, and web-api tools",
+    "a role or task that is not allowed is denied",
+    "document.parse extracts text and records delivery evidence",
+    "image.analyze extracts image text and records delivery evidence",
+    "database.migrate applies schema and records delivery evidence",
+    "web-api.call uses call-time transport without persisting secrets",
+    "browser.navigate runs locally and fails loud when a hosted fleet is requested",
+    "tool calls that affect delivery appear on the WorkItem evidence summary",
+    "customers cannot invoke remaining-category tools"
+  ],
+  "constraints": [
+    "hosted browser fleets are out of scope",
+    "secrets never persist",
+    "do not start Phase D chrome on the fused board cockpit"
+  ],
+  "nonGoals": [
+    "hosted browser fleets",
+    "technology skill packs",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

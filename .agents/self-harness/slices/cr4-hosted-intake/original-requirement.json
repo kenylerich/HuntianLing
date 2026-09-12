@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR4",
+      "source": "user"
+    }
+  ],
+  "goal": "Image, PDF, and Word intake extract text without a test stub when hosted OCR is configured, and mode llm uses a configured live-model extractor",
+  "actors": ["customer", "mkt"],
+  "scenarios": [
+    "an image is OCR'd by the configured hosted recognizer without a per-test understanding stub",
+    "a PDF with no extractable text falls back to hosted OCR",
+    "a Word document still extracts without OCR",
+    "mode llm uses the configured extractor without injecting a test stub",
+    "mode llm still fails loud when no extractor is configured",
+    "an image without OCR configuration stays pending",
+    "human approval is still required before candidates become WorkItems",
+    "customers can upload attachments and run llm analysis on their own sessions"
+  ],
+  "constraints": [
+    "hosted credentials are never persisted",
+    "candidates are not committed WorkItems until approved",
+    "a hosted model fleet is not a product"
+  ],
+  "nonGoals": [
+    "hosted model fleet as a product",
+    "visual workflow designer"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

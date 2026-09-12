@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C5",
+      "source": "user"
+    }
+  ],
+  "goal": "A WorkItem can be planned, gated, approved, scheduled, and controlled as a visible workflow run using built-in capabilities and a versioned default template",
+  "actors": ["developer", "admin", "planner", "generator", "evaluator"],
+  "scenarios": [
+    "inspecting a transition lists missing fields, evidence, reviews, or approvals",
+    "an invalid status change is blocked with those missing items",
+    "an override records actor, reason, scope, and an audit event",
+    "planning a WorkItem creates sequential agent steps with skills, tools, checks, and handoffs",
+    "a blocked or unapproved step does not start",
+    "a human can approve or reject a request and the decision is a role-scoped event",
+    "the run view shows owner, running and waiting steps, next action, scheduler reasons, and a timeline",
+    "authorized users can pause, resume, cancel, retry, or reassign a step",
+    "built-in capabilities and the default template can be selected or cloned but not mutated in place",
+    "customers cannot manage workflow runs or approvals"
+  ],
+  "constraints": [
+    "forbidden lifecycle transitions remain blocked even with override",
+    "dependent steps wait for required approvals",
+    "creating a workflow run does not create a dsh LLM chat task by itself"
+  ],
+  "nonGoals": [
+    "visual workflow designer canvas",
+    "workflow test lab replay",
+    "custom third-party workflow packs",
+    "PostgreSQL"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B4",
+      "source": "user"
+    }
+  ],
+  "goal": "A versioned environment profile prepares this repo or a second project and reports ready or blocked, with tool allowlists and skill coverage",
+  "actors": ["developer"],
+  "scenarios": [
+    "same profile initializes a second workspace",
+    "missing package.json blocks implementation",
+    "replacement preserve existing files"
+  ],
+  "constraints": ["secrets stay out of persisted profile output"],
+  "nonGoals": ["remote environment fleets"],
+  "openQuestions": [],
+  "confirmed": true
+}

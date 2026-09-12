@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-WEB-007", "REQ-REQ-001", "REQ-WEB-006"],
+  "outcome": "Authenticated developers land on a five-job shell with Collect, Design, Progress, Channel, and Environment",
+  "acceptance": [
+    "GET /developer HTML includes the five job names",
+    "GET /developer HTML does not include the fused module-rail",
+    "developer-board API returns collect, design, and progress projections",
+    "design fields analysis, design, and acceptance are editable through existing WorkItem APIs",
+    "environment prepare is available to developers and denied to customers",
+    "fused board remains at /board"
+  ],
+  "inScope": ["developer SPA", "developer-board API", "environment prepare HTTP"],
+  "outOfScope": ["admin shell", "removing page.ts"],
+  "assumptions": ["channel APIs from B6 remain"],
+  "openQuestions": []
+}

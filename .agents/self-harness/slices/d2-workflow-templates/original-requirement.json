@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D2",
+      "source": "user"
+    }
+  ],
+  "goal": "A project can select Scrum, Kanban, hotfix, or research templates besides the built-in user-story template",
+  "actors": ["developer"],
+  "scenarios": [
+    "the catalog lists user-story, Scrum, Kanban, hotfix, and research built-in templates",
+    "selecting Scrum plans a new WorkItem with Scrum steps",
+    "selecting Kanban plans a new WorkItem with Kanban steps",
+    "selecting hotfix plans a new WorkItem with hotfix steps",
+    "selecting research plans a new WorkItem with research steps",
+    "an existing open run keeps its previous template after the project selects another",
+    "customers cannot select a project workflow template"
+  ],
+  "constraints": [
+    "third-party workflow packs are out of scope",
+    "visual workflow designer is out of scope",
+    "Workflow Test Lab is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "third-party workflow packs",
+    "visual workflow designer",
+    "Workflow Test Lab simulation",
+    "removing the fused board cockpit",
+    "Scrumban and compliance-heavy templates",
+    "per-WorkItem-type, Milestone, risk, or delivery-slice template override"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

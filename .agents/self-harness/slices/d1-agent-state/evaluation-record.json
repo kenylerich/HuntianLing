@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a caller reads a workflow run state snapshot including work item, leases, branches, and evidence",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d1.test.mjs"
+    },
+    {
+      "id": "recognizing a ready analyze step allows start and records the snapshot on the step",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d1.test.mjs"
+    },
+    {
+      "id": "an exclusive lease held by someone else blocks the step and posts a Team Chat event",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d1.test.mjs"
+    },
+    {
+      "id": "a missing approval names request-approval as the next safe action",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d1.test.mjs"
+    },
+    {
+      "id": "a stale snapshot after a design change blocks execution",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d1.test.mjs"
+    },
+    {
+      "id": "an agent run refuses to start from a blocked recognition",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d1.test.mjs"
+    },
+    {
+      "id": "customers cannot recognize workflow step state",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d1.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

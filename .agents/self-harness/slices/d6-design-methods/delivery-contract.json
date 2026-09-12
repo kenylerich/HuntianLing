@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-METHOD-001"
+  ],
+  "outcome": "Use Case, BDD, Example Mapping, Event Storming, DDD, API Design, ADR, and Threat Modeling are selectable method packs",
+  "acceptance": [
+    "the catalog lists user-story plus use-case, bdd, example-mapping, event-storming, ddd, api-design, adr, and threat-modeling",
+    "a new project has user-story enabled and the extra packs disabled until selected",
+    "enabling a method pack lets a planner run produce that method's output fields",
+    "a WorkItem records the method pack that produced it",
+    "missing method skills are reported as skill gaps and block the planner run",
+    "disabling a pack prevents new planner runs with that method",
+    "customers cannot enable method packs"
+  ],
+  "inScope": [
+    "built-in design method pack catalog beyond User Story",
+    "project-enabled method packs",
+    "WorkItem method pack record",
+    "planner method-specific skills, output fields, and skill-gap reporting"
+  ],
+  "outOfScope": [
+    "prioritization method packs",
+    "removing the fused board cockpit"
+  ],
+  "assumptions": [
+    "User Story is already the default method baseline",
+    "prioritization packs stay in the next D row"
+  ],
+  "openQuestions": []
+}

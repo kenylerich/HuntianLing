@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D9",
+      "source": "user"
+    }
+  ],
+  "goal": "Frontend, backend, database, and related packs install as versioned coverage",
+  "actors": ["developer"],
+  "scenarios": [
+    "the catalog lists frontend, backend, database, and related versioned skill packs",
+    "a project scan recommends skill packs from the workspace",
+    "a WorkItem can declare required skill packs",
+    "installing a pack makes its versioned coverage available to the project",
+    "the agent runtime loads only the relevant installed pack skills for the selected task",
+    "a missing required pack blocks the agent run",
+    "customers cannot install skill packs"
+  ],
+  "constraints": [
+    "OAuth is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "OAuth",
+    "removing the fused board cockpit",
+    "adding technology packs to the coding environment baseline"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

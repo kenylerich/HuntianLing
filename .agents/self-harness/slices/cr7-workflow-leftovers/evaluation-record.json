@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "replacing a project workflow template shows a preview of changed stages and steps and writes an audit event",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "future-only replacement leaves active runs on the previous template",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "active-run migration remaps open runs onto the new template",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "rollback restores the previous template",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "a built-in capability includes documentation and a conformance fixture",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "a recurring step is scheduled again after it completes",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "an event-triggered step stays queued until its event arrives",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "a review request can be created and completed as role-scoped events",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "accepting a handoff changes owner in the same transition",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "rejecting a handoff records the rejection and does not change owner",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "a wrong-role handoff does not change state",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "project rollups show overloaded roles and release readiness",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    },
+    {
+      "id": "customers cannot replace templates, manage reviews, or accept handoffs",
+      "result": "pass",
+      "evidence": "test/unit/workflow-cr7.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

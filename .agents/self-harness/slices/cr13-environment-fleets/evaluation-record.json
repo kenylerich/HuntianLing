@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a caller lists local and replacement environment fleet slots",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    },
+    {
+      "id": "a replacement environment is prepared from the same profile",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    },
+    {
+      "id": "uncommitted work is copied onto the replacement environment",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    },
+    {
+      "id": "uncommitted work that would be discarded is reported and blocks until loss is accepted",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    },
+    {
+      "id": "an interrupted Story delivery run resumes on the replacement environment without re-running a completed Planner step",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    },
+    {
+      "id": "a failed prerequisite on the replacement still leaves it not ready",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    },
+    {
+      "id": "secrets are not persisted in fleet records",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    },
+    {
+      "id": "customers cannot replace environments",
+      "result": "pass",
+      "evidence": "test/unit/environment-cr13.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

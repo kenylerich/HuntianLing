@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B10",
+      "source": "user"
+    }
+  ],
+  "goal": "A Story delivery run persists checkpoints, survives interrupt and a replaced execution environment, and resumes without losing accepted decisions or repeating completed steps",
+  "actors": ["developer", "planner", "generator", "evaluator"],
+  "scenarios": [
+    "developer starts one Story delivery run after Definition of Ready",
+    "the run records a durable checkpoint after each accepted step",
+    "interrupt then resume on a new runtime continues from the checkpoint",
+    "duplicate or stale events do not advance the run",
+    "cancel or retry limits stop the run with a visible reason"
+  ],
+  "constraints": [
+    "dsh owns session storage; HuntianLing owns delivery records",
+    "no unbounded retry loop",
+    "start requires a ready Story"
+  ],
+  "nonGoals": [
+    "Workflow Test Lab simulation",
+    "hosted branch and pull-request execution",
+    "Skill depth measurement"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

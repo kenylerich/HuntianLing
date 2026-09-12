@@ -1,0 +1,1 @@
+Put one directory per development slice: `original-requirement.json`, `delivery-contract.json`, `environment-ready.json`, `implementation-record.json`, `evaluation-record.json`. Validate each file with `pnpm run self-harness:validate -- <file>`.

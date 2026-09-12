@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D6",
+      "source": "user"
+    }
+  ],
+  "goal": "Use Case, BDD, Example Mapping, Event Storming, DDD, API Design, ADR, and Threat Modeling are selectable method packs",
+  "actors": ["developer"],
+  "scenarios": [
+    "the catalog lists user-story plus use-case, bdd, example-mapping, event-storming, ddd, api-design, adr, and threat-modeling",
+    "a new project has user-story enabled and the extra packs disabled until selected",
+    "enabling a method pack lets a planner run produce that method's output fields",
+    "a WorkItem records the method pack that produced it",
+    "missing method skills are reported as skill gaps and block the planner run",
+    "disabling a pack prevents new planner runs with that method",
+    "customers cannot enable method packs"
+  ],
+  "constraints": [
+    "prioritization method packs are out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "prioritization method packs",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

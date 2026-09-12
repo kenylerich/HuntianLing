@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "each role stores allowed work-item types, tools, write permissions, approval requirements, and forbidden actions",
+      "result": "pass",
+      "evidence": "test/unit/authority-service.test.mjs"
+    },
+    {
+      "id": "read, draft, code change, commit, push, pull request, local CI, production CI, review approval, and merge are separate permissions",
+      "result": "pass",
+      "evidence": "test/unit/authority-service.test.mjs"
+    },
+    {
+      "id": "planner cannot push or open a pull request even with approval",
+      "result": "pass",
+      "evidence": "test/unit/authority-service.test.mjs"
+    },
+    {
+      "id": "generator push or pull request without approval is denied and audited",
+      "result": "pass",
+      "evidence": "test/unit/authority-service.test.mjs"
+    },
+    {
+      "id": "a granted approval from a different human allows generator push",
+      "result": "pass",
+      "evidence": "test/unit/authority-service.test.mjs"
+    },
+    {
+      "id": "the requester cannot approve their own request",
+      "result": "pass",
+      "evidence": "test/unit/authority-service.test.mjs"
+    },
+    {
+      "id": "evaluator can run local CI without approval",
+      "result": "pass",
+      "evidence": "test/unit/authority-service.test.mjs"
+    },
+    {
+      "id": "production CI without approval is denied and audited",
+      "result": "pass",
+      "evidence": "test/unit/web-authority.test.mjs"
+    },
+    {
+      "id": "developer progress shows capability boundaries before a task starts",
+      "result": "pass",
+      "evidence": "test/unit/web-authority.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

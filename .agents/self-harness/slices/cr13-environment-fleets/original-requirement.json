@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR13",
+      "source": "user"
+    }
+  ],
+  "goal": "A replacement remote environment can be prepared from the project profile without losing uncommitted work, and an interrupted Story delivery run can resume there without repeating a completed step",
+  "actors": ["developer"],
+  "scenarios": [
+    "a caller lists local and replacement environment fleet slots",
+    "a replacement environment is prepared from the same profile",
+    "uncommitted work is copied onto the replacement environment",
+    "uncommitted work that would be discarded is reported and blocks until loss is accepted",
+    "an interrupted Story delivery run resumes on the replacement environment without re-running a completed Planner step",
+    "a failed prerequisite on the replacement still leaves it not ready",
+    "secrets are not persisted in fleet records",
+    "customers cannot replace environments"
+  ],
+  "constraints": [
+    "PostgreSQL is out of scope",
+    "hosted browser fleets are out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "PostgreSQL driver",
+    "hosted browser fleets",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

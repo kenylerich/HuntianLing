@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-AGENT-004"],
+  "outcome": "Each agent role has explicit capability limits, and push, pull request, and production CI stay blocked until a human approval is granted",
+  "acceptance": [
+    "each role stores allowed work-item types, tools, write permissions, approval requirements, and forbidden actions",
+    "read, draft, code change, commit, push, pull request, local CI, production CI, review approval, and merge are separate permissions",
+    "planner cannot push or open a pull request even with approval",
+    "generator push or pull request without approval is denied and audited",
+    "a granted approval from a different human allows generator push",
+    "the requester cannot approve their own request",
+    "evaluator can run local CI without approval",
+    "production CI without approval is denied and audited",
+    "developer progress shows capability boundaries before a task starts"
+  ],
+  "inScope": [
+    "role capability policies",
+    "human approval for high-risk actions",
+    "gated local push and pull-request intent",
+    "gated production CI",
+    "audit and developer policy panel"
+  ],
+  "outOfScope": [
+    "hosted GitHub or GitLab adapters",
+    "branch naming and stacked PRs",
+    "Workflow Test Lab"
+  ],
+  "assumptions": [
+    "local Git inspect remains allowed without approval",
+    "lint and hygiene remain blocked probe scripts"
+  ],
+  "openQuestions": []
+}

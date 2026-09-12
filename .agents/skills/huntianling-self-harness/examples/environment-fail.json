@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "role": "environment",
+  "commands": {
+    "typecheck": "pass",
+    "test": "pass",
+    "lint": "pass"
+  },
+  "ready": true
+}

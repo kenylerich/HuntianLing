@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/dispatch/types.ts",
+    "src/host/dispatch/store.ts",
+    "src/host/dispatch/service.ts",
+    "src/host/dispatch/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/web/server.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/developer-board.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/dispatch-leases.test.mjs",
+    "test/unit/web-evidence.test.mjs",
+    "test/unit/web-developer.test.mjs",
+    "test/unit/contract.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a project can register a GitHub, Gitea, or GitLab repository on the same WorkItem records as local Git",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "local Git still works without GitHub",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "unknown provider or missing hosted remote metadata fails loud",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "hosted push, open pull request, and merge remain separate actions",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "hosted push, open pull request, and merge still require human approval",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "hosted credentials are supplied at call time or from the environment and are never persisted",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "GitHub, Gitea, and GitLab use provider-specific pull-request and merge endpoints",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "Code View shows the hosted pull-request URL",
+      "result": "pass",
+      "evidence": "test/unit/scm-hosted.test.mjs"
+    },
+    {
+      "id": "customers cannot register hosted repositories or push",
+      "result": "pass",
+      "evidence": "test/unit/web-code-view.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

@@ -30,6 +30,25 @@ function readyCard(store, projectId) {
   });
 }
 
+function attachExecutedEvidence(store, card) {
+  store.updateDeliveryEvidenceSummary(card.id, {
+    checks: [{
+      id: 'evaluator:delivery-proof',
+      area: 'acceptance',
+      title: 'delivery proof',
+      status: 'passing',
+      required: true,
+      reason: 'executed',
+      evidenceIds: ['run-1'],
+      acceptanceCriterionIds: [],
+      links: [],
+      producer: 'evaluator',
+      executionKind: 'executed',
+      designRevision: '',
+    }],
+  });
+}
+
 test('no manifest means no gates', () => {
   const root = mkdtempSync(join(tmpdir(), 'huntianling-empty-'));
   assert.deepEqual(loadGateManifest(root), []);
@@ -45,6 +64,7 @@ test('manifest gates load and block matching transitions', () => {
   const service = createBoardService(root);
   const project = service.createProject({ name: 'p' });
   const card = readyCard(service, project.id);
+  attachExecutedEvidence(service, card);
   assert.throws(
     () => service.transitionCard(card.id, 'delivered'),
     /gate delivery-proof.*not verified/s,

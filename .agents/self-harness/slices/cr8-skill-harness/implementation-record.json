@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/skills/types.ts",
+    "src/host/skills/service.ts",
+    "src/host/environment/profile.ts",
+    "src/host/environment/types.ts",
+    "src/host/environment/scan.ts",
+    "src/host/environment/service.ts",
+    "src/host/agents/types.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/harness/types.ts",
+    "src/host/harness/hosted.ts",
+    "src/host/harness/service.ts",
+    "src/host/harness/plugin.ts",
+    "src/host/harness/store.ts",
+    "src/host/web/server.ts",
+    "test/unit/harness-cr8.test.mjs",
+    "test/unit/harness-measure.test.mjs",
+    "test/unit/environment-profile.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

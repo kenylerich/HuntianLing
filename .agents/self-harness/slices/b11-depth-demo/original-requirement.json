@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B11",
+      "source": "user"
+    }
+  ],
+  "goal": "Measure one Skill depth change against a baseline before treating it as required, and record a HuntianLing self-development demonstration that uses the same method",
+  "actors": ["developer", "evaluator"],
+  "scenarios": [
+    "compare MKT depth 0 with depth 1 on fixed pass, fail, and cancelled cases",
+    "replay a recorded trial without treating it as a fresh model run",
+    "promote a depth only after a predeclared threshold is met",
+    "demonstrate a fresh project prepare plus one Story through fail, repair, interrupt, resume, and evidence-based progress",
+    "label unavailable gates and live-model gaps instead of reporting them as pass"
+  ],
+  "constraints": [
+    "unknown measurements stay unknown",
+    "lint and hygiene remain blocked probe scripts",
+    "do not claim live-model HuntianLing-runtime Agents"
+  ],
+  "nonGoals": [
+    "promoting Skill depth 2-4",
+    "Workflow Test Lab",
+    "OAuth providers"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C7",
+      "source": "user"
+    }
+  ],
+  "goal": "An agent task shows missing required information before it starts, and skill-creator can draft gated agile skills that stay disabled until they pass validation",
+  "actors": ["developer", "planner", "generator", "evaluator"],
+  "scenarios": [
+    "before an agent task starts, HuntianLing injects WorkItem context, tree, milestone, acceptance, tech profile, source documents, prior feedback, tool permissions, and checks",
+    "missing required information is visible before the task starts",
+    "the task does not start while required information is missing",
+    "a completed agent run returns structured feedback, assumptions, open questions, evidence references, and next actions",
+    "skill-creator drafts a skill from an agile template",
+    "the catalog covers intake, analysis, story splitting, acceptance, planning, review, QA, release, documentation, and retrospective skills",
+    "the skill validator records results in agent_skill_validations",
+    "an invalid or unvalidated draft cannot be enabled for agent execution"
+  ],
+  "constraints": [
+    "skill drafts stay gated until they pass validation",
+    "customers cannot inspect agent task context or manage skill drafts"
+  ],
+  "nonGoals": [
+    "third-party skill packs",
+    "visual skill designer",
+    "auto-enabling drafted skills as live runtime agents"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

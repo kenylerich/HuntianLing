@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "login routes by domain to cn or global without relying only on IP",
+      "result": "pass",
+      "evidence": "test/unit/auth-d10.test.mjs"
+    },
+    {
+      "id": "users can manually switch login region when routing is ambiguous",
+      "result": "pass",
+      "evidence": "test/unit/auth-d10.test.mjs"
+    },
+    {
+      "id": "login events record the region used",
+      "result": "pass",
+      "evidence": "test/unit/auth-d10.test.mjs"
+    },
+    {
+      "id": "Google, GitHub, and WeChat appear as regional OAuth/OIDC providers",
+      "result": "pass",
+      "evidence": "test/unit/auth-d10.test.mjs"
+    },
+    {
+      "id": "OAuth start and callback bind a provider identity with state and PKCE where supported",
+      "result": "pass",
+      "evidence": "test/unit/auth-d10.test.mjs"
+    },
+    {
+      "id": "one user can unlink a bound provider",
+      "result": "pass",
+      "evidence": "test/unit/auth-d10.test.mjs"
+    },
+    {
+      "id": "OAuth secrets are not stored in board records",
+      "result": "pass",
+      "evidence": "test/unit/auth-d10.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

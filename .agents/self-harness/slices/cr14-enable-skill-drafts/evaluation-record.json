@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "validating a draft does not register it for agent execution",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    },
+    {
+      "id": "a validated draft can be enabled for a project and used on an agent run",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    },
+    {
+      "id": "an unvalidated draft still cannot be enabled",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    },
+    {
+      "id": "enabling for one project does not enable it for another project",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    },
+    {
+      "id": "enabling one draft does not enable other drafts",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    },
+    {
+      "id": "enabled skill-creator versions are retained in history",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    },
+    {
+      "id": "enabled drafts survive process reload",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    },
+    {
+      "id": "customers cannot enable skill drafts",
+      "result": "pass",
+      "evidence": "test/unit/skill-cr14.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

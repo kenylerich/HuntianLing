@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/tools/types.ts",
+    "src/host/tools/registry.ts",
+    "src/host/environment/types.ts",
+    "src/host/environment/profile.ts",
+    "src/host/environment/service.ts",
+    "src/host/environment/plugin.ts",
+    "src/host/plugin.ts",
+    "test/unit/environment-profile.test.mjs",
+    "test/unit/contract.test.mjs"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

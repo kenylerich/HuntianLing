@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C6",
+      "source": "user"
+    }
+  ],
+  "goal": "Concurrent work is dispatched by policy with resource leases, and WorkItem detail shows Agent feedback that a human can accept or reject",
+  "actors": ["developer", "planner", "generator", "evaluator"],
+  "scenarios": [
+    "dispatch recommends an eligible member using capacity, WIP, role, skills, and blocked status",
+    "automatic dispatch assigns exclusive work to one member and records the assignment",
+    "a second member cannot take the same exclusive WorkItem while a lease is held",
+    "review or pair work can share a read lease when the task allows multiple participants",
+    "a blocked or cancelled assignment is rebalanced and the lease is released",
+    "a WorkItem can acquire, renew, expire, and release a short-lived lease",
+    "conflicts for the same exclusive resource are listed before work starts",
+    "WorkItem detail shows agent feedback, questions, blockers, missing evidence, and next actions linked to a run and skill version",
+    "accepted feedback can update the WorkItem; rejected feedback stays auditable and does not"
+  ],
+  "constraints": [
+    "dispatch is not an ad hoc agent start",
+    "assignment, claim, release, and reassignment are auditable",
+    "customers cannot dispatch work or decide agent feedback"
+  ],
+  "nonGoals": [
+    "model-token budget as a capacity unit",
+    "hosted CI runner pools",
+    "visual workflow designer"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

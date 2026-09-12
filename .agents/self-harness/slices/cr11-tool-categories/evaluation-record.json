@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a caller lists browser, image, document-parse, database-migration, and web-api tools",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "a role or task that is not allowed is denied",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "document.parse extracts text and records delivery evidence",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "image.analyze extracts image text and records delivery evidence",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "database.migrate applies schema and records delivery evidence",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "web-api.call uses call-time transport without persisting secrets",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "browser.navigate runs locally and fails loud when a hosted fleet is requested",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "tool calls that affect delivery appear on the WorkItem evidence summary",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    },
+    {
+      "id": "customers cannot invoke remaining-category tools",
+      "result": "pass",
+      "evidence": "test/unit/tools-cr11.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

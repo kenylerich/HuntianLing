@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-MKT-002", "REQ-SKILL-005", "REQ-SKILL-006", "REQ-HARNESS-006"],
+  "outcome": "Self-dev Skills are complete enough that HuntianLing Phase B can start under depth 0-1 without claiming product runtime Agents",
+  "acceptance": [
+    "five role Skills exist with covers and does-not-cover",
+    "validator rejects missing quotes, self-acceptance, and probe lint as pass",
+    "unit tests re-run those sensors independently",
+    "Evaluator can request Generator repair through typed handoff, not hidden chat",
+    "Skill packs include guide, output contract, sensors, and depth 0-1",
+    "product runtime Planner Generator Evaluator are not claimed"
+  ],
+  "inScope": ["self-harness pack", "validator", "examples"],
+  "outOfScope": ["REQ-HARNESS-006 runtime", "Agent Channel UI", "audience shells"],
+  "assumptions": ["human or external Agent executes the roles"],
+  "openQuestions": []
+}

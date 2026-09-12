@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-WEB-007"],
+  "outcome": "After login, a customer principal opens only the customer shell",
+  "acceptance": [
+    "customer audience lands on the customer shell",
+    "guessing a developer URL returns authorization error"
+  ],
+  "inScope": ["audience field on session", "customer landing"],
+  "outOfScope": ["OAuth", "workflow designer"],
+  "assumptions": ["process-local auth remains"],
+  "openQuestions": []
+}

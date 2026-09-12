@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/scm/types.ts",
+    "src/host/scm/hosted.ts",
+    "src/host/scm/store.ts",
+    "src/host/scm/service.ts",
+    "src/host/scm/plugin.ts",
+    "src/host/web/server.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/scm-hosted.test.mjs",
+    "test/unit/web-code-view.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "check-command",
+      "result": "pass",
+      "evidence": "node --test test/unit/web-developer.test.mjs test/unit/web-audience.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

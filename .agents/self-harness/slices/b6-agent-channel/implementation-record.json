@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/collab/types.ts",
+    "src/host/collab/schema.ts",
+    "src/host/collab/service.ts",
+    "src/host/collab/plugin.ts",
+    "src/host/web/audience.ts",
+    "src/host/web/server.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/pages/channel.ts",
+    "src/host/plugin.ts",
+    "test/unit/collab-channel.test.mjs"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

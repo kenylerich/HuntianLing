@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/harness/types.ts",
+    "src/host/harness/store.ts",
+    "src/host/harness/service.ts",
+    "src/host/harness/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/server.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/harness-measure.test.mjs",
+    "test/unit/web-harness.test.mjs",
+    "test/unit/contract.test.mjs",
+    "test/unit/web-developer.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

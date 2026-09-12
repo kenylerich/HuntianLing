@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-SKILL-001",
+    "REQ-SKILL-002"
+  ],
+  "outcome": "A validated skill-creator draft can be enabled for Agent execution on a chosen project without auto-enabling unvalidated drafts or other projects",
+  "acceptance": [
+    "validating a draft does not register it for agent execution",
+    "a validated draft can be enabled for a project and used on an agent run",
+    "an unvalidated draft still cannot be enabled",
+    "enabling for one project does not enable it for another project",
+    "enabling one draft does not enable other drafts",
+    "enabled skill-creator versions are retained in history",
+    "enabled drafts survive process reload",
+    "customers cannot enable skill drafts"
+  ],
+  "inScope": [
+    "project-scoped enable of validated skill-creator drafts",
+    "agent runtime loading of enabled drafts",
+    "skill-creator version history and reload persistence",
+    "keep unvalidated drafts gated"
+  ],
+  "outOfScope": [
+    "technology skill packs",
+    "auto-enabling unvalidated drafts",
+    "removing the fused board cockpit"
+  ],
+  "assumptions": [
+    "skill-creator draft, validate, and gated enable APIs already exist",
+    "built-in MKT and coding Skills stay enabled unless a project disables them"
+  ],
+  "openQuestions": []
+}

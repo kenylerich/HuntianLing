@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-AUTH-002", "REQ-COLLAB-003"],
+  "outcome": "Password credentials prefer Argon2id with bcrypt and PBKDF2 fallbacks, rotation, and disable; first-slice collaboration-task types create and update agent-team work with events, transfer fields, runtime refusal, and developer-visible open tasks",
+  "acceptance": [
+    "a newly stored password uses Argon2id with salt and algorithm parameters",
+    "bcrypt and PBKDF2 hashes remain accepted fallbacks",
+    "password rotation replaces the stored hash and the previous password no longer verifies",
+    "a disabled credential cannot log in",
+    "passwords and raw secrets are not present in thrown error messages",
+    "a structured channel message creates a collaboration task with requester, assignee, objective, inputs, skills, tools, checks, due milestone or date, priority, blockers, and context tags",
+    "accept, decline, question, answer, transfer, block, unblock, complete, and cancel update task status and write an auditable event",
+    "a transfer names sending role, receiving role, reason, transferred context, expected next action, required evidence, and unresolved questions",
+    "agent runtime refuses to start from a collaboration task that lacks required fields, skills, tools, or checks",
+    "developer board and WorkItem views show open collaboration tasks and customers cannot create or transfer them"
+  ],
+  "inScope": [
+    "password hashing upgrade",
+    "credential rotation and disable",
+    "first-slice collaboration-task types and records",
+    "agent runtime task input gate",
+    "developer-visible open tasks"
+  ],
+  "outOfScope": [
+    "OAuth login providers",
+    "task.split and task.merge",
+    "regional domain routing"
+  ],
+  "assumptions": [
+    "configured Web users remain the login directory",
+    "Argon2id uses the platform crypto API when present"
+  ],
+  "openQuestions": []
+}

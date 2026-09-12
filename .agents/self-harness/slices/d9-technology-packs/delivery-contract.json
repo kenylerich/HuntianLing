@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-SKILL-004"
+  ],
+  "outcome": "Frontend, backend, database, and related packs install as versioned coverage",
+  "acceptance": [
+    "the catalog lists frontend, backend, database, and related versioned skill packs",
+    "a project scan recommends skill packs from the workspace",
+    "a WorkItem can declare required skill packs",
+    "installing a pack makes its versioned coverage available to the project",
+    "the agent runtime loads only the relevant installed pack skills for the selected task",
+    "a missing required pack blocks the agent run",
+    "customers cannot install skill packs"
+  ],
+  "inScope": [
+    "installable versioned technology skill packs",
+    "scan-based pack recommendations",
+    "WorkItem required skill packs",
+    "task-scoped pack skill loading"
+  ],
+  "outOfScope": [
+    "OAuth",
+    "removing the fused board cockpit",
+    "adding technology packs to the coding environment baseline"
+  ],
+  "assumptions": [
+    "MKT and coding Skills remain the environment baseline",
+    "OAuth stays in the next D row"
+  ],
+  "openQuestions": []
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续",
+      "source": "user"
+    },
+    {
+      "text": "客户登录后只看到自己的需求和进度",
+      "source": "user"
+    }
+  ],
+  "goal": "Customer shell lets a customer create their project, talk in an MKT dialog, see original requirements with quotes, and see evidence-backed progress",
+  "actors": ["customer"],
+  "scenarios": [
+    "create a project that other customers cannot see",
+    "send a dialog message and see the original words",
+    "delivered appears only when execution evidence exists"
+  ],
+  "constraints": ["no developer board chrome"],
+  "nonGoals": ["OAuth", "full Planner design UI"],
+  "openQuestions": [],
+  "confirmed": true
+}

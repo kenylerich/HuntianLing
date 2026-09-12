@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-COLLAB-001",
+    "REQ-COLLAB-002",
+    "REQ-COLLAB-003",
+    "REQ-COLLAB-004"
+  ],
+  "outcome": "Agent Channel conversations record decisions and approvals, unresolved questions appear on the board, tasks can split and merge, and agent runtime reads selected channel messages before a collaboration task then writes conclusions back",
+  "acceptance": [
+    "a caller records a conversation decision through the conversation API",
+    "a caller records a conversation approval through the conversation API",
+    "board and WorkItem views show unresolved team-chat questions and recorded decisions",
+    "task.split creates child collaboration tasks from a parent",
+    "task.merge combines selected tasks into one remaining task",
+    "unknown later catalog types are still rejected at write time",
+    "agent runtime reads selected channel messages before starting a collaboration task and writes conclusions back",
+    "agent runtime refuses to start when the collaboration task has a pending approval",
+    "customers cannot record decisions, approvals, split, or merge"
+  ],
+  "inScope": [
+    "conversation decisions and approvals APIs",
+    "unresolved questions and decisions on board and WorkItem views",
+    "later catalog types task.split and task.merge",
+    "decision.record and approval request/granted/rejected message types",
+    "runtime selected channel messages and conclusion write-back",
+    "pending-approval start gate"
+  ],
+  "outOfScope": [
+    "specialist agent roster",
+    "remaining later catalog types beyond split, merge, decision, and approval",
+    "removing the fused board cockpit"
+  ],
+  "assumptions": [
+    "first-slice Agent Channel types and collaboration tasks already exist",
+    "agent runtime already refuses collaboration tasks that lack skills, tools, checks, or expected output"
+  ],
+  "openQuestions": []
+}

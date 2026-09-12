@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a comparison uses fixed pass, fail, and cancelled cases and records accepted-scope completion, escaped defects, false rejections, repair rounds, elapsed time, and unknown token cost",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "orchestration replay is distinct from a fresh trial",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "promotion of a Skill depth requires a comparison that already met a threshold set before the comparison",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "a comparison that misses the threshold cannot promote the depth",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "a fresh workspace can be prepared with the shipped Node/pnpm profile",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "one Story run records failed evaluation, repair, interrupt, resume, and Evaluator evidence",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "customer-visible delivered updates from that evidence",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "lint and hygiene are recorded as blocked, not pass",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    },
+    {
+      "id": "the demonstration names remaining gaps including unbound live model",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

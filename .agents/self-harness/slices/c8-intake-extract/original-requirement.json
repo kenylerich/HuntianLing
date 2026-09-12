@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C8，之后的切片方案",
+      "source": "user"
+    }
+  ],
+  "goal": "Intake can extract text from PDF, Word, and image attachments, and analysis can use an LLM extractor to turn raw ideas into candidate requirements that still need human approval",
+  "actors": ["customer", "developer", "mkt"],
+  "scenarios": [
+    "a PDF attachment is stored as a source document and its text is extracted into chunks",
+    "a Word document attachment is stored and its text is extracted",
+    "an image can be understood or OCR'd into extracted text, or stay pending with a parse error when understanding is missing",
+    "analysis extracts goals, actors, scenarios, constraints, risks, assumptions, open questions, and acceptance",
+    "LLM analysis can add Bug candidates while still producing Epic, Feature, Story, Task, and Research nodes",
+    "every candidate keeps source references where possible",
+    "human approval is still required before candidates become WorkItems",
+    "LLM analysis fails loud when no extractor is configured instead of silently writing WorkItems"
+  ],
+  "constraints": [
+    "secrets are never persisted",
+    "candidates are not committed WorkItems until approved",
+    "Phase D work is planned only, not started"
+  ],
+  "nonGoals": [
+    "hosted OCR fleets",
+    "visual workflow designer",
+    "starting Phase D implementation"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

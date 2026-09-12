@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "role": "environment",
+  "commands": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "skipped",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  },
+  "ready": true
+}

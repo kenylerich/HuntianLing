@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B7",
+      "source": "user"
+    }
+  ],
+  "goal": "The developer shell is five jobs: Collect, Design, Progress, Channel, and Environment, not the seven-module cockpit",
+  "actors": ["developer"],
+  "scenarios": [
+    "developer opens collect design progress channel and environment",
+    "design job can edit analysis and acceptance",
+    "no Intake/Backlog/Plans/Team/Runs/Evidence/Admin rail"
+  ],
+  "constraints": ["keep fused board at /board until later removal"],
+  "nonGoals": ["admin shell restack", "splitting page.ts CSS"],
+  "openQuestions": [],
+  "confirmed": true
+}

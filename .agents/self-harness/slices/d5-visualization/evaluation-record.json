@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a caller reads a static workflow map with stages, steps, and layer toggles without running it",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d5.test.mjs"
+    },
+    {
+      "id": "the same template is shown as stage swimlane, role swimlane, dependency graph, and outline",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d5.test.mjs"
+    },
+    {
+      "id": "validation badges appear on incomplete or invalid nodes",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d5.test.mjs"
+    },
+    {
+      "id": "two template versions can be compared for added, removed, and changed steps",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d5.test.mjs"
+    },
+    {
+      "id": "a test run replays over the same workflow map with frame-by-frame states",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d5.test.mjs"
+    },
+    {
+      "id": "the replay report exports as publication evidence",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d5.test.mjs"
+    },
+    {
+      "id": "customers cannot export a replay report",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d5.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

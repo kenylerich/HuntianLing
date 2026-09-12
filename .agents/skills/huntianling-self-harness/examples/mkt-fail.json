@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [],
+  "goal": "split page.ts",
+  "technicalDesign": "extract CSS into page.css",
+  "confirmed": false
+}

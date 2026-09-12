@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "customer-landing",
+      "result": "pass",
+      "evidence": "test/unit/web-service.test.mjs"
+    }
+  ],
+  "decision": "pass"
+}

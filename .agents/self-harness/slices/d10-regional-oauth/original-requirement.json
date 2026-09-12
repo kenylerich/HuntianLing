@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D10",
+      "source": "user"
+    }
+  ],
+  "goal": "Login routes by region and binds OAuth/OIDC accounts without storing secrets in board records",
+  "actors": ["developer", "customer", "admin"],
+  "scenarios": [
+    "login routes by domain to cn or global without relying only on IP",
+    "users can manually switch login region when routing is ambiguous",
+    "login events record the region used",
+    "Google, GitHub, and WeChat appear as regional OAuth/OIDC providers",
+    "OAuth start and callback bind a provider identity with state and PKCE where supported",
+    "one user can unlink a bound provider",
+    "OAuth secrets are not stored in board records"
+  ],
+  "constraints": [
+    "PostgreSQL is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist in board records"
+  ],
+  "nonGoals": [
+    "PostgreSQL",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

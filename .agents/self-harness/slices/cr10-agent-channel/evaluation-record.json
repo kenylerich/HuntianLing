@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a caller records a conversation decision through the conversation API",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "a caller records a conversation approval through the conversation API",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "board and WorkItem views show unresolved team-chat questions and recorded decisions",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "task.split creates child collaboration tasks from a parent",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "task.merge combines selected tasks into one remaining task",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "unknown later catalog types are still rejected at write time",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "agent runtime reads selected channel messages before starting a collaboration task and writes conclusions back",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "agent runtime refuses to start when the collaboration task has a pending approval",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    },
+    {
+      "id": "customers cannot record decisions, approvals, split, or merge",
+      "result": "pass",
+      "evidence": "test/unit/collab-cr10.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

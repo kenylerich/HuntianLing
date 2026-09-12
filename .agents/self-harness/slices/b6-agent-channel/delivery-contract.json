@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-COLLAB-001", "REQ-COLLAB-002", "REQ-COLLAB-004", "REQ-FLOW-021"],
+  "outcome": "A project Agent Channel stores typed messages and events; first-slice types update collaboration tasks and handoffs in the same accepted write",
+  "acceptance": [
+    "unknown message types are rejected at write time",
+    "note.chat does not change WorkItem status",
+    "handoff.request requires receiver role, skills, tools, output schema, and checks",
+    "MKT to Planner to Generator to Evaluator handoffs change task state and owner together",
+    "human.stop cancels the active collaboration task",
+    "customer.question_needed writes the customer MKT dialog without exposing channel history",
+    "customer audience cannot open the developer channel"
+  ],
+  "inScope": ["first-slice message types", "collaboration tasks", "immutable events"],
+  "outOfScope": ["task.split", "OAuth", "fused board restack"],
+  "assumptions": ["channel is developer-shell only"],
+  "openQuestions": []
+}

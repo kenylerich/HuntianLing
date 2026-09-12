@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/web/auth.ts",
+    "src/host/web/customer-progress.ts",
+    "src/host/web/customer-board.ts",
+    "src/host/web/pages/customer.ts",
+    "src/host/web/server.ts",
+    "test/unit/customer-progress.test.mjs",
+    "test/unit/web-customer.test.mjs"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "skipped",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/tools/types.ts",
+    "src/host/tools/registry.ts",
+    "src/host/tools/feedback.ts",
+    "src/host/skills/types.ts",
+    "src/host/skills/templates.ts",
+    "src/host/skills/validator.ts",
+    "src/host/skills/service.ts",
+    "src/host/agents/types.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/agents/plugin.ts",
+    "src/host/harness/service.ts",
+    "src/host/web/server.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/developer-board.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/tool-feedback.test.mjs",
+    "test/unit/skill-creator.test.mjs",
+    "test/unit/contract.test.mjs",
+    "test/unit/web-developer.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

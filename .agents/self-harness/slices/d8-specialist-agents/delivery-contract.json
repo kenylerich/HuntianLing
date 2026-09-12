@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-AGENT-001"
+  ],
+  "outcome": "UX, QA, security, and similar roles exist as explicit agent definitions with boundaries",
+  "acceptance": [
+    "the catalog lists UX, QA, security, and similar specialist agent definitions with role, responsibilities, allowed task types, allowed tools, required skills, and output expectations",
+    "a new project enables planner, generator, and evaluator only; specialist agents stay disabled until selected",
+    "enabling a specialist agent lets a run produce that agent's output and attach it to a WorkItem",
+    "disabling a specialist agent prevents new runs with that agent",
+    "a project can customize a specialist agent's allowed tools within its built-in boundary",
+    "agent actions are auditable",
+    "customers cannot enable specialist agents"
+  ],
+  "inScope": [
+    "specialist agent definitions with capability boundaries",
+    "project enablement, disablement, and in-boundary customization",
+    "WorkItem output and feedback attachment",
+    "auditable specialist agent actions"
+  ],
+  "outOfScope": [
+    "technology skill packs",
+    "removing the fused board cockpit",
+    "replacing planner, generator, or evaluator"
+  ],
+  "assumptions": [
+    "planner, generator, and evaluator remain the built-in coding Agents",
+    "MKT remains the collection role rather than a specialist agent",
+    "technology skill packs stay in the next D row"
+  ],
+  "openQuestions": []
+}

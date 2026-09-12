@@ -2,7 +2,7 @@
   "name": "@kenylerich/dsh-huntianling",
   "version": "0.0.0",
   "private": true,
-  "description": "HuntianLing — an agile project-management capability for DeepSeek Harness. Loaded via `dsh --profile huntianling` to add requirement intake, board, and workflow orchestration.",
+  "description": "HuntianLing — a DeepSeek Harness plugin that delivers a vibe-coding development environment with Planner, Generator, and Evaluator Agents, engineering methods, and a standard development board.",
   "type": "module",
   "license": "UNLICENSED",
   "engines": {
@@ -12,7 +12,9 @@
   "files": [
     "lib",
     "cordis.yml",
-    "README.md"
+    "README.md",
+    "README.zh.md",
+    "docs"
   ],
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -32,12 +34,18 @@
     "typecheck": "tsc -p tsconfig.src.json --noEmit",
     "clean": "rm -rf lib *.tsbuildinfo",
     "test": "node --test test/unit/*.test.mjs",
+    "test:docs": "node scripts/verify-doc-bilingual.mjs",
+    "doc-sync": "node scripts/verify-doc-bilingual.mjs",
+    "doc-sync:write": "node scripts/verify-doc-bilingual.mjs --write",
+    "self-harness:validate": "node .agents/skills/huntianling-self-harness/validate.mjs",
+    "self-harness:loop": "node .agents/skills/huntianling-self-harness/repair-loop.mjs",
     "test:e2e": "node scripts/plugin-e2e.mjs",
     "lint": "echo \"HUNTIANLING_PROBE: no lint yet; see AGENTS.md Quality gates\" && exit 1",
     "hygiene": "echo \"HUNTIANLING_PROBE: no hygiene yet; see AGENTS.md Quality gates\" && exit 1"
   },
   "dependencies": {
-    "@deepseek-ai/cordis": "workspace:^"
+    "@deepseek-ai/cordis": "workspace:^",
+    "bcryptjs": "^3.0.3"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

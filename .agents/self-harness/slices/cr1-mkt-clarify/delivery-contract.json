@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-INTAKE-001", "REQ-WEB-003", "REQ-MKT-001"],
+  "outcome": "Missing original-requirement fields return clarifying questions to the customer MKT dialog, the customer can submit structured follow-up answers there, and a record is tracked only after customer confirm",
+  "acceptance": [
+    "a customer message missing required collection fields produces clarifying questions in the same intake session",
+    "the customer can submit a structured follow-up answer for a named field without using the developer shell",
+    "open clarifying questions mark customer progress as waiting on the customer",
+    "the original-requirement draft stays untracked until the customer confirms",
+    "confirming tracks the original requirement with source quotes, goal, and any answered actors or scenarios",
+    "a follow-up answer that includes technical design is rejected and does not update the draft",
+    "a product question posted from Agent Channel appears in the customer MKT dialog",
+    "customers can list open questions and answer them on their own project"
+  ],
+  "inScope": [
+    "clarifying-question messages",
+    "structured follow-up answers",
+    "customer MKT dialog questions and confirm"
+  ],
+  "outOfScope": [
+    "live-model default extractor",
+    "hosted OCR",
+    "developer-shell question inbox"
+  ],
+  "assumptions": [
+    "intake sessions and customer chat already exist",
+    "original-requirement.write already requires quotes, goal, and confirmed"
+  ],
+  "openQuestions": []
+}

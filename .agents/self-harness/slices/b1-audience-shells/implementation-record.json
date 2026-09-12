@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/web/audience.ts",
+    "src/host/web/auth.ts",
+    "src/host/web/server.ts",
+    "src/host/web/page.ts",
+    "src/host/web/pages/login.ts",
+    "src/host/web/pages/audience-shell.ts",
+    "test/unit/web-audience.test.mjs",
+    ".agents/skills/huntianling-self-harness/repair-loop.mjs",
+    ".agents/skills/huntianling-self-harness/validate.mjs",
+    "package.json"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "skipped",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

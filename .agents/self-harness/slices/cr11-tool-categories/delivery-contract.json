@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-TOOL-001"
+  ],
+  "outcome": "The harness tool registry covers browser, image analysis, document parsing, database migration, and web-api tools with allow/deny by role and task and records calls that affect delivery as evidence",
+  "acceptance": [
+    "a caller lists browser, image, document-parse, database-migration, and web-api tools",
+    "a role or task that is not allowed is denied",
+    "document.parse extracts text and records delivery evidence",
+    "image.analyze extracts image text and records delivery evidence",
+    "database.migrate applies schema and records delivery evidence",
+    "web-api.call uses call-time transport without persisting secrets",
+    "browser.navigate runs locally and fails loud when a hosted fleet is requested",
+    "tool calls that affect delivery appear on the WorkItem evidence summary",
+    "customers cannot invoke remaining-category tools"
+  ],
+  "inScope": [
+    "browser, image, document-parse, database-migration, and web-api registry entries",
+    "allow/deny by role and task",
+    "local invoke adapters and delivery evidence",
+    "call-time web-api transport without persisted secrets"
+  ],
+  "outOfScope": [
+    "hosted browser fleets",
+    "technology skill packs",
+    "removing the fused board cockpit"
+  ],
+  "assumptions": [
+    "filesystem, terminal, git, test, and CI tools already exist in the registry",
+    "document and image extraction already exist for intake attachments",
+    "SQLite migrate already exists on huntianling.database"
+  ],
+  "openQuestions": []
+}

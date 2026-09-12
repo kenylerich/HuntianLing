@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR1",
+      "source": "user"
+    }
+  ],
+  "goal": "When required original-requirement fields are missing, MKT asks clarifying questions in the customer dialog and the customer can answer them with a structured follow-up without entering the developer shell",
+  "actors": ["customer", "mkt"],
+  "scenarios": [
+    "a short customer message is missing actors or scenarios and MKT asks those questions in the customer dialog",
+    "the customer answers a structured follow-up for a named field",
+    "the original requirement stays untracked until the customer confirms",
+    "after confirm, the original requirement is tracked with source quotes",
+    "a follow-up that includes technical design is rejected",
+    "product questions from a developer Agent Channel still appear in the customer MKT dialog",
+    "the customer does not need the developer shell to answer"
+  ],
+  "constraints": [
+    "product ambiguity stays with MKT",
+    "raw customer language stays separate from confirmed original requirements",
+    "live-model default extractor is out of scope"
+  ],
+  "nonGoals": [
+    "hosted OCR fleets",
+    "default live-model intake extractor",
+    "developer-shell question inbox"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

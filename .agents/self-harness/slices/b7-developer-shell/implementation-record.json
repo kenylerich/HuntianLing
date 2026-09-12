@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/web/pages/developer.ts",
+    "src/host/web/developer-board.ts",
+    "src/host/web/server.ts",
+    "src/host/web/plugin.ts",
+    "test/unit/web-developer.test.mjs",
+    "test/unit/web-audience.test.mjs"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

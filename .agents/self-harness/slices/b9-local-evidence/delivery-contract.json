@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-SCM-001",
+    "REQ-CI-001",
+    "REQ-HARNESS-003",
+    "REQ-HARNESS-008",
+    "REQ-EVIDENCE-001",
+    "REQ-WEB-004"
+  ],
+  "outcome": "A WorkItem records local Git, local checks, and independent Evaluator evidence, and the customer view becomes delivered only from that executed evidence",
+  "acceptance": [
+    "local Git inspect reports branch and HEAD without requiring GitHub",
+    "linking HEAD writes a commit code link and an executed scm check on the WorkItem",
+    "local typecheck and test runs write ci-run links and executed ci checks on the WorkItem",
+    "Evaluator records one check per acceptance criterion on the owning WorkItem",
+    "Generator self-check cannot mark customer progress delivered",
+    "notes or code links without executed checks cannot mark customer progress delivered",
+    "changing analysis, design, or acceptance makes prior executed evidence stale",
+    "missing or failed required executed evidence keeps customer progress out of delivered",
+    "developer progress inspector shows Agent, Code, CI, and Evidence"
+  ],
+  "inScope": [
+    "local Git inspect and HEAD link",
+    "local command runner for typecheck and test",
+    "Evaluator evidence persistence",
+    "customer progress from executed evidence",
+    "developer evidence panels"
+  ],
+  "outOfScope": [
+    "hosted SCM providers",
+    "branch and pull-request write APIs",
+    "durable interrupt and resume of a Story delivery run"
+  ],
+  "assumptions": [
+    "tests inject Git and command runners so live git is not required",
+    "lint and hygiene remain blocked probe scripts"
+  ],
+  "openQuestions": []
+}

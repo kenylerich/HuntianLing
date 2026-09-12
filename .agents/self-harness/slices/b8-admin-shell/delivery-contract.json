@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-WEB-007", "REQ-AUDIT-001", "REQ-AUTH-001"],
+  "outcome": "Administrators land on /admin with users, membership, environment, access, and audit jobs",
+  "acceptance": [
+    "GET /admin HTML includes users, membership, environment, access, and audit jobs",
+    "GET /admin HTML does not include module-rail or requirement design editors",
+    "admin can list users and change audience",
+    "admin can grant project membership",
+    "developer audience is denied admin APIs",
+    "admin can read project audit events"
+  ],
+  "inScope": ["admin SPA", "admin directory APIs", "membership grant"],
+  "outOfScope": ["OAuth", "CRUD coverage matrix"],
+  "assumptions": ["process-local auth users remain the directory source"],
+  "openQuestions": []
+}

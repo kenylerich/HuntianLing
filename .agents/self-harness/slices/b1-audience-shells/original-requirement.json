@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续开工做b1，并且generator 与 evaluator 相互自动的来回修",
+      "source": "user"
+    }
+  ],
+  "goal": "Login opens one audience shell; other shells are denied; Generator and Evaluator repair through a typed loop",
+  "actors": ["customer", "developer", "admin"],
+  "scenarios": [
+    "unauthenticated user sees login, not a greyed cockpit",
+    "customer cannot open developer or admin HTML",
+    "evaluator failure writes a repair handoff for generator"
+  ],
+  "constraints": ["do not claim product runtime Agents"],
+  "nonGoals": ["full customer MKT dialog", "workflow designer"],
+  "openQuestions": [],
+  "confirmed": true
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR2",
+      "source": "user"
+    }
+  ],
+  "goal": "A project can push, open a pull request, and merge on GitHub, Gitea, or GitLab through the same WorkItem records used for local Git",
+  "actors": ["developer", "generator"],
+  "scenarios": [
+    "developer registers a GitHub, Gitea, or GitLab repository on a project",
+    "developer pushes a WorkItem branch to the hosted provider",
+    "developer opens a hosted pull request linked to the WorkItem",
+    "developer merges the hosted pull request",
+    "push, pull request, and merge still require human approval",
+    "local Git still works without GitHub",
+    "Code View shows the hosted pull-request URL",
+    "customer cannot register a hosted repository or push"
+  ],
+  "constraints": [
+    "core operation does not require GitHub",
+    "hosted credentials are never persisted",
+    "agent push, pull request, and merge still need C1 approval",
+    "the same WorkItem branch and pull-request records are used for every provider"
+  ],
+  "nonGoals": [
+    "hosted CI adapters",
+    "GitHub Issue synchronization"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

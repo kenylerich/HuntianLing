@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-WEB-007", "REQ-MKT-001", "REQ-INTAKE-001", "REQ-WEB-003", "REQ-HARNESS-008"],
+  "outcome": "A customer principal uses /customer to create their own projects, collect needs in an MKT dialog, list original requirements with quotes, and see customer-safe progress",
+  "acceptance": [
+    "customer with no membership sees no other customers' projects",
+    "creating a project grants that customer access and not another customer",
+    "customer can post a dialog message and read it back as original words",
+    "customer-safe progress delivered requires executed evidence, not notes-only summaries",
+    "customer HTML does not include the developer workspace rail"
+  ],
+  "inScope": [
+    "customer membership grant on project create",
+    "customer-board API",
+    "customer shell page"
+  ],
+  "outOfScope": [
+    "admin shell workbench",
+    "Agent Channel",
+    "environment profile runtime"
+  ],
+  "assumptions": ["intake sessions remain the MKT collection record"],
+  "openQuestions": []
+}

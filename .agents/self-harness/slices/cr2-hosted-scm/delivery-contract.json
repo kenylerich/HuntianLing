@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-SCM-001", "REQ-SCM-002", "REQ-SCM-003", "REQ-CODE-001", "REQ-AGENT-004"],
+  "outcome": "A project can push, open a pull request, and merge on GitHub, Gitea, or GitLab through the same WorkItem records, while local Git still works without GitHub and hosted credentials are never persisted",
+  "acceptance": [
+    "a project can register a GitHub, Gitea, or GitLab repository on the same WorkItem records as local Git",
+    "local Git still works without GitHub",
+    "unknown provider or missing hosted remote metadata fails loud",
+    "hosted push, open pull request, and merge remain separate actions",
+    "hosted push, open pull request, and merge still require human approval",
+    "hosted credentials are supplied at call time or from the environment and are never persisted",
+    "GitHub, Gitea, and GitLab use provider-specific pull-request and merge endpoints",
+    "Code View shows the hosted pull-request URL",
+    "customers cannot register hosted repositories or push"
+  ],
+  "inScope": [
+    "hosted GitHub, Gitea, and GitLab write adapters",
+    "shared WorkItem branch and pull-request records",
+    "Code View pull-request URL"
+  ],
+  "outOfScope": [
+    "hosted CI",
+    "GitHub Issue sync"
+  ],
+  "assumptions": [
+    "local Git repository, branch, changeset, and pull-request records already exist",
+    "C1 authority remains the push, pull-request, and merge gate",
+    "tests inject a hosted transport"
+  ],
+  "openQuestions": []
+}

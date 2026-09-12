@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "dispatch recommendation ranks eligible members by capacity, WIP, role, skills, and blocked status",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "policy-approved automatic dispatch assigns exclusive work to one member and writes an audit event",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "a second member cannot claim the same exclusive WorkItem while its exclusive lease is held",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "a shared read lease allows a second participant when the task permits pair or review work",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "rebalance releases leases and assignments when work is blocked or cancelled",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "a short-lived lease can be acquired, renewed, expired, and released with owner, reason, and linked task",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "exclusive write leases block conflicting editors; project conflicts lists those overlaps",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "WorkItem detail shows agent feedback, open questions, decisions, blockers, missing evidence, and next actions linked to the producing run and skill versions",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "accepting feedback can update the WorkItem; rejected feedback remains auditable and does not update it",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    },
+    {
+      "id": "customers cannot dispatch work or decide agent feedback",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-leases.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

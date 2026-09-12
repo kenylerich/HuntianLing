@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a caller lists versioned agent, skill, tool, SCM, and CI catalogs",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "a project name and description can be updated",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "a project can be archived and restored",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "a WorkItem can be created and transitioned through versioned v1 APIs",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "a WorkItem can be archived and restored without a hard delete",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "an admin creates a user that still exists after the process reloads the directory",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "login, failed login, and logout write auth audit events",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "moving a child WorkItem between Milestones updates the parent plan and audit log",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    },
+    {
+      "id": "customers cannot manage the user directory or archive projects",
+      "result": "pass",
+      "evidence": "test/unit/web-cr9.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

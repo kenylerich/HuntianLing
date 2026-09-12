@@ -30,16 +30,24 @@ export type WorkflowRunId = Branded<'WorkflowRunId'>;
 // --- Domain shapes -------------------------------------------------------
 
 /**
- * One collected requirement. The shape mirrors the agile intake template:
- * who is asking, what they want, why, and acceptance criteria.
+ * One collected requirement. The intake captures what is being asked for,
+ * the analysis/design notes produced during refinement, and stable
+ * acceptance criteria that child work items can cover.
  */
 export interface Requirement {
   readonly id: RequirementId;
   readonly title: string;
   readonly submittedBy: string;
   readonly submittedAt: number;
-  readonly acceptance: readonly string[];
-  // TODO: priority, tags, linked epic, source channel.
+  readonly analysis: string;
+  readonly design: string;
+  readonly acceptanceCriteria: readonly RequirementAcceptanceCriterion[];
+  // TODO: priority, tags, linked epic, source channel, backing WorkItem id.
+}
+
+export interface RequirementAcceptanceCriterion {
+  readonly id: string;
+  readonly text: string;
 }
 
 /**
@@ -48,9 +56,13 @@ export interface Requirement {
  */
 export type WorkflowState =
   | { readonly kind: 'collected' }
+  | { readonly kind: 'analyzing' }
+  | { readonly kind: 'designing' }
   | { readonly kind: 'triaged' }
   | { readonly kind: 'planned' }
+  | { readonly kind: 'ready' }
   | { readonly kind: 'in_progress' }
+  | { readonly kind: 'in_review' }
   | { readonly kind: 'verifying' }
   | { readonly kind: 'gates_passing' }
   | { readonly kind: 'delivered' }

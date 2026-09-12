@@ -2,33 +2,23 @@
 
 HuntianLing is a Cordis plugin loaded by DeepSeek Harness (dsh). This file is the working agreement for code, docs, and reviews in this repository.
 
-This repository is currently a placeholder skeleton: the plugin package, tests, and build pipeline are not yet implemented. Sections marked **TODO** describe the rules that will apply once those pieces exist; everything else is in force today.
+This repository is an early HuntianLing implementation. The plugin package, local Board Service, Milestone model, Requirement Service, Web Service, vendored Cordis build path, and focused tests exist; requirement intake, workflow orchestration, advanced UI views, and rollup reporting are still planned. Sections marked **TODO** describe rules that will apply once those pieces exist; everything else is in force today.
 
 ## Status
 
 - Repository name: `HuntianLing`
 - Remote: `https://github.com/kenylerich/HuntianLing.git`
 - Default branch: `master`
-- Package scope (planned): `@kenylerich/dsh-huntianling` — TODO until `package.json` is added
-- Loader target: a `bundle/` plugin or a host composition overlay consumed by `dsh` — TODO until the loader mechanism is chosen
+- Package scope: `@kenylerich/dsh-huntianling`
+- Loader target: host composition loaded by `dsh` through `cordis.yml`
 
 ## What this plugin will provide
 
-TODO. Replace this section with a one-paragraph statement of the plugin's responsibility: which Harness capability seam it extends, which Service / Event / Tool / Slot it contributes, and how it interacts with the host composition.
+HuntianLing is a dsh plugin whose interface is a standard development board for requirement collection, requirement design, development progress, evaluation, and acceptance. After Web login, customer, developer, and admin shells project the same records. MKT collects original requirements under a role contract that a human or Agent may execute. Behind the developer board the plugin prepares a reusable standard vibe-coding environment in the current dsh setup, including executable Planner, Generator, and Evaluator Agents and built-in engineering methods. Skills declare capability boundary and depth; the harness does not assume a strong model. It owns an internal WorkItem tree as the source of truth, supports Epic → Feature → Requirement/Story → Task decomposition, groups work through project Milestones, records requirement analysis and design directly on board cards, tracks acceptance coverage and delivery evidence, and projects the same records into portfolio, milestone, requirement, delivery, tree, coverage, roadmap, and browser-accessible views. GitHub Issues and Projects are optional synchronization targets; they do not own the requirements lifecycle.
 
 ## Repository layout
 
-The current layout is the harness reference assets kept for reference. The intended layout is listed below.
-
 Current:
-
-```
-AGENTS.md       this file — working agreement
-.agents/        harness reference skills and notes (kept as reference only; not active in this repo)
-.github/        harness reference workflows and templates (kept as reference only; not active in this repo)
-```
-
-Intended once the skeleton is filled in:
 
 ```
 src/                plugin source (Host and/or Client faces)
@@ -39,11 +29,26 @@ package.json         npm manifest; entry points; scripts
 tsconfig*.json       strict-mode TypeScript projects, face-specific where required
 test/                unit and snapshot tests
 fixtures/            recorded-session fixtures (keyless replay)
+docs/                documentation map, requirements, reviews, and architecture notes
 README.md            plugin user-facing docs
 CHANGELOG.md         release notes
 ```
 
-`.agents/` and `.github/` ship unchanged from the dsh reference. Do not edit them as part of normal plugin work; treat them as read-only reference assets. Replace them only when this repo graduates to running its own gates (see [Quality gates](#quality-gates)).
+`.agents/` remains a harness reference asset. `.github/` is active for this repository's CI and optional GitHub Issue/Project synchronization policy; keep those workflows aligned with HuntianLing's independent requirements model.
+
+## Requirement implementation
+
+Before implementing product behavior, API behavior, board behavior, workflow behavior, Agent/Skill behavior, SCM/CI behavior, authentication, governance, or storage changes, read `docs/requirements/backlog.md` and identify the relevant `REQ-*` ids. Read `docs/requirements/harness-engineering.md` for product direction and the self-development method. Use the backlog as the product requirements source; do not rely on GitHub Issues, Project boards, chat history, or memory as the source of truth.
+
+If the scope touches workflow templates, scheduling, state transitions, handoffs, Agent/Skill binding, Team Chat collaboration, approvals, reviews, Story delivery runs, workflow visualization, Workflow Test Lab, SCM/CI evidence, or governance gates, also read `docs/architecture/workflow-orchestration-engine.md` before editing code or tests.
+
+When implementation splits, changes, completes, or discovers a requirement, update the English and Chinese backlog pair in the same change, re-record it with `pnpm run doc-sync:write`, and keep `pnpm run doc-sync` green. The final handoff or PR summary must name the implemented or affected `REQ-*` ids and the checks that prove them.
+
+## Developing HuntianLing with its own method
+
+The product baseline is both faces together: the standard development board, and the invisible standard environment with MKT collection, Planner, Generator, Evaluator, executable methods, and Skill boundary/depth. Until that runtime exists, develop this repository with the depth 0–1 pack in `.agents/skills/huntianling-self-harness/` (`huntianling-mkt`, `huntianling-planner`, `huntianling-environment`, `huntianling-generator`, `huntianling-evaluator`). Validate slice artifacts with `pnpm run self-harness:validate -- <file>`. Do not claim HuntianLing-runtime Agents. A manually prepared Story demonstration does not replace fresh-project onboarding acceptance. Use `REQ-WEB-007`, `REQ-MKT-001`, `REQ-SKILL-005`, `REQ-SKILL-006`, `REQ-HARNESS-001`, and `REQ-HARNESS-005`–`008` to evaluate those capabilities. Do not reduce MKT or the three coding Agents to role labels, substitute Generator self-checks for Evaluator execution, or complete a Skill without sensors.
+
+For each implementation slice, record the affected `REQ-*` ids, intended customer behavior, reviewed analysis/design, acceptance criteria, applicable checks, and execution owner. Link the actual change set, verification artifacts, reviewer decision, and unresolved blockers before recording completion. Use the board where supported and a linked repository review record for missing capabilities; keep requirement specifications in the bilingual backlog. Mark manual, external-agent, and HuntianLing-runtime steps explicitly. Unavailable gates and manually edited workflow summaries are not proof of automated delivery. The first runtime demonstration and its acceptance criteria are owned by `REQ-HARNESS-005`.
 
 ## Plugin conventions (in force today)
 
@@ -76,6 +81,8 @@ These rules apply to any Cordis plugin code, tests, or docs added to this reposi
 
 ## Documentation and prose
 
+- `README.md` and every user-facing `docs/**/*.md` source must ship as a bilingual pair: `foo.md`, `foo.zh.md`, and `foo.i18n.yaml`. Put the language switcher in the first 16 lines of each file, update both languages in the same change, run `pnpm run doc-sync:write` to re-record the pair, and keep `pnpm run doc-sync` green. The local gate enforces pair presence, switchers, sidecar freshness, and blocks re-recording when only one language changed.
+- Every user-facing Markdown source and counterpart must start with lifecycle frontmatter containing `doc_status`, `doc_version`, `created`, `last_reviewed`, and `review_after`. Use `doc_version: YYYY-MM-DD.N`, use ISO dates for lifecycle fields, and use `archive_after` for time-bound review packages, decision notes, and temporary design material. `pnpm run doc-sync` rejects overdue active documents and archived documents that are not under `docs/archive/`.
 - Comments and docs state complete contracts and context, not reasoning transcripts. Use direct, concrete terms.
 - Before writing `contract`, `boundary`, or `shape`, ask whether a more exact term names the subject: write `response fields`, `JSON validation`, or `ESM exports` instead of `response shape`, `validation boundary`, or `module shape`. Keep `contract` for preconditions, postconditions, invariants, compatibility promises, and other obligations that callers, callees, implementers, providers, producers, or consumers rely on.
 - Keep a literal process, wire, security, transaction, or lifecycle boundary. Do not narrate control flow or tests, preserve review history, or restate code.
@@ -146,7 +153,7 @@ The probe series also established that the package scripts (`test`, `test:e2e`, 
 
 `ISSUE_TEMPLATE/` ships five templates (`bug`, `feature`, `idea`, `research`, `task`) plus `config.yml` with `blank_issues_enabled: false`. The templates are generic Chinese Markdown with a 50-unit body limit and a collapsed `<details>` block — they match the rules `policy.validateBody` checks for and pass when run locally against each file. The picker therefore surfaces them at the New Issue page.
 
-`issue-management/` is live. `config.json` points at user `kenylerich`, repository `HuntianLing`, and user Project #2 titled `HuntianLing project`. `policy.mjs` reads the Project through `repository.owner` so the same query works for a User-owned board. `issue-lifecycle.yml` is the write path: explicit workflow events advance development lanes, while native completed closes require a delivery record or are recovered. PR events initialize Start Date only. See [.github/issue-management/README.md](.github/issue-management/README.md) for deployment, transition inputs, and recovery. `issue-policy.yml` is the PR check.
+`issue-management/` is live. `config.json` points at user `kenylerich`, repository `HuntianLing`, and user Project #2 titled `HuntianLing project`. `policy.mjs` reads the Project through `repository.owner` so the same query works for a User-owned board. `issue-lifecycle.yml` is the write path: Issue open/reopen events place cards in Inbox, explicit workflow events move cards through Backlog, Ready, In progress, In review, and gated completion, and PR-open events initialize Start Date only. Native Issue close events with `not_planned` move cards to No action. Native completed close events must include a `huntianling-delivery-gate` certificate; otherwise the workflow reopens the Issue and restores the Project card to the previous open lane, or to In review when the previous lane is missing or terminal. Use the manual `recover_closed` workflow event to reopen one already closed illegal card, or `recover_illegal_closed` plus the scheduled lifecycle sweep to recover all illegal completed closes. See [.github/issue-management/README.md](.github/issue-management/README.md) for deployment, transition inputs, and recovery. `issue-policy.yml` is the PR check.
 
 Those workflows cannot use `github.token` to mutate a user-owned Project V2. They mint a GitHub App token when `HUNTIANLING_ISSUE_APP_CLIENT_ID` is set; otherwise they use repository secret `HUNTIANLING_PROJECT_TOKEN`. Without one of those two credentials, lifecycle fails at "Resolve board token" with a pointer back here. A fine-grained PAT is not sufficient: GitHub does not grant user-Project write to that token type.
 
@@ -156,6 +163,7 @@ Operator setup, once:
 2. Store it as repository secret `HUNTIANLING_PROJECT_TOKEN`.
 3. Provision the board fields: `GH_TOKEN=<classic-pat> node scripts/setup-project-board.mjs`. The script creates Status / Priority / Start Date when missing and links the repository to Project #2.
 4. Open a templated Issue. `issue-lifecycle.yml` should add it to the board at Inbox.
+5. Backfill an existing Issue from Actions by running `Issue lifecycle` manually with `issue_number` and the target `workflow_event`.
 
 A GitHub App (`HUNTIANLING_ISSUE_APP_CLIENT_ID` + `HUNTIANLING_ISSUE_APP_PRIVATE_KEY`) is the longer-lived alternative to the classic PAT; the workflows accept either.
 

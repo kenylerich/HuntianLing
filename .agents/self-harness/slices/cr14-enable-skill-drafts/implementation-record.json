@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/skills/store.ts",
+    "src/host/skills/service.ts",
+    "src/host/skills/plugin.ts",
+    "src/host/agents/types.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/web/server.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/skill-cr14.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-TOOL-002", "REQ-SKILL-002"],
+  "outcome": "An agent task can inspect injected context and missing required information before it starts, returns structured feedback after it runs, and skill-creator can draft gated agile skills that stay disabled until the validator records a pass",
+  "acceptance": [
+    "inspecting an agent task injects WorkItem context, parent/child tree, milestone, acceptance criteria, project tech profile, source documents, prior agent feedback, tool permissions, and checks",
+    "missing required information is listed before the task starts",
+    "start is blocked while required information is missing",
+    "a completed agent run returns structured feedback, assumptions, open questions, evidence references, and next actions",
+    "skill-creator drafts a skill from an agile template without enabling it for agent execution",
+    "the template catalog covers requirement intake, analysis, story splitting, acceptance criteria, prioritization, sprint planning, UX review, architecture, implementation planning, code review, test design, QA verification, security review, release, documentation, and retrospective analysis",
+    "validating a draft records the result in agent_skill_validations",
+    "an invalid or unvalidated draft cannot be enabled for agent execution",
+    "customers cannot inspect agent task context or create, validate, or enable skill drafts"
+  ],
+  "inScope": [
+    "task context inspect and missing-input gate",
+    "structured agent run feedback",
+    "skill-creator drafts, validator, and enable gate"
+  ],
+  "outOfScope": [
+    "third-party skill packs",
+    "visual skill designer",
+    "auto-enabling drafted skills as live runtime agents"
+  ],
+  "assumptions": [
+    "built-in MKT and coding skills remain the live agent runtime set",
+    "C6 agent feedback accept/reject remains a separate control"
+  ],
+  "openQuestions": []
+}

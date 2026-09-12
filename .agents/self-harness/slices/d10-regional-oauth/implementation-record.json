@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/web/oauth.ts",
+    "src/host/web/auth.ts",
+    "src/host/web/server.ts",
+    "src/host/web/pages/login.ts",
+    "src/host/database/types.ts",
+    "src/host/database/sqlite.ts",
+    "test/unit/auth-d10.test.mjs",
+    "test/unit/database-sqlite.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

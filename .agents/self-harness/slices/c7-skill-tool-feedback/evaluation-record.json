@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "inspecting an agent task injects WorkItem context, parent/child tree, milestone, acceptance criteria, project tech profile, source documents, prior agent feedback, tool permissions, and checks",
+      "result": "pass",
+      "evidence": "test/unit/tool-feedback.test.mjs"
+    },
+    {
+      "id": "missing required information is listed before the task starts",
+      "result": "pass",
+      "evidence": "test/unit/tool-feedback.test.mjs"
+    },
+    {
+      "id": "start is blocked while required information is missing",
+      "result": "pass",
+      "evidence": "test/unit/tool-feedback.test.mjs"
+    },
+    {
+      "id": "a completed agent run returns structured feedback, assumptions, open questions, evidence references, and next actions",
+      "result": "pass",
+      "evidence": "test/unit/tool-feedback.test.mjs"
+    },
+    {
+      "id": "skill-creator drafts a skill from an agile template without enabling it for agent execution",
+      "result": "pass",
+      "evidence": "test/unit/skill-creator.test.mjs"
+    },
+    {
+      "id": "the template catalog covers requirement intake, analysis, story splitting, acceptance criteria, prioritization, sprint planning, UX review, architecture, implementation planning, code review, test design, QA verification, security review, release, documentation, and retrospective analysis",
+      "result": "pass",
+      "evidence": "test/unit/skill-creator.test.mjs"
+    },
+    {
+      "id": "validating a draft records the result in agent_skill_validations",
+      "result": "pass",
+      "evidence": "test/unit/skill-creator.test.mjs"
+    },
+    {
+      "id": "an invalid or unvalidated draft cannot be enabled for agent execution",
+      "result": "pass",
+      "evidence": "test/unit/skill-creator.test.mjs"
+    },
+    {
+      "id": "customers cannot inspect agent task context or create, validate, or enable skill drafts",
+      "result": "pass",
+      "evidence": "test/unit/tool-feedback.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

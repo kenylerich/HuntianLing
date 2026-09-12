@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-FLOW-008",
+    "REQ-FLOW-009",
+    "REQ-FLOW-010",
+    "REQ-FLOW-011"
+  ],
+  "outcome": "Third-party packs pass conformance; custom events and node types stay catalogued",
+  "acceptance": [
+    "the catalog lists built-in node types and system event types",
+    "importing a namespaced pack records its templates, custom events, custom nodes, and extension packages",
+    "conformance fails when a pack uses an unknown node type or an undeclared tool",
+    "a pack cannot be enabled for a project until conformance passes; conflicting extensions fail with an explicit conflict",
+    "custom events require a pack or project namespace and cannot redefine system events",
+    "custom nodes appear in the designer catalog only after conformance, and Test Lab simulates them from fixtures",
+    "customers cannot import packs or register custom events"
+  ],
+  "inScope": [
+    "workflow pack import, conformance report, and project enable",
+    "namespaced custom event catalog",
+    "namespaced custom node catalog after conformance",
+    "declared extension points with conflict errors",
+    "Test Lab custom-node fixture simulation"
+  ],
+  "outOfScope": [
+    "issue tracker sync",
+    "removing the fused board cockpit",
+    "timeout and retry Test Lab scenarios"
+  ],
+  "assumptions": [
+    "built-in templates, canvas, and Test Lab happy-path already exist",
+    "GitHub Issue sync stays in a later D row"
+  ],
+  "openQuestions": []
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/agents/types.ts",
+    "src/host/agents/definitions.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/skills/specialist-pack.ts",
+    "src/host/skills/service.ts",
+    "src/host/environment/service.ts",
+    "src/host/authority/policies.ts",
+    "src/host/board/types.ts",
+    "src/host/board/store.ts",
+    "src/host/board/plugin.ts",
+    "src/host/tools/feedback.ts",
+    "src/host/web/server.ts",
+    "test/unit/agents-d8.test.mjs",
+    "test/unit/agents-runtime.test.mjs",
+    "test/unit/authority-service.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

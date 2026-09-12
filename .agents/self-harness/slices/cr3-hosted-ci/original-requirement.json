@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR3",
+      "source": "user"
+    }
+  ],
+  "goal": "An authorized role can trigger a hosted pipeline and attach JUnit, coverage, SARIF, and Playwright artifacts as executed CI evidence on the WorkItem",
+  "actors": ["developer", "evaluator", "ci"],
+  "scenarios": [
+    "developer or evaluator discovers GitHub Actions, Gitea Actions, or GitLab CI workflows",
+    "an authorized role triggers a hosted pipeline for a WorkItem",
+    "the service waits until the run completes before recording evidence",
+    "JUnit, coverage, SARIF, and Playwright artifacts attach as executed CI evidence",
+    "local command-runner CI still works without GitHub",
+    "production hosted CI still requires human approval",
+    "customer cannot trigger hosted CI"
+  ],
+  "constraints": [
+    "hosted credentials are never persisted",
+    "pipeline trigger must be authorized",
+    "core operation does not require GitHub",
+    "executed CI evidence is recorded on the WorkItem"
+  ],
+  "nonGoals": [
+    "GitHub Issue synchronization",
+    "Jenkins adapters"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

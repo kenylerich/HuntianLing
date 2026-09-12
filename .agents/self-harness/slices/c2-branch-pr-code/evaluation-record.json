@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a project can register a local Git repository",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "creating a WorkItem branch stores name, base, linked WorkItem, owner, and protection status",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "protected branch names are rejected",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "sync and rebase-check record unpushed, diverged, and conflict signals",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "a changeset commit uses a message template that includes the WorkItem id",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "patch, commit, push, pull request, and merge remain separate actions",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "push, pull request, and merge still require human approval",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "Code View shows repositories, branches, commits, diffs, changed files, and pull requests",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "unlinked branches appear in the project unlinked-code list",
+      "result": "pass",
+      "evidence": "test/unit/scm-branches.test.mjs"
+    },
+    {
+      "id": "developer progress inspector shows Code View and customers cannot create branches",
+      "result": "pass",
+      "evidence": "test/unit/web-code-view.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

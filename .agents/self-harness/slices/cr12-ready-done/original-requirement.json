@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR12",
+      "source": "user"
+    }
+  ],
+  "goal": "A project configures Definition of Ready and Definition of Done checks, and missing executed evidence still blocks delivered",
+  "actors": ["developer"],
+  "scenarios": [
+    "a project returns its Definition of Ready and Definition of Done policy",
+    "a developer updates which Ready and Done checks the project requires",
+    "a story cannot become ready when a configured Ready check is missing",
+    "a story without executed evidence cannot transition to delivered",
+    "stale or failed required evidence still blocks delivered",
+    "a configured extra Done check such as unfinished children blocks delivered",
+    "inspecting delivery gates names the missing Ready or Done pieces",
+    "Story delivery start uses the project Ready policy",
+    "customers cannot change the project Ready or Done policy"
+  ],
+  "constraints": [
+    "governance certification packs are out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "governance certification packs",
+    "visual designer editing of gates",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

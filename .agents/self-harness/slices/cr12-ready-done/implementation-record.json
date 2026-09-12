@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/board/types.ts",
+    "src/host/board/work-item.ts",
+    "src/host/board/store.ts",
+    "src/host/board/plugin.ts",
+    "src/host/delivery/service.ts",
+    "src/host/workflow/service.ts",
+    "src/host/web/server.ts",
+    "test/unit/evidence-cr12.test.mjs",
+    "test/unit/board-store.test.mjs",
+    "test/unit/ci-service.test.mjs",
+    "test/unit/agents-runtime.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

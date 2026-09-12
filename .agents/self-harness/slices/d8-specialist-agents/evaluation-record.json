@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "the catalog lists UX, QA, security, and similar specialist agent definitions with role, responsibilities, allowed task types, allowed tools, required skills, and output expectations",
+      "result": "pass",
+      "evidence": "test/unit/agents-d8.test.mjs"
+    },
+    {
+      "id": "a new project enables planner, generator, and evaluator only; specialist agents stay disabled until selected",
+      "result": "pass",
+      "evidence": "test/unit/agents-d8.test.mjs"
+    },
+    {
+      "id": "enabling a specialist agent lets a run produce that agent's output and attach it to a WorkItem",
+      "result": "pass",
+      "evidence": "test/unit/agents-d8.test.mjs"
+    },
+    {
+      "id": "disabling a specialist agent prevents new runs with that agent",
+      "result": "pass",
+      "evidence": "test/unit/agents-d8.test.mjs"
+    },
+    {
+      "id": "a project can customize a specialist agent's allowed tools within its built-in boundary",
+      "result": "pass",
+      "evidence": "test/unit/agents-d8.test.mjs"
+    },
+    {
+      "id": "agent actions are auditable",
+      "result": "pass",
+      "evidence": "test/unit/agents-d8.test.mjs"
+    },
+    {
+      "id": "customers cannot enable specialist agents",
+      "result": "pass",
+      "evidence": "test/unit/agents-d8.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

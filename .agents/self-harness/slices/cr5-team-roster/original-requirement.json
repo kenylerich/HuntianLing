@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR5",
+      "source": "user"
+    }
+  ],
+  "goal": "A project can add and remove member roles, reviewers, approvers, and watchers, and apply role, repository, CI, and environment WIP policies that block overloaded assignment",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "a project adds a role to a team member and records the change",
+    "a project removes a role from a team member",
+    "a WorkItem gets a reviewer, approver, or watcher from the project roster",
+    "a reviewer, approver, or watcher can be removed",
+    "role, repository, CI, and environment WIP policies block a new assignment when the limit is reached",
+    "humans and agents can have different WIP policies",
+    "the team capacity view shows overload warnings from those policies",
+    "customers cannot change the roster, roles, participants, or WIP policies"
+  ],
+  "constraints": [
+    "members remain humans, agents, service accounts, or external reviewers",
+    "the same person can hold different roles in different projects",
+    "member-level concurrent WorkItem limits remain in force"
+  ],
+  "nonGoals": [
+    "dispatch scoring leftovers",
+    "token-cost capacity accounting"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

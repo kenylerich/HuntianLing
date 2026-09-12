@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B9",
+      "source": "user"
+    }
+  ],
+  "goal": "Local Git, local checks, and Evaluator evidence update the owning WorkItem so customer progress comes from executed evidence",
+  "actors": ["developer", "customer", "evaluator"],
+  "scenarios": [
+    "developer links the current local Git commit to a WorkItem without GitHub",
+    "developer runs local typecheck and test and those results attach as CI evidence",
+    "Evaluator records criterion-level evidence on the WorkItem",
+    "customer delivered appears only when executed evaluator, CI, or Git checks pass on the current design revision",
+    "Generator self-check, notes, and stale evidence after analysis or design change cannot mark the customer view delivered"
+  ],
+  "constraints": [
+    "core operation does not require GitHub",
+    "manually entered summaries cannot masquerade as executed checks",
+    "Generator self-check cannot mark the slice complete"
+  ],
+  "nonGoals": [
+    "hosted GitHub, Gitea, or GitLab adapters",
+    "branch creation and pull request write path",
+    "durable Story delivery run checkpoint"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

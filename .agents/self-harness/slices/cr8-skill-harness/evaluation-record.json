@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "environment prepare scans language, package manager, build, test, CI, and documentation and requires coding Skills besides MKT",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "a missing, unvalidated, or tool-blocked required Skill is a coverage gap and blocks claiming support",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "depth 2, 3, and 4 writes use their sensors instead of a longer prompt",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "an uncalibrated depth 2-4 product write is rejected until a comparison is promoted",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "repeated invalid output at a higher depth lowers depth or stops",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "live-model trials can repeat when a model endpoint is configured and fail loud when it is missing",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "orchestration replay stays distinct from a live-model trial",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "self-development demonstration steps are labeled manual, external-agent, or HuntianLing-runtime",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    },
+    {
+      "id": "customers cannot run harness comparisons or coverage scans",
+      "result": "pass",
+      "evidence": "test/unit/harness-cr8.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

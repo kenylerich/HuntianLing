@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "the catalog lists user-story plus use-case, bdd, example-mapping, event-storming, ddd, api-design, adr, and threat-modeling",
+      "result": "pass",
+      "evidence": "test/unit/method-d6.test.mjs"
+    },
+    {
+      "id": "a new project has user-story enabled and the extra packs disabled until selected",
+      "result": "pass",
+      "evidence": "test/unit/method-d6.test.mjs"
+    },
+    {
+      "id": "enabling a method pack lets a planner run produce that method's output fields",
+      "result": "pass",
+      "evidence": "test/unit/method-d6.test.mjs"
+    },
+    {
+      "id": "a WorkItem records the method pack that produced it",
+      "result": "pass",
+      "evidence": "test/unit/method-d6.test.mjs"
+    },
+    {
+      "id": "missing method skills are reported as skill gaps and block the planner run",
+      "result": "pass",
+      "evidence": "test/unit/method-d6.test.mjs"
+    },
+    {
+      "id": "disabling a pack prevents new planner runs with that method",
+      "result": "pass",
+      "evidence": "test/unit/method-d6.test.mjs"
+    },
+    {
+      "id": "customers cannot enable method packs",
+      "result": "pass",
+      "evidence": "test/unit/method-d6.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-HARNESS-006", "REQ-HARNESS-007", "REQ-AGENT-002", "REQ-FLOW-014", "REQ-METHOD-001"],
+  "outcome": "Three versioned Agent task definitions run through a task runtime with User Story as the only required method pack",
+  "acceptance": [
+    "planner, generator, and evaluator definitions include skills, tools, input and output schemas",
+    "planner output is rejected when it contains implementation file paths",
+    "generator cannot mark the slice accepted",
+    "evaluator pass cannot be replaced by generator self-check",
+    "evaluator revision-required produces a repair handoff to generator",
+    "user-story method adds a userStory artifact; omitting the method does not",
+    "missing required method skill blocks the planner task",
+    "task runs record skill versions and depth"
+  ],
+  "inScope": ["deterministic executors", "User Story method", "typed handoffs"],
+  "outOfScope": ["live model calls", "workflow designer APIs", "board UI for runs"],
+  "assumptions": ["environment readiness is an input to Generator"],
+  "openQuestions": []
+}

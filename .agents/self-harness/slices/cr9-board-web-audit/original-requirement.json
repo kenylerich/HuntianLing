@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR9",
+      "source": "user"
+    }
+  ],
+  "goal": "Versioned agent, skill, tool, SCM, and CI API groups are available, projects and WorkItems can be updated and archived, admins persist a user directory with login audit, and moving a child between Milestones updates the parent plan",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "a caller lists versioned agent, skill, tool, SCM, and CI catalogs",
+    "a project name and description can be updated",
+    "a project can be archived and restored",
+    "a WorkItem can be created and transitioned through versioned v1 APIs",
+    "a WorkItem can be archived and restored without a hard delete",
+    "an admin creates a user that still exists after the process reloads the directory",
+    "login, failed login, and logout write auth audit events",
+    "moving a child WorkItem between Milestones updates the parent plan and audit log",
+    "customers cannot manage the user directory or archive projects"
+  ],
+  "constraints": [
+    "OAuth providers are out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "OAuth login providers",
+    "visual workflow designer",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

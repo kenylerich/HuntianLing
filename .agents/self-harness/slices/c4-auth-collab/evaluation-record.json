@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a newly stored password uses Argon2id with salt and algorithm parameters",
+      "result": "pass",
+      "evidence": "test/unit/password-auth.test.mjs"
+    },
+    {
+      "id": "bcrypt and PBKDF2 hashes remain accepted fallbacks",
+      "result": "pass",
+      "evidence": "test/unit/password-auth.test.mjs"
+    },
+    {
+      "id": "password rotation replaces the stored hash and the previous password no longer verifies",
+      "result": "pass",
+      "evidence": "test/unit/password-auth.test.mjs"
+    },
+    {
+      "id": "a disabled credential cannot log in",
+      "result": "pass",
+      "evidence": "test/unit/password-auth.test.mjs"
+    },
+    {
+      "id": "passwords and raw secrets are not present in thrown error messages",
+      "result": "pass",
+      "evidence": "test/unit/password-auth.test.mjs"
+    },
+    {
+      "id": "a structured channel message creates a collaboration task with requester, assignee, objective, inputs, skills, tools, checks, due milestone or date, priority, blockers, and context tags",
+      "result": "pass",
+      "evidence": "test/unit/collab-channel.test.mjs"
+    },
+    {
+      "id": "accept, decline, question, answer, transfer, block, unblock, complete, and cancel update task status and write an auditable event",
+      "result": "pass",
+      "evidence": "test/unit/collab-channel.test.mjs"
+    },
+    {
+      "id": "a transfer names sending role, receiving role, reason, transferred context, expected next action, required evidence, and unresolved questions",
+      "result": "pass",
+      "evidence": "test/unit/collab-channel.test.mjs"
+    },
+    {
+      "id": "agent runtime refuses to start from a collaboration task that lacks required fields, skills, tools, or checks",
+      "result": "pass",
+      "evidence": "test/unit/agents-runtime.test.mjs"
+    },
+    {
+      "id": "developer board and WorkItem views show open collaboration tasks and customers cannot create or transfer them",
+      "result": "pass",
+      "evidence": "test/unit/collab-channel.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

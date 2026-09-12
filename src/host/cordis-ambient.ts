@@ -4,14 +4,17 @@
  */
 
 export interface Context {
-  plugin(value: unknown): unknown;
+  plugin<T = unknown>(value: Plugin<T>, config?: T): unknown;
   provide(name: string, value: unknown): unknown;
   get(name: string): unknown;
+  effect(execute: () => unknown, label?: string): unknown;
 }
 
-export interface Plugin {
+export interface Plugin<T = unknown> {
   name?: string;
-  apply(ctx: Context): void;
+  inject?: readonly string[] | Record<string, unknown>;
+  provide?: string | readonly string[];
+  apply(ctx: Context, config?: T): unknown;
 }
 
 export abstract class Service {

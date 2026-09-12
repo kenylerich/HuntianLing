@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D7",
+      "source": "user"
+    }
+  ],
+  "goal": "MoSCoW, RICE, WSJF, Kano, risk-first, dependency-first, and milestone-first ranking is explainable and overridable with audit",
+  "actors": ["developer"],
+  "scenarios": [
+    "the catalog lists moscow, rice, wsjf, kano, risk-first, dependency-first, and milestone-first",
+    "a project can select a prioritization method",
+    "a WorkItem stores the inputs needed by the selected method",
+    "ranking output is explainable and traceable to inputs",
+    "ranked Story output feeds the Story priority queue",
+    "users can override ranking with an audit reason",
+    "customers cannot select a prioritization method"
+  ],
+  "constraints": [
+    "specialist agents are out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "specialist agents",
+    "removing the fused board cockpit",
+    "design method packs"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

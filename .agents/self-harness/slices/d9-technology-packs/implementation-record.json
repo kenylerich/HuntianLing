@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/skills/technology-packs.ts",
+    "src/host/skills/types.ts",
+    "src/host/skills/store.ts",
+    "src/host/skills/service.ts",
+    "src/host/board/types.ts",
+    "src/host/board/store.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/environment/types.ts",
+    "src/host/environment/service.ts",
+    "src/host/web/server.ts",
+    "test/unit/skill-d9.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

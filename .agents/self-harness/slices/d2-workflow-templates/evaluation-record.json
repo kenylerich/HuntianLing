@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "the catalog lists user-story, Scrum, Kanban, hotfix, and research built-in templates",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d2.test.mjs"
+    },
+    {
+      "id": "selecting Scrum plans a new WorkItem with Scrum steps",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d2.test.mjs"
+    },
+    {
+      "id": "selecting Kanban plans a new WorkItem with Kanban steps",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d2.test.mjs"
+    },
+    {
+      "id": "selecting hotfix plans a new WorkItem with hotfix steps",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d2.test.mjs"
+    },
+    {
+      "id": "selecting research plans a new WorkItem with research steps",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d2.test.mjs"
+    },
+    {
+      "id": "an existing open run keeps its previous template after the project selects another",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d2.test.mjs"
+    },
+    {
+      "id": "customers cannot select a project workflow template",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d2.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

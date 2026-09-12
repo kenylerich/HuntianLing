@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C2",
+      "source": "user"
+    }
+  ],
+  "goal": "A project can register a local repository, create WorkItem branches, commit through a changeset, open and merge a pull request with approval, and inspect the related code in a Code View",
+  "actors": ["developer", "generator"],
+  "scenarios": [
+    "developer registers a local repository on a project",
+    "developer creates a named branch linked to a WorkItem",
+    "a changeset is committed with the WorkItem id in the message",
+    "push and pull request still require human approval",
+    "Code View shows branches, commits, diffs, files, and pull requests",
+    "unlinked branches are flagged",
+    "customer cannot create branches"
+  ],
+  "constraints": [
+    "core operation does not require GitHub",
+    "protected branch names cannot be created",
+    "agent push, pull request, and merge still need C1 approval"
+  ],
+  "nonGoals": [
+    "hosted GitHub, Gitea, or GitLab write adapters",
+    "SQLite storage"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

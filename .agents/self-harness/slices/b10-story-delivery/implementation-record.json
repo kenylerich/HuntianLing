@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/delivery/types.ts",
+    "src/host/delivery/store.ts",
+    "src/host/delivery/service.ts",
+    "src/host/delivery/plugin.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/agents/types.ts",
+    "src/host/plugin.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/server.ts",
+    "src/host/web/developer-board.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/story-delivery.test.mjs",
+    "test/unit/web-delivery.test.mjs",
+    "test/unit/contract.test.mjs",
+    "test/unit/web-developer.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

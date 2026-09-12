@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "the catalog lists frontend, backend, database, and related versioned skill packs",
+      "result": "pass",
+      "evidence": "test/unit/skill-d9.test.mjs"
+    },
+    {
+      "id": "a project scan recommends skill packs from the workspace",
+      "result": "pass",
+      "evidence": "test/unit/skill-d9.test.mjs"
+    },
+    {
+      "id": "a WorkItem can declare required skill packs",
+      "result": "pass",
+      "evidence": "test/unit/skill-d9.test.mjs"
+    },
+    {
+      "id": "installing a pack makes its versioned coverage available to the project",
+      "result": "pass",
+      "evidence": "test/unit/skill-d9.test.mjs"
+    },
+    {
+      "id": "the agent runtime loads only the relevant installed pack skills for the selected task",
+      "result": "pass",
+      "evidence": "test/unit/skill-d9.test.mjs"
+    },
+    {
+      "id": "a missing required pack blocks the agent run",
+      "result": "pass",
+      "evidence": "test/unit/skill-d9.test.mjs"
+    },
+    {
+      "id": "customers cannot install skill packs",
+      "result": "pass",
+      "evidence": "test/unit/skill-d9.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "客户登录后只看到自己的需求和进度",
+      "source": "user"
+    }
+  ],
+  "goal": "Customer shell shows only that customer's requirements and progress",
+  "actors": ["customer"],
+  "scenarios": ["login then see own original requirements"],
+  "constraints": ["no developer board"],
+  "nonGoals": ["OAuth providers"],
+  "openQuestions": [],
+  "confirmed": true
+}

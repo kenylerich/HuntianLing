@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-AUTH-003",
+    "REQ-AUTH-004"
+  ],
+  "outcome": "Login routes by region and binds OAuth/OIDC accounts without storing secrets in board records",
+  "acceptance": [
+    "login routes by domain to cn or global without relying only on IP",
+    "users can manually switch login region when routing is ambiguous",
+    "login events record the region used",
+    "Google, GitHub, and WeChat appear as regional OAuth/OIDC providers",
+    "OAuth start and callback bind a provider identity with state and PKCE where supported",
+    "one user can unlink a bound provider",
+    "OAuth secrets are not stored in board records"
+  ],
+  "inScope": [
+    "domain-based and manual regional login routing",
+    "login-event region recording",
+    "Google OIDC, GitHub OAuth, and WeChat QR provider flows",
+    "provider identity binding, unlinking, state, and PKCE",
+    "keeping OAuth secrets out of board records"
+  ],
+  "outOfScope": [
+    "PostgreSQL",
+    "removing the fused board cockpit"
+  ],
+  "assumptions": [
+    "password login and regional provider discovery already exist",
+    "PostgreSQL stays in the next D row"
+  ],
+  "openQuestions": []
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a project returns its Definition of Ready and Definition of Done policy",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "a developer updates which Ready and Done checks the project requires",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "a story cannot become ready when a configured Ready check is missing",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "a story without executed evidence cannot transition to delivered",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "stale or failed required evidence still blocks delivered",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "a configured extra Done check such as unfinished children blocks delivered",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "inspecting delivery gates names the missing Ready or Done pieces",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "Story delivery start uses the project Ready policy",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    },
+    {
+      "id": "customers cannot change the project Ready or Done policy",
+      "result": "pass",
+      "evidence": "test/unit/evidence-cr12.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

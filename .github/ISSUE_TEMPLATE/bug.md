@@ -18,5 +18,14 @@ type: Bug
 - 预期结果：
 - 环境：
 - 验收条件：
+- 交付门禁证明（完成关闭前填写）：
+<!-- huntianling-delivery-gate -->
+  - WorkItem:
+  - Acceptance:
+  - Code:
+  - Review:
+  - CI:
+  - Evidence:
+  - Gates:
 
 </details>

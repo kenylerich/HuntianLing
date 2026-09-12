@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-TEAM-001", "REQ-TEAM-002"],
+  "outcome": "A project can add and remove member roles, WorkItem reviewers, approvers, and watchers, and apply role, repository, CI, and environment WIP policies that block overloaded assignment",
+  "acceptance": [
+    "a project can add a role to a team member and the change is audited",
+    "a project can remove a role from a team member and the change is audited",
+    "a WorkItem can add and remove reviewers, approvers, and watchers from the project roster",
+    "unknown roles or members from another project fail loud",
+    "role, repository, CI, and environment WIP policies block a new assignment when the limit is reached",
+    "humans and agents can use different WIP policies",
+    "the team capacity view shows overload warnings from those policies",
+    "customers cannot change the roster, roles, participants, or WIP policies"
+  ],
+  "inScope": [
+    "member role add and remove",
+    "WorkItem reviewers, approvers, and watchers",
+    "project WIP policies for role, repository, CI, environment, and member type"
+  ],
+  "outOfScope": [
+    "dispatch scoring leftovers",
+    "token-cost capacity accounting"
+  ],
+  "assumptions": [
+    "project team members, member-level WIP, and assignment already exist",
+    "C6 dispatch remains unchanged"
+  ],
+  "openQuestions": []
+}

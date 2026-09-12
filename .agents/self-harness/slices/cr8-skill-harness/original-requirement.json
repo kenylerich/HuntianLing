@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR8",
+      "source": "user"
+    }
+  ],
+  "goal": "A project skill-coverage scan includes coding Skills, Skill depth 2-4 can be measured and used after promotion, live-model trials can repeat when configured, and self-development demonstration steps are labeled manual, external-agent, or HuntianLing-runtime",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "environment prepare scans language, package manager, build, test, CI, and documentation and includes coding Skills besides MKT",
+    "a missing, unvalidated, or tool-blocked required Skill is a coverage gap and blocks claiming support",
+    "depth 2, 3, and 4 writes use their sensors instead of a longer prompt",
+    "an uncalibrated depth 2-4 write is rejected until a comparison is promoted",
+    "repeated invalid output at a higher depth lowers depth or stops",
+    "live-model trials can repeat when a model endpoint is configured and fail loud when it is missing",
+    "orchestration replay stays distinct from a live-model trial",
+    "self-development demonstration steps are labeled manual, external-agent, or HuntianLing-runtime",
+    "customers cannot run harness comparisons or coverage scans"
+  ],
+  "constraints": [
+    "secrets never persist",
+    "lint and hygiene stay blocked while they probe-fail",
+    "technology skill packs are out of scope"
+  ],
+  "nonGoals": [
+    "technology skill packs",
+    "replacing deterministic three-agent executors with a required live model",
+    "remaining design method packs"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

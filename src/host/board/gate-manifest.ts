@@ -12,19 +12,9 @@ import { join } from 'node:path';
 
 import { createHookGate } from './hook-gate.js';
 import type { TransitionGate } from './gates.js';
-import type { WorkItemStatus } from './types.js';
+import { WORK_ITEM_STATUSES, type WorkItemStatus } from './types.js';
 
-const STATUSES: ReadonlySet<string> = new Set([
-  'inbox',
-  'triaged',
-  'planned',
-  'in_progress',
-  'verifying',
-  'gates_passing',
-  'delivered',
-  'rejected',
-  'stopped',
-]);
+const STATUSES: ReadonlySet<string> = new Set(WORK_ITEM_STATUSES);
 
 export function gateManifestPath(workspaceRoot: string): string {
   return join(workspaceRoot, '.huntianling', 'gates.json');

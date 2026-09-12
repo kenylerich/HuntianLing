@@ -13,7 +13,7 @@
 
 plugin:
   name: huntianling
-  description: Agile project-management capability for dsh.
+  description: Agile requirements board for dsh with milestones, browser UI, and JSON APIs.
   # Resolver manifest dependencies — verify-cordis-config enforces that every
   # bare plugin reference is declared here.
   dependencies:

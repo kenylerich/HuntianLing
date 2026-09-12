@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/workflow/types.ts",
+    "src/host/workflow/catalog.ts",
+    "src/host/workflow/store.ts",
+    "src/host/workflow/service.ts",
+    "src/host/workflow/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/board/store.ts",
+    "src/host/board/plugin.ts",
+    "src/host/web/server.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/developer-board.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/workflow-engine.test.mjs",
+    "test/unit/contract.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

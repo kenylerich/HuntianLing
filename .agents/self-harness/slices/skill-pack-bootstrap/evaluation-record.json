@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "five-role-skills",
+      "result": "pass",
+      "evidence": ".agents/skills/huntianling-mkt/SKILL.md, huntianling-planner, huntianling-environment, huntianling-generator, huntianling-evaluator"
+    },
+    {
+      "id": "validator-rejects-bad-artifacts",
+      "result": "pass",
+      "evidence": "pnpm run self-harness:validate on mkt-fail, generator-fail, environment-fail"
+    },
+    {
+      "id": "unit-tests-rerun-sensors",
+      "result": "pass",
+      "evidence": "test/unit/self-harness-validate.test.mjs 6 pass"
+    },
+    {
+      "id": "evaluator-generator-typed-handoff",
+      "result": "fail",
+      "evidence": "Handoff is documented as evaluate then repair in SKILL.md. No runtime Agent Channel, no process that lets Evaluator send task.repair to Generator. Interaction is sequential JSON files plus a human or external Agent."
+    },
+    {
+      "id": "four-layer-skill-pack",
+      "result": "fail",
+      "evidence": "Guide exists (SKILL.md). Sensors exist (validate.mjs). No schema.json files. No depth.yaml. Generator and environment have fail examples only, no pass examples."
+    },
+    {
+      "id": "no-runtime-claim",
+      "result": "pass",
+      "evidence": "huntianling-self-harness/SKILL.md Must not claim HuntianLing-runtime Agents"
+    }
+  ],
+  "decision": "revision-required"
+}

@@ -16,5 +16,14 @@ type: Task
 - 验收条件：
 - 交付物：
 - 测试证据：
+- 交付门禁证明（完成关闭前填写）：
+<!-- huntianling-delivery-gate -->
+  - WorkItem:
+  - Acceptance:
+  - Code:
+  - Review:
+  - CI:
+  - Evidence:
+  - Gates:
 
 </details>

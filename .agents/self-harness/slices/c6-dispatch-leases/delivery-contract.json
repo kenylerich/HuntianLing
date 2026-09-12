@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-TEAM-003", "REQ-TEAM-004", "REQ-AGENT-003"],
+  "outcome": "A project can recommend and run policy dispatch with exclusive leases, share read leases for review, and show Agent feedback on the WorkItem that humans accept or reject without silent board edits",
+  "acceptance": [
+    "dispatch recommendation ranks eligible members by capacity, WIP, role, skills, and blocked status",
+    "policy-approved automatic dispatch assigns exclusive work to one member and writes an audit event",
+    "a second member cannot claim the same exclusive WorkItem while its exclusive lease is held",
+    "a shared read lease allows a second participant when the task permits pair or review work",
+    "rebalance releases leases and assignments when work is blocked or cancelled",
+    "a short-lived lease can be acquired, renewed, expired, and released with owner, reason, and linked task",
+    "exclusive write leases block conflicting editors; project conflicts lists those overlaps",
+    "WorkItem detail shows agent feedback, open questions, decisions, blockers, missing evidence, and next actions linked to the producing run and skill versions",
+    "accepting feedback can update the WorkItem; rejected feedback remains auditable and does not update it",
+    "customers cannot dispatch work or decide agent feedback"
+  ],
+  "inScope": [
+    "dispatch recommend and run",
+    "claim and release",
+    "resource leases and conflict listing",
+    "agent feedback on the WorkItem"
+  ],
+  "outOfScope": [
+    "hosted CI fleets",
+    "token-cost capacity accounting",
+    "workflow visual designer"
+  ],
+  "assumptions": [
+    "team members and member WIP limits already exist on the board",
+    "C5 workflow reassignment remains a separate control"
+  ],
+  "openQuestions": []
+}

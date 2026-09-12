@@ -11,7 +11,9 @@ import assert from 'node:assert/strict'
 
 import {
   assertRequirementHasAcceptance,
+  allowedParentTypes,
   isForbiddenTransition,
+  validateDefinitionOfReady,
   validateWorkItemHierarchy,
   validateWorkItemRequiredFields,
   validateWorkItemTransition,
@@ -25,6 +27,8 @@ function makeRequirement(overrides = {}) {
     type: 'requirement',
     title: 'Add a button',
     body: 'Clicking should save the form.',
+    analysis: '',
+    design: '',
     status: 'inbox',
     priority: null,
     estimate: null,
@@ -33,9 +37,24 @@ function makeRequirement(overrides = {}) {
     startDate: null,
     dueDate: null,
     acceptance: ['Save button submits the form'],
+    acceptanceCriteria: [],
+    coversAcceptanceIds: [],
+    dependencyIds: [],
+    blockedByIds: [],
+    evidence: [],
     sourceRequirementId: null,
     ...overrides,
   }
+}
+
+function makeReadyRequirement(overrides = {}) {
+  return makeRequirement({
+    analysis: 'The user needs a clear delivery path.',
+    design: 'The board records the transition and evidence.',
+    milestoneId: 'milestone-1',
+    status: 'ready',
+    ...overrides,
+  })
 }
 
 test('validateWorkItemRequiredFields passes for a fully-populated requirement', () => {
@@ -58,10 +77,15 @@ test('assertRequirementHasAcceptance rejects an empty acceptance list', () => {
 })
 
 test('assertRequirementHasAcceptance passes for non-requirement types', () => {
-  // Defects, tasks, process cards do not require acceptance; an empty
+  // Bugs, tasks, process cards do not require acceptance; an empty
   // list must not raise. The acceptance rule is requirement-specific.
-  const item = makeRequirement({ type: 'defect', acceptance: [] })
+  const item = makeRequirement({ type: 'bug', acceptance: [] })
   assert.equal(assertRequirementHasAcceptance(item), null)
+})
+
+test('assertRequirementHasAcceptance applies to story work items', () => {
+  const error = assertRequirementHasAcceptance(makeRequirement({ type: 'story', acceptance: [] }))
+  assert.equal(error?.kind, 'missing_acceptance_for_requirement')
 })
 
 test('validateWorkItemHierarchy passes when there is no parent', () => {
@@ -69,20 +93,46 @@ test('validateWorkItemHierarchy passes when there is no parent', () => {
   assert.equal(validateWorkItemHierarchy(item, () => null), null)
 })
 
-test('validateWorkItemHierarchy passes when the parent has no further parent', () => {
-  const item = makeRequirement({ parentId: 'epic-1' })
-  const epic = makeRequirement({ id: 'epic-1' })
-  assert.equal(validateWorkItemHierarchy(item, () => epic), null)
+test('allowedParentTypes documents the product hierarchy', () => {
+  assert.deepEqual(allowedParentTypes('feature'), ['epic'])
+  assert.deepEqual(allowedParentTypes('requirement'), ['feature'])
+  assert.deepEqual(allowedParentTypes('story'), ['feature'])
+  assert.deepEqual(allowedParentTypes('task'), ['requirement', 'story'])
 })
 
-test('validateWorkItemHierarchy rejects a parent that is itself a child', () => {
-  const item = makeRequirement({ parentId: 'child-parent' })
-  const parent = makeRequirement({
-    id: 'child-parent',
-    parentId: 'epic-1',
+test('validateWorkItemHierarchy accepts an Epic to Task requirement tree', () => {
+  const epic = makeRequirement({ id: 'epic-1', type: 'epic' })
+  const feature = makeRequirement({ id: 'feature-1', type: 'feature', parentId: 'epic-1' })
+  const story = makeRequirement({ id: 'story-1', type: 'story', parentId: 'feature-1' })
+  const task = makeRequirement({ id: 'task-1', type: 'task', parentId: 'story-1', acceptance: [] })
+  const items = new Map([
+    [epic.id, epic],
+    [feature.id, feature],
+    [story.id, story],
+    [task.id, task],
+  ])
+  assert.equal(validateWorkItemHierarchy(task, (id) => items.get(id) ?? null), null)
+})
+
+test('validateWorkItemHierarchy rejects an invalid parent type', () => {
+  const feature = makeRequirement({ id: 'feature-1', type: 'feature' })
+  const task = makeRequirement({ id: 'task-1', type: 'task', parentId: 'feature-1', acceptance: [] })
+  const error = validateWorkItemHierarchy(task, (id) => (id === feature.id ? feature : null))
+  assert.equal(error?.kind, 'invalid_parent_type')
+  assert.equal(error?.childType, 'task')
+  assert.equal(error?.parentType, 'feature')
+})
+
+test('validateWorkItemHierarchy rejects cross-project parents', () => {
+  const feature = makeRequirement({ id: 'feature-1', type: 'feature', projectId: 'proj-1' })
+  const story = makeRequirement({
+    id: 'story-1',
+    type: 'story',
+    projectId: 'proj-2',
+    parentId: 'feature-1',
   })
-  const error = validateWorkItemHierarchy(item, () => parent)
-  assert.equal(error?.kind, 'parent_is_child')
+  const error = validateWorkItemHierarchy(story, (id) => (id === feature.id ? feature : null))
+  assert.equal(error?.kind, 'cross_project_parent')
 })
 
 test('validateWorkItemHierarchy detects a self-referential cycle', () => {
@@ -114,4 +164,34 @@ test('validateWorkItemTransition rejects a forbidden transition', () => {
 test('validateWorkItemTransition passes for an inbox → triaged move with acceptance', () => {
   const item = makeRequirement()
   assert.equal(validateWorkItemTransition(item, 'triaged'), null)
+})
+
+test('Definition of Ready requires analysis, design, acceptance, milestone, and no blockers', () => {
+  assert.equal(validateDefinitionOfReady(makeReadyRequirement()), null)
+  assert.equal(validateDefinitionOfReady(makeReadyRequirement({ analysis: '' }))?.kind, 'missing_analysis_for_ready')
+  assert.equal(validateDefinitionOfReady(makeReadyRequirement({ design: '' }))?.kind, 'missing_design_for_ready')
+  assert.equal(
+    validateDefinitionOfReady(makeReadyRequirement({ acceptance: [] }))?.kind,
+    'missing_acceptance_for_requirement',
+  )
+  assert.equal(
+    validateDefinitionOfReady(makeReadyRequirement({ milestoneId: null }))?.kind,
+    'missing_milestone_for_ready',
+  )
+  assert.equal(
+    validateDefinitionOfReady(makeReadyRequirement({ blockedByIds: ['wi-2'] }))?.kind,
+    'blocked_work_items_for_ready',
+  )
+})
+
+test('validateWorkItemTransition blocks development before Ready', () => {
+  assert.equal(
+    validateWorkItemTransition(makeReadyRequirement({ status: 'planned' }), 'in_progress')?.kind,
+    'not_ready_for_development',
+  )
+  assert.equal(validateWorkItemTransition(makeReadyRequirement(), 'in_progress'), null)
+  assert.equal(
+    validateWorkItemTransition(makeReadyRequirement({ status: 'in_review' }), 'in_progress'),
+    null,
+  )
 })

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/authority/types.ts",
+    "src/host/authority/policies.ts",
+    "src/host/authority/store.ts",
+    "src/host/authority/service.ts",
+    "src/host/authority/plugin.ts",
+    "src/host/tools/registry.ts",
+    "src/host/agents/definitions.ts",
+    "src/host/scm/types.ts",
+    "src/host/scm/service.ts",
+    "src/host/scm/plugin.ts",
+    "src/host/ci/types.ts",
+    "src/host/ci/service.ts",
+    "src/host/ci/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/server.ts",
+    "src/host/web/developer-board.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/authority-service.test.mjs",
+    "test/unit/web-authority.test.mjs",
+    "test/unit/contract.test.mjs",
+    "test/unit/web-developer.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

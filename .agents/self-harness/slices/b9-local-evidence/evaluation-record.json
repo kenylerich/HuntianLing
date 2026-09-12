@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "local Git inspect reports branch and HEAD without requiring GitHub",
+      "result": "pass",
+      "evidence": "test/unit/scm-service.test.mjs"
+    },
+    {
+      "id": "linking HEAD writes a commit code link and an executed scm check on the WorkItem",
+      "result": "pass",
+      "evidence": "test/unit/scm-service.test.mjs"
+    },
+    {
+      "id": "local typecheck and test runs write ci-run links and executed ci checks on the WorkItem",
+      "result": "pass",
+      "evidence": "test/unit/ci-service.test.mjs"
+    },
+    {
+      "id": "Evaluator records one check per acceptance criterion on the owning WorkItem",
+      "result": "pass",
+      "evidence": "test/unit/agents-runtime.test.mjs"
+    },
+    {
+      "id": "Generator self-check cannot mark customer progress delivered",
+      "result": "pass",
+      "evidence": "test/unit/customer-progress.test.mjs"
+    },
+    {
+      "id": "notes or code links without executed checks cannot mark customer progress delivered",
+      "result": "pass",
+      "evidence": "test/unit/customer-progress.test.mjs"
+    },
+    {
+      "id": "changing analysis, design, or acceptance makes prior executed evidence stale",
+      "result": "pass",
+      "evidence": "test/unit/board-store.test.mjs"
+    },
+    {
+      "id": "missing or failed required executed evidence keeps customer progress out of delivered",
+      "result": "pass",
+      "evidence": "test/unit/ci-service.test.mjs"
+    },
+    {
+      "id": "developer progress inspector shows Agent, Code, CI, and Evidence",
+      "result": "pass",
+      "evidence": "test/unit/web-developer.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

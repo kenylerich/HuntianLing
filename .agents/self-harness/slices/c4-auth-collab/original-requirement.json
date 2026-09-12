@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C4",
+      "source": "user"
+    }
+  ],
+  "goal": "Password credentials use Argon2id by default with rotation and disable, and first-slice collaboration-task types fully manage agent-team work from the channel",
+  "actors": ["developer", "admin", "generator"],
+  "scenarios": [
+    "a new password is stored as an Argon2id hash with salt and parameters",
+    "an existing PBKDF2 or bcrypt hash still verifies",
+    "a user rotates their password and the old hash no longer works",
+    "a disabled credential cannot log in",
+    "a channel message creates a collaboration task with requester, assignee, objective, skills, tools, and context tags",
+    "accept, decline, question, answer, transfer, block, unblock, complete, and cancel update the task and write an event",
+    "a transfer names sending role, receiving role, reason, context, next action, required evidence, and unresolved questions",
+    "an agent run refuses a collaboration task that is missing required fields",
+    "the developer board shows open collaboration tasks and customers cannot manage them"
+  ],
+  "constraints": [
+    "only salted hashes and algorithm parameters are stored",
+    "passwords, OAuth secrets, API tokens, and raw session secrets are never logged",
+    "creating a collaboration task does not create a dsh LLM chat task"
+  ],
+  "nonGoals": [
+    "OAuth providers",
+    "task.split and task.merge",
+    "PostgreSQL"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

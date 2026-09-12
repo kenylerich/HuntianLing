@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "the catalog lists moscow, rice, wsjf, kano, risk-first, dependency-first, and milestone-first",
+      "result": "pass",
+      "evidence": "test/unit/method-d7.test.mjs"
+    },
+    {
+      "id": "a project can select a prioritization method",
+      "result": "pass",
+      "evidence": "test/unit/method-d7.test.mjs"
+    },
+    {
+      "id": "a WorkItem stores the inputs needed by the selected method",
+      "result": "pass",
+      "evidence": "test/unit/method-d7.test.mjs"
+    },
+    {
+      "id": "ranking output is explainable and traceable to inputs",
+      "result": "pass",
+      "evidence": "test/unit/method-d7.test.mjs"
+    },
+    {
+      "id": "ranked Story output feeds the Story priority queue",
+      "result": "pass",
+      "evidence": "test/unit/method-d7.test.mjs"
+    },
+    {
+      "id": "users can override ranking with an audit reason",
+      "result": "pass",
+      "evidence": "test/unit/method-d7.test.mjs"
+    },
+    {
+      "id": "customers cannot select a prioritization method",
+      "result": "pass",
+      "evidence": "test/unit/method-d7.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

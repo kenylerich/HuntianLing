@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C1",
+      "source": "user"
+    }
+  ],
+  "goal": "Agents cannot push, open a pull request, or trigger production CI until role policy and human approval allow it",
+  "actors": ["developer", "generator", "evaluator", "planner"],
+  "scenarios": [
+    "planner cannot push even with an approval record",
+    "generator push or pull request without approval is blocked and audited",
+    "generator push proceeds only after a different human grants approval",
+    "evaluator may run local checks without approval and cannot trigger production CI without approval",
+    "developer sees role capability boundaries before starting a task"
+  ],
+  "constraints": [
+    "high-risk Git and production actions require human approval",
+    "blocked actions and approval results are auditable",
+    "requester cannot approve their own request"
+  ],
+  "nonGoals": [
+    "hosted GitHub branch and pull-request write adapters",
+    "full Code View",
+    "SQLite storage"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

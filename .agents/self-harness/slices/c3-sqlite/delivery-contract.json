@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-DATA-001", "REQ-DATA-002"],
+  "outcome": "A local workspace persists current board data in SQLite with versioned migrations, and uploads land on a replaceable local filesystem backend with database metadata and size/type rejection",
+  "acceptance": [
+    "upper layers use one internal huntianling.database service and do not import a concrete driver",
+    "local deployments persist through SQLite",
+    "schema migrations are recorded with a version",
+    "existing JSON board data is imported into database tables",
+    "after import, board reads and writes use the database as the source of truth",
+    "large file content is stored outside the database",
+    "the database stores upload filename, MIME type, size, sha256, uploader, project, storage path, extracted-text status, and references",
+    "uploads are stored under a configurable workspace storage root",
+    "files that exceed configured size or type limits are rejected",
+    "the file storage interface can be replaced without requiring MinIO"
+  ],
+  "inScope": [
+    "SQLite database service",
+    "schema migrations and version tracking",
+    "JSON board import into tables",
+    "local file storage for uploads"
+  ],
+  "outOfScope": [
+    "PostgreSQL",
+    "S3-compatible adapters",
+    "hosted SCM write adapters"
+  ],
+  "assumptions": [
+    "Node 22.19 or newer provides node:sqlite",
+    "current JSON board collections are the import source for this slice"
+  ],
+  "openQuestions": []
+}

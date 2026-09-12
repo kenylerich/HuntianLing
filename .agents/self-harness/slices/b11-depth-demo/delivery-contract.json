@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-HARNESS-004", "REQ-HARNESS-005"],
+  "outcome": "One Skill depth change is measured against a baseline with a predeclared promotion threshold, and one Story demonstration records environment prepare, failed evaluation, repair, interrupt/resume, and customer progress from evidence",
+  "acceptance": [
+    "a comparison uses fixed pass, fail, and cancelled cases and records accepted-scope completion, escaped defects, false rejections, repair rounds, elapsed time, and unknown token cost",
+    "orchestration replay is distinct from a fresh trial",
+    "promotion of a Skill depth requires a comparison that already met a threshold set before the comparison",
+    "a comparison that misses the threshold cannot promote the depth",
+    "a fresh workspace can be prepared with the shipped Node/pnpm profile",
+    "one Story run records failed evaluation, repair, interrupt, resume, and Evaluator evidence",
+    "customer-visible delivered updates from that evidence",
+    "lint and hygiene are recorded as blocked, not pass",
+    "the demonstration names remaining gaps including unbound live model"
+  ],
+  "inScope": [
+    "MKT depth 0 versus 1 comparison",
+    "promotion threshold",
+    "self-development demonstration record",
+    "developer environment actions"
+  ],
+  "outOfScope": [
+    "Skill depth 2-4 calibration",
+    "live model trials",
+    "Workflow Test Lab"
+  ],
+  "assumptions": [
+    "deterministic MKT write and three-agent executors are the measured orchestration",
+    "lint and hygiene still probe-fail"
+  ],
+  "openQuestions": []
+}

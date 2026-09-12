@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a customer message missing required collection fields produces clarifying questions in the same intake session",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    },
+    {
+      "id": "the customer can submit a structured follow-up answer for a named field without using the developer shell",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    },
+    {
+      "id": "open clarifying questions mark customer progress as waiting on the customer",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    },
+    {
+      "id": "the original-requirement draft stays untracked until the customer confirms",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    },
+    {
+      "id": "confirming tracks the original requirement with source quotes, goal, and any answered actors or scenarios",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    },
+    {
+      "id": "a follow-up answer that includes technical design is rejected and does not update the draft",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    },
+    {
+      "id": "a product question posted from Agent Channel appears in the customer MKT dialog",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    },
+    {
+      "id": "customers can list open questions and answer them on their own project",
+      "result": "pass",
+      "evidence": "test/unit/mkt-clarify.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/ci/types.ts",
+    "src/host/ci/artifacts.ts",
+    "src/host/ci/hosted.ts",
+    "src/host/ci/service.ts",
+    "src/host/ci/plugin.ts",
+    "src/host/web/server.ts",
+    "src/host/web/developer-board.ts",
+    "src/host/web/pages/developer.ts",
+    "test/unit/ci-hosted.test.mjs",
+    "test/unit/web-ci.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

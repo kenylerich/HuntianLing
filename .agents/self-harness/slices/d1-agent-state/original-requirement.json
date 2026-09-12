@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步D",
+      "source": "user"
+    }
+  ],
+  "goal": "An executable workflow step inspects repository, CI, leases, and evidence before it runs, records the recognized state, and asks or waits instead of guessing the next transition",
+  "actors": ["developer"],
+  "scenarios": [
+    "a caller reads a workflow run state snapshot including work item, leases, branches, and evidence",
+    "recognizing a ready analyze step allows start and records the snapshot on the step",
+    "an exclusive lease held by someone else blocks the step and posts a Team Chat event",
+    "a missing approval names request-approval as the next safe action",
+    "a stale snapshot after a design change blocks execution",
+    "an agent run refuses to start from a blocked recognition",
+    "customers cannot recognize workflow step state"
+  ],
+  "constraints": [
+    "visual workflow designer is out of scope",
+    "Workflow Test Lab is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "visual workflow designer",
+    "Workflow Test Lab simulation",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-CI-001"],
+  "outcome": "An authorized role can trigger GitHub Actions, Gitea Actions, or GitLab CI, wait for completion, and attach JUnit, coverage, SARIF, and Playwright artifacts as executed CI evidence, while local CI still works without GitHub",
+  "acceptance": [
+    "a project can discover GitHub Actions, Gitea Actions, or GitLab CI workflows",
+    "an authorized hosted pipeline trigger records an executed CI run on the WorkItem",
+    "hosted trigger waits until the run has completed before attaching evidence",
+    "JUnit, coverage, SARIF, and Playwright artifacts attach as executed CI evidence",
+    "local command-runner CI still works without GitHub",
+    "unknown provider or missing hosted workflow metadata fails loud",
+    "hosted credentials are supplied at call time or from the environment and are never persisted",
+    "production hosted CI still requires human approval",
+    "customers cannot trigger hosted CI"
+  ],
+  "inScope": [
+    "GitHub Actions, Gitea Actions, and GitLab CI adapters",
+    "authorized pipeline trigger and completion wait",
+    "JUnit, coverage, SARIF, and Playwright artifact evidence"
+  ],
+  "outOfScope": [
+    "GitHub Issue sync",
+    "Jenkins adapters"
+  ],
+  "assumptions": [
+    "local command-runner CI already records executed checks",
+    "C1 authority remains the production CI gate",
+    "tests inject a hosted transport"
+  ],
+  "openQuestions": []
+}

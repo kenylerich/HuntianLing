@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR7",
+      "source": "user"
+    }
+  ],
+  "goal": "A project can replace and roll back its workflow template, read packed capability docs and fixtures, schedule recurring and event-triggered steps, request and complete reviews, accept or reject handoffs, and see overloaded-role and release-readiness rollups",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "replacing a project workflow template shows a preview and records an audit event",
+    "future-only replacement leaves active runs on the previous template",
+    "active-run migration remaps open runs onto the new template",
+    "rollback restores the previous template",
+    "a built-in capability includes documentation and a conformance fixture",
+    "a recurring step is scheduled again after it completes",
+    "an event-triggered step stays queued until its event arrives",
+    "a review request can be created and completed as role-scoped events",
+    "accepting a handoff changes owner in the same transition",
+    "rejecting a handoff records the rejection and does not change owner",
+    "a wrong-role handoff does not change state",
+    "project rollups show overloaded roles and release readiness",
+    "customers cannot replace templates, manage reviews, or accept handoffs"
+  ],
+  "constraints": [
+    "built-in templates cannot be mutated in place",
+    "rejected or wrong-role events must not change current state"
+  ],
+  "nonGoals": [
+    "visual workflow designer canvas",
+    "workflow test lab",
+    "agent and skill binding simulation",
+    "automatic child task generation"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

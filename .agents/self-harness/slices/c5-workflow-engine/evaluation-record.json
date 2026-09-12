@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "inspecting a transition lists required fields, evidence, reviews, and approvals and names what is missing",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "an invalid transition is blocked and the missing items are explained",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "override requires actor, reason, and scope and writes an audit record while forbidden lifecycle moves stay blocked",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "planning a WorkItem produces steps with dependencies, roles, skills, tools, checks, and handoffs",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "starting a plan creates a collaboration task for agent work and does not start blocked or unapproved steps",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "an approval request declares requester and required approver roles; approve, reject, and revision-request write role-scoped events",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "dependent steps stay queued until required approvals are resolved",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "a workflow run shows owner, running and blocked steps, waiting approvals, next action, scheduler reasons, and a timeline",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "authorized users can pause, resume, cancel, retry, and reassign steps",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "built-in capabilities and the default template are versioned; builtin definitions cannot be mutated in place and a project selects or clones them",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    },
+    {
+      "id": "customers cannot manage workflow runs or approvals",
+      "result": "pass",
+      "evidence": "test/unit/workflow-engine.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

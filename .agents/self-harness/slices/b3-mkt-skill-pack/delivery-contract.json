@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-MKT-002", "REQ-SKILL-001", "REQ-SKILL-005", "REQ-SKILL-006"],
+  "outcome": "The product Skill registry ships the MKT pack; original-requirement writes go through a validated tool at depth 0 or 1",
+  "acceptance": [
+    "MKT pack skills declare boundary and depth 0-1 with default 1",
+    "write tool rejects missing source quotes",
+    "write tool rejects technical design fields",
+    "missing required pack skill blocks collection complete",
+    "repeated invalid depth 1 output requires depth 0 or stops",
+    "a skill without boundary or depth cannot be enabled"
+  ],
+  "inScope": ["in-memory registry", "shipped MKT pack", "original-requirement write tool"],
+  "outOfScope": ["skill-creator", "technology skill packs", "Planner runtime"],
+  "assumptions": ["unmeasured models use MKT default depth 1"],
+  "openQuestions": []
+}

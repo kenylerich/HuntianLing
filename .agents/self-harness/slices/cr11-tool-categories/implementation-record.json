@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/tools/types.ts",
+    "src/host/tools/registry.ts",
+    "src/host/tools/invoke.ts",
+    "src/host/environment/service.ts",
+    "src/host/environment/plugin.ts",
+    "src/host/agents/definitions.ts",
+    "src/host/authority/policies.ts",
+    "src/host/board/types.ts",
+    "src/host/web/server.ts",
+    "test/unit/tools-cr11.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

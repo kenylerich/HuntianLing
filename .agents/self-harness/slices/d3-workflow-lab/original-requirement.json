@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D3",
+      "source": "user"
+    }
+  ],
+  "goal": "Authors edit and dry-run a template on a canvas before publishing",
+  "actors": ["developer"],
+  "scenarios": [
+    "a caller reads a canvas of stages and steps for a template",
+    "editing a draft canvas node updates the template step and reports invalid nodes",
+    "builtin templates cannot be overwritten on the canvas",
+    "validate reports a missing dependency before publish",
+    "Test Lab dry-runs happy-path, missing-approval, resource-conflict, stale-state, and missing-evidence",
+    "publish is blocked until a passing happy-path test run exists",
+    "customers cannot edit the canvas or run the Test Lab"
+  ],
+  "constraints": [
+    "third-party workflow pack conformance is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "third-party workflow pack conformance",
+    "removing the fused board cockpit",
+    "timeout, retry, custom-node, and pack conformance Test Lab scenarios"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

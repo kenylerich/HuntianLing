@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-SCM-002", "REQ-SCM-003", "REQ-CODE-001"],
+  "outcome": "A local repository and WorkItem branch can be created, a changeset committed, a pull request opened and merged under approval, and Code View shows the linked code without leaving the developer shell",
+  "acceptance": [
+    "a project can register a local Git repository",
+    "creating a WorkItem branch stores name, base, linked WorkItem, owner, and protection status",
+    "protected branch names are rejected",
+    "sync and rebase-check record unpushed, diverged, and conflict signals",
+    "a changeset commit uses a message template that includes the WorkItem id",
+    "patch, commit, push, pull request, and merge remain separate actions",
+    "push, pull request, and merge still require human approval",
+    "Code View shows repositories, branches, commits, diffs, changed files, and pull requests",
+    "unlinked branches appear in the project unlinked-code list",
+    "developer progress inspector shows Code View and customers cannot create branches"
+  ],
+  "inScope": [
+    "local repository registry",
+    "managed branches and naming rules",
+    "changeset commit workflow",
+    "pull request records and merge",
+    "Code View in the developer shell"
+  ],
+  "outOfScope": [
+    "hosted GitHub adapters",
+    "inline syntax-highlighted editor",
+    "SQLite"
+  ],
+  "assumptions": [
+    "tests inject a Git runner",
+    "C1 authority remains the push, pull-request, and merge gate"
+  ],
+  "openQuestions": []
+}

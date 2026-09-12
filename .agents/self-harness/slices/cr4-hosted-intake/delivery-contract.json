@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-INTAKE-002", "REQ-INTAKE-003"],
+  "outcome": "Configured hosted OCR extracts image and textless PDF attachments without a test stub, Word still extracts locally, and mode llm uses a configured live-model extractor while remaining unconfigured analysis fails loud",
+  "acceptance": [
+    "an image extracts through configured hosted OCR without a per-test understanding stub",
+    "a PDF with no extractable text falls back to hosted OCR",
+    "a Word document still extracts without OCR",
+    "an image without OCR configuration stays pending with a parse error",
+    "mode llm uses a configured extractor without injecting a test stub",
+    "mode llm still fails loud when no extractor is configured",
+    "hosted credentials are supplied at call time or from the environment and are never persisted",
+    "human approval is still required before candidates become WorkItems",
+    "customers can upload attachments and run llm analysis on their own intake sessions"
+  ],
+  "inScope": [
+    "hosted OCR for images and textless PDFs",
+    "configured live-model intake extractor for mode llm"
+  ],
+  "outOfScope": [
+    "hosted model fleet as a product",
+    "visual workflow designer"
+  ],
+  "assumptions": [
+    "PDF and Word text extraction already work without OCR",
+    "injected extractors remain valid test doubles",
+    "tests inject a hosted transport"
+  ],
+  "openQuestions": []
+}

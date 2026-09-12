@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/workflow/types.ts",
+    "src/host/workflow/recognize.ts",
+    "src/host/workflow/service.ts",
+    "src/host/workflow/store.ts",
+    "src/host/workflow/plugin.ts",
+    "src/host/agents/types.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/web/server.ts",
+    "test/unit/workflow-d1.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

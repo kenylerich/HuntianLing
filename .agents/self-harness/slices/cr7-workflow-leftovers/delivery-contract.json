@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-FLOW-005",
+    "REQ-FLOW-012",
+    "REQ-FLOW-013",
+    "REQ-FLOW-015",
+    "REQ-FLOW-019",
+    "REQ-FLOW-021"
+  ],
+  "outcome": "A project can replace and roll back its workflow template with preview and audit, read packed capability docs and fixtures, schedule recurring and event-triggered steps, request and complete reviews, accept or reject handoffs without applying rejected events, and read overloaded-role and release-readiness rollups",
+  "acceptance": [
+    "replacing a project workflow template shows a preview of changed stages and steps and writes an audit event",
+    "future-only replacement leaves active runs on the previous template",
+    "active-run migration remaps open runs onto the new template",
+    "rollback restores the previous template",
+    "a built-in capability includes documentation and a conformance fixture",
+    "a recurring step is scheduled again after it completes",
+    "an event-triggered step stays queued until its event arrives",
+    "a review request can be created and completed as role-scoped events",
+    "accepting a handoff changes owner in the same transition",
+    "rejecting a handoff records the rejection and does not change owner",
+    "a wrong-role handoff does not change state",
+    "project rollups show overloaded roles and release readiness",
+    "customers cannot replace templates, manage reviews, or accept handoffs"
+  ],
+  "inScope": [
+    "template replace preview, future-only and active-run migration, rollback, import and export",
+    "packed capability documentation and conformance fixtures",
+    "recurring and event-triggered step kinds",
+    "review-request APIs",
+    "handoff accept and reject with transition rejection records",
+    "overloaded-role and release-readiness rollups"
+  ],
+  "outOfScope": [
+    "visual workflow designer canvas",
+    "workflow test lab",
+    "agent and skill binding simulation",
+    "automatic child task generation"
+  ],
+  "assumptions": [
+    "clone, select, gates, approvals, pause, resume, retry, and reassign already exist",
+    "built-in templates stay immutable; customization uses clone or import"
+  ],
+  "openQuestions": []
+}

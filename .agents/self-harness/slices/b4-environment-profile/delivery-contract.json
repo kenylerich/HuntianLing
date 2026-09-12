@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-HARNESS-001", "REQ-TOOL-001", "REQ-SKILL-003"],
+  "outcome": "One versioned Node/pnpm profile can prepare this repo or a second workspace; missing prerequisites block; tools are allowlisted; skill coverage gaps are reported",
+  "acceptance": [
+    "profile records version, commands, required skills, and required tools",
+    "prepare reports ready when required baseline checks pass",
+    "missing package.json is a dependency blocker and not ready",
+    "the same profile prepares a second workspace",
+    "re-prepare preserves existing workspace files",
+    "probe lint is blocked not passing",
+    "disallowed tool use is denied",
+    "missing required skills appear as coverage gaps and block starting implementation"
+  ],
+  "inScope": ["local Node/pnpm toolchain", "in-memory tool registry", "skill coverage against MKT pack"],
+  "outOfScope": ["remote fleets", "actual dsh sandbox adapter", "OAuth"],
+  "assumptions": ["unit tests inject a command runner"],
+  "openQuestions": []
+}

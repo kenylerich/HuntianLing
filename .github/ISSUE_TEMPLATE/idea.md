@@ -16,5 +16,14 @@ type: Idea
 - 价值假设：
 - 需要验证：
 - 可能的后续工作：
+- 交付门禁证明（完成关闭前填写）：
+<!-- huntianling-delivery-gate -->
+  - WorkItem:
+  - Acceptance:
+  - Code:
+  - Review:
+  - CI:
+  - Evidence:
+  - Gates:
 
 </details>

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B6",
+      "source": "user"
+    }
+  ],
+  "goal": "Developer Agent Channel uses typed first-slice messages and durable handoff events",
+  "actors": ["developer"],
+  "scenarios": [
+    "MKT to Planner to Generator to Evaluator handoff sequence",
+    "unknown message type is rejected",
+    "note.chat does not change WorkItem state",
+    "human.stop cancels the active collaboration task"
+  ],
+  "constraints": ["customer does not host this channel"],
+  "nonGoals": ["later catalog types", "workflow designer"],
+  "openQuestions": [],
+  "confirmed": true
+}

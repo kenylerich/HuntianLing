@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-FLOW-001"
+  ],
+  "outcome": "A project can select Scrum, Kanban, hotfix, or research templates besides the built-in user-story template",
+  "acceptance": [
+    "the catalog lists user-story, Scrum, Kanban, hotfix, and research built-in templates",
+    "selecting Scrum plans a new WorkItem with Scrum steps",
+    "selecting Kanban plans a new WorkItem with Kanban steps",
+    "selecting hotfix plans a new WorkItem with hotfix steps",
+    "selecting research plans a new WorkItem with research steps",
+    "an existing open run keeps its previous template after the project selects another",
+    "customers cannot select a project workflow template"
+  ],
+  "inScope": [
+    "built-in Scrum, Kanban, hotfix, and research workflow templates",
+    "project default template selection",
+    "planning a WorkItem from the selected template",
+    "keeping an open run on its original template version"
+  ],
+  "outOfScope": [
+    "third-party workflow packs",
+    "visual workflow designer",
+    "Workflow Test Lab simulation",
+    "removing the fused board cockpit",
+    "Scrumban and compliance-heavy templates",
+    "per-WorkItem-type, Milestone, risk, or delivery-slice template override"
+  ],
+  "assumptions": [
+    "the built-in user-story template, clone, select, replace, and plan already exist",
+    "visual designer and Test Lab stay in later D rows"
+  ],
+  "openQuestions": []
+}

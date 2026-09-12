@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-HARNESS-002", "REQ-FLOW-020"],
+  "outcome": "One Story can start a durable delivery run that checkpoints, interrupts, resumes, and completes Planner then Generator then Evaluator without duplicating finished work",
+  "acceptance": [
+    "a Story that fails Definition of Ready cannot start a delivery run",
+    "start writes a durable checkpoint outside the in-memory agent runtime",
+    "interrupt after a persisted step then resume on a new runtime does not re-run that step",
+    "duplicate or stale events are rejected and do not change run state",
+    "cancel records a visible reason and a recoverable handoff",
+    "retry limits block unbounded repair loops",
+    "driving one ready Story through the run records Planner, Generator, and Evaluator outputs and Evaluator evidence on the WorkItem",
+    "developer progress shows the Story delivery run and can start, pause, resume, or cancel it"
+  ],
+  "inScope": [
+    "Story delivery run entity",
+    "durable checkpoint",
+    "interrupt resume cancel pause",
+    "one Planner-Generator-Evaluator delivery path",
+    "developer run controls"
+  ],
+  "outOfScope": [
+    "Workflow Test Lab",
+    "child task generation from a workflow template",
+    "hosted SCM write path",
+    "Skill depth comparison"
+  ],
+  "assumptions": [
+    "lint and hygiene remain blocked probe scripts",
+    "Story delivery uses the deterministic three-agent executors"
+  ],
+  "openQuestions": []
+}

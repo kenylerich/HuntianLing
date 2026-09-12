@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a project can discover GitHub Actions, Gitea Actions, or GitLab CI workflows",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "an authorized hosted pipeline trigger records an executed CI run on the WorkItem",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "hosted trigger waits until the run has completed before attaching evidence",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "JUnit, coverage, SARIF, and Playwright artifacts attach as executed CI evidence",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "local command-runner CI still works without GitHub",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "unknown provider or missing hosted workflow metadata fails loud",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "hosted credentials are supplied at call time or from the environment and are never persisted",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "production hosted CI still requires human approval",
+      "result": "pass",
+      "evidence": "test/unit/ci-hosted.test.mjs"
+    },
+    {
+      "id": "customers cannot trigger hosted CI",
+      "result": "pass",
+      "evidence": "test/unit/web-ci.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

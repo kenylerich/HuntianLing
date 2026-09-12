@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a member who owns the WorkItem branch ranks higher in dispatch recommendation",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-cr6.test.mjs"
+    },
+    {
+      "id": "pending approvals change dispatch ranking",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-cr6.test.mjs"
+    },
+    {
+      "id": "transferring work writes a transfer event instead of a new assignment event",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-cr6.test.mjs"
+    },
+    {
+      "id": "Code View shows active lease badges for the WorkItem",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-cr6.test.mjs"
+    },
+    {
+      "id": "migration file leases appear as migration conflicts",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-cr6.test.mjs"
+    },
+    {
+      "id": "a workflow step does not start when an exclusive lease or foreign branch ownership blocks it",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-cr6.test.mjs"
+    },
+    {
+      "id": "customers cannot transfer dispatched work",
+      "result": "pass",
+      "evidence": "test/unit/dispatch-cr6.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

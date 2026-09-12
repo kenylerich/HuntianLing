@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/database/types.ts",
+    "src/host/database/files.ts",
+    "src/host/database/sqlite.ts",
+    "src/host/database/service.ts",
+    "src/host/database/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/board/store.ts",
+    "src/host/board/plugin.ts",
+    "src/host/board/types.ts",
+    "src/host/board/workspace.ts",
+    "src/host/web/server.ts",
+    "src/host/web/plugin.ts",
+    "test/unit/database-sqlite.test.mjs",
+    "test/unit/web-files.test.mjs",
+    "test/unit/contract.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

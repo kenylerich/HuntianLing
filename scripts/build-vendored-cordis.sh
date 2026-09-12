@@ -6,8 +6,8 @@
 # each vendored tsconfig's `extends` to point at it, runs `tsc -b`,
 # synthesises a tsdown config (when missing) and runs `tsdown` so the
 # package emits the bundled `lib/index.js` that Node resolves through
-# its `main` field, and restores the original tsconfig content from an
-# in-memory snapshot so the commit is not modified.
+# its `main` field, and restores the original tsconfig content from a
+# temporary backup so the commit is not modified.
 #
 # Required:
 #   - pnpm on PATH (run pnpm/action-setup before invoking this script)
@@ -45,28 +45,34 @@ cd "$REPO_ROOT"
 # Track every vendored tsconfig and package.json we mutate, plus every
 # tsdown config we synthesise, so the EXIT trap can restore them even
 # when an inner step fails. Per-package restore is required because
-# the package references reach across siblings (cordis → cosmokit,
-# loader → cordis), and a partially-restored tree would break a later
+# the package references reach across siblings (cordis -> cosmokit,
+# loader -> cordis), and a partially-restored tree would break a later
 # `tsc -b`. `pnpm add` mutates package.json and pnpm-lock.yaml as a
 # side effect; both must be reverted to keep the commit unmodified.
-declare -A ORIGINAL_TSCONFIG
-declare -A ORIGINAL_PACKAGE_JSON
-declare -a TSDOWN_SYNTHESIS_DIRS
+BACKUP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/huntianling-vendor-build.XXXXXX")
+TSDOWN_SYNTHESIS_LIST="$BACKUP_DIR/tsdown-synthesis-dirs"
+: > "$TSDOWN_SYNTHESIS_LIST"
 
 cleanup() {
-  for pkg in "${!ORIGINAL_TSCONFIG[@]}"; do
-    printf '%s' "${ORIGINAL_TSCONFIG[$pkg]}" > "vendor/$pkg/tsconfig.json"
+  for pkg in cosmokit cordis include loader; do
+    if [ -f "$BACKUP_DIR/$pkg.tsconfig.json" ]; then
+      cp "$BACKUP_DIR/$pkg.tsconfig.json" "$REPO_ROOT/vendor/$pkg/tsconfig.json"
+    fi
+    if [ -f "$BACKUP_DIR/$pkg.package.json" ]; then
+      cp "$BACKUP_DIR/$pkg.package.json" "$REPO_ROOT/vendor/$pkg/package.json"
+    fi
   done
-  for pkg in "${!ORIGINAL_PACKAGE_JSON[@]}"; do
-    printf '%s' "${ORIGINAL_PACKAGE_JSON[$pkg]}" > "vendor/$pkg/package.json"
-  done
-  for dir in "${TSDOWN_SYNTHESIS_DIRS[@]}"; do
+  while IFS= read -r dir; do
+    if [ -z "$dir" ]; then
+      continue
+    fi
     rm -f "$dir/tsdown.config.ts"
-  done
-  rm -f .tsconfig.cordis-base.json
+  done < "$TSDOWN_SYNTHESIS_LIST"
+  rm -f "$REPO_ROOT/.tsconfig.cordis-base.json"
+  rm -rf "$BACKUP_DIR"
   # `pnpm add` rewrites the workspace lockfile in place; restore it
   # from git so the commit is unchanged on a green run too.
-  git checkout -- pnpm-lock.yaml 2>/dev/null || true
+  git -C "$REPO_ROOT" checkout -- pnpm-lock.yaml 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -106,8 +112,8 @@ BASE
 #    per-iteration rewrite would leave a downstream package pointing
 #    at an unrestored upstream.
 for pkg in cosmokit cordis include loader; do
-  ORIGINAL_TSCONFIG["$pkg"]=$(cat "vendor/$pkg/tsconfig.json")
-  ORIGINAL_PACKAGE_JSON["$pkg"]=$(cat "vendor/$pkg/package.json")
+  cp "vendor/$pkg/tsconfig.json" "$BACKUP_DIR/$pkg.tsconfig.json"
+  cp "vendor/$pkg/package.json" "$BACKUP_DIR/$pkg.package.json"
   python3 "$REPO_ROOT/scripts/rewrite-vendored-tsconfig.py" \
     "vendor/$pkg/tsconfig.json"
 done
@@ -120,14 +126,16 @@ for pkg in cosmokit cordis include loader; do
   cd "vendor/$pkg"
 
   # `pnpm install --ignore-scripts --no-frozen-lockfile` populates the
-  # vendored package's node_modules from the workspace lockfile. We then
+  # vendored package's node_modules from the workspace lockfile. Keep
+  # the store under the repository so a sandboxed local run and an
+  # escalated local run do not disagree on link ownership. We then
   # add `tsdown` and `typescript` as devDependencies so both binaries
   # resolve through the package's own node_modules: the bare
   # `import { defineConfig } from 'tsdown'` inside tsdown.config.ts
   # needs `tsdown` on disk, and `pnpm exec tsc` lets us reuse a pinned
   # 5.7 release that supports `rewriteRelativeImportExtensions`.
-  pnpm install --ignore-scripts --no-frozen-lockfile >/dev/null
-  pnpm add --save-dev tsdown@latest typescript@5.7 >/dev/null
+  pnpm install --store-dir "$REPO_ROOT/.pnpm-store" --ignore-scripts --no-frozen-lockfile >/dev/null
+  pnpm add --store-dir "$REPO_ROOT/.pnpm-store" --save-dev tsdown@latest typescript@5.7 >/dev/null
 
   # --force ensures tsc re-reads the rewritten tsconfig rather than
   # serving the previous build from its .tsbuildinfo cache.
@@ -155,7 +163,7 @@ export default defineConfig([
   { ...shared, entry: ['lib/types/index.js'] },
 ])
 TSDOWN
-    TSDOWN_SYNTHESIS_DIRS+=("$PWD")
+    printf '%s\n' "$PWD" >> "$TSDOWN_SYNTHESIS_LIST"
   fi
 
   # `pnpm exec tsdown` runs the locally-installed binary so its config
@@ -170,14 +178,16 @@ done
 #    exit; disable it and drop the synthesised artefacts explicitly
 #    so the working tree is identical to the committed state.
 trap - EXIT
-for pkg in "${!ORIGINAL_TSCONFIG[@]}"; do
-  printf '%s' "${ORIGINAL_TSCONFIG[$pkg]}" > "vendor/$pkg/tsconfig.json"
+for pkg in cosmokit cordis include loader; do
+  cp "$BACKUP_DIR/$pkg.tsconfig.json" "vendor/$pkg/tsconfig.json"
+  cp "$BACKUP_DIR/$pkg.package.json" "vendor/$pkg/package.json"
 done
-for pkg in "${!ORIGINAL_PACKAGE_JSON[@]}"; do
-  printf '%s' "${ORIGINAL_PACKAGE_JSON[$pkg]}" > "vendor/$pkg/package.json"
-done
-for dir in "${TSDOWN_SYNTHESIS_DIRS[@]}"; do
+while IFS= read -r dir; do
+  if [ -z "$dir" ]; then
+    continue
+  fi
   rm -f "$dir/tsdown.config.ts"
-done
+done < "$TSDOWN_SYNTHESIS_LIST"
 rm -f .tsconfig.cordis-base.json
+rm -rf "$BACKUP_DIR"
 git checkout -- pnpm-lock.yaml 2>/dev/null || true

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D8",
+      "source": "user"
+    }
+  ],
+  "goal": "UX, QA, security, and similar roles exist as explicit agent definitions with boundaries",
+  "actors": ["developer"],
+  "scenarios": [
+    "the catalog lists UX, QA, security, and similar specialist agent definitions with role, responsibilities, allowed task types, allowed tools, required skills, and output expectations",
+    "a new project enables planner, generator, and evaluator only; specialist agents stay disabled until selected",
+    "enabling a specialist agent lets a run produce that agent's output and attach it to a WorkItem",
+    "disabling a specialist agent prevents new runs with that agent",
+    "a project can customize a specialist agent's allowed tools within its built-in boundary",
+    "agent actions are auditable",
+    "customers cannot enable specialist agents"
+  ],
+  "constraints": [
+    "technology skill packs are out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "technology skill packs",
+    "removing the fused board cockpit",
+    "replacing planner, generator, or evaluator"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

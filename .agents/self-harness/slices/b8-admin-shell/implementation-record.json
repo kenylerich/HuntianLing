@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/web/auth.ts",
+    "src/host/web/pages/admin.ts",
+    "src/host/web/server.ts",
+    "src/host/environment/service.ts",
+    "test/unit/web-admin.test.mjs",
+    "test/unit/web-audience.test.mjs"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

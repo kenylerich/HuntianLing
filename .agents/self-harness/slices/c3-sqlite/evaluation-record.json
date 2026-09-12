@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "upper layers use one internal huntianling.database service and do not import a concrete driver",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "local deployments persist through SQLite",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "schema migrations are recorded with a version",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "existing JSON board data is imported into database tables",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "after import, board reads and writes use the database as the source of truth",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "large file content is stored outside the database",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "the database stores upload filename, MIME type, size, sha256, uploader, project, storage path, extracted-text status, and references",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "uploads are stored under a configurable workspace storage root",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "files that exceed configured size or type limits are rejected",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "the file storage interface can be replaced without requiring MinIO",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

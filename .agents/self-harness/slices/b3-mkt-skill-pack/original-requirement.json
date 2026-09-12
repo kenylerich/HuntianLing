@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B3",
+      "source": "user"
+    }
+  ],
+  "goal": "Ship the product MKT Skill pack with registry, capability boundary, depth 0-1, and a write tool that rejects missing quotes and technical design",
+  "actors": ["developer"],
+  "scenarios": [
+    "depth 0 and depth 1 writes of original requirements",
+    "missing pack skill blocks collection complete",
+    "repeated invalid depth 1 output downgrades"
+  ],
+  "constraints": ["not a PO/BA/marketing catalog"],
+  "nonGoals": ["skill-creator workflow", "technology packs"],
+  "openQuestions": [],
+  "confirmed": true
+}

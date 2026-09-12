@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-EVIDENCE-001",
+    "REQ-HARNESS-003"
+  ],
+  "outcome": "A project configures Definition of Ready and Definition of Done checks, and missing executed evidence still blocks delivered",
+  "acceptance": [
+    "a project returns its Definition of Ready and Definition of Done policy",
+    "a developer updates which Ready and Done checks the project requires",
+    "a story cannot become ready when a configured Ready check is missing",
+    "a story without executed evidence cannot transition to delivered",
+    "stale or failed required evidence still blocks delivered",
+    "a configured extra Done check such as unfinished children blocks delivered",
+    "inspecting delivery gates names the missing Ready or Done pieces",
+    "Story delivery start uses the project Ready policy",
+    "customers cannot change the project Ready or Done policy"
+  ],
+  "inScope": [
+    "project Ready and Done policy configuration",
+    "Ready transition using the project policy",
+    "delivered blocked when executed evidence is missing",
+    "extra Done checks from project policy",
+    "delivery-gate inspection"
+  ],
+  "outOfScope": [
+    "governance certification packs",
+    "visual designer editing of gates",
+    "removing the fused board cockpit"
+  ],
+  "assumptions": [
+    "default Ready checks remain analysis, design, acceptance, milestone, and no open blockers",
+    "customer-visible delivered still requires a passing executed evaluator, CI, or local Git check"
+  ],
+  "openQuestions": []
+}

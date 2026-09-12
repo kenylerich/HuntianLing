@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "uploading a PDF stores a source document and extracts text into parse status, errors, and chunks",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "uploading a Word document stores a source document and extracts text into chunks",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "an image with understanding or OCR extracts text; an image without understanding stays pending with a parse error",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "analysis extracts business goals, actors, scenarios, constraints, risks, assumptions, open questions, and acceptance criteria",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "LLM analysis can generate Bug candidates in addition to Epic, Feature, Story, Task, and Research nodes",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "generated candidates keep source references to messages, documents, or chunks where possible",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "human approval is still required before candidates become WorkItems",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "LLM analysis fails loud when no extractor is configured",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    },
+    {
+      "id": "customers can upload attachments and run analysis on their own intake sessions",
+      "result": "pass",
+      "evidence": "test/unit/intake-extract.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

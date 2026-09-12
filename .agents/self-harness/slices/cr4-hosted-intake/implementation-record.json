@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/intake/types.ts",
+    "src/host/intake/hosted.ts",
+    "src/host/intake/extract.ts",
+    "src/host/board/store.ts",
+    "src/host/board/plugin.ts",
+    "src/host/plugin.ts",
+    "test/unit/intake-hosted.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

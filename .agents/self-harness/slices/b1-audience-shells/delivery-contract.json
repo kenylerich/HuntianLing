@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-WEB-007", "REQ-AUTH-001", "REQ-WEB-001", "REQ-COLLAB-004"],
+  "outcome": "After login, each principal lands on their audience shell; cross-shell HTML is denied; Evaluator check failures write a repair handoff that Generator consumes",
+  "acceptance": [
+    "session principal includes audience customer, developer, or admin",
+    "unauthenticated GET of a shell redirects to login and does not serve the fused board",
+    "authenticated customer GET /developer or /admin is denied",
+    "login response includes shellPath for that audience",
+    "repair-loop writes a repair artifact when the check command fails and exits 0 when it passes"
+  ],
+  "inScope": [
+    "audience on auth users and principals",
+    "HTML routes /login /customer /developer /admin",
+    "self-harness repair-loop script"
+  ],
+  "outOfScope": [
+    "complete customer MKT UI",
+    "splitting page.ts CSS/JS into many files",
+    "OAuth"
+  ],
+  "assumptions": ["auth disabled still serves the developer board at /"],
+  "openQuestions": []
+}

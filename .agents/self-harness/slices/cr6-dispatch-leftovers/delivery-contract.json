@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-TEAM-003", "REQ-TEAM-004", "REQ-FLOW-003"],
+  "outcome": "Dispatch recommendation considers branch ownership and pending approvals, transfer is a distinct audited event, Code View shows lease badges, migration conflicts are listed, and a workflow step does not start when capacity, an exclusive lease, or branch ownership blocks it",
+  "acceptance": [
+    "a member who owns the WorkItem branch ranks higher in dispatch recommendation",
+    "pending approvals change dispatch ranking",
+    "transferring work writes a transfer event instead of a new assignment event",
+    "Code View shows active lease badges for the WorkItem",
+    "migration file leases appear as migration conflicts",
+    "a workflow step does not start when an exclusive lease or foreign branch ownership blocks it",
+    "customers cannot transfer dispatched work"
+  ],
+  "inScope": [
+    "branch-ownership and approval scoring",
+    "transfer as a distinct event",
+    "Code View lease badges",
+    "migration conflicts",
+    "workflow start checks for leases and branch ownership"
+  ],
+  "outOfScope": [
+    "token-cost capacity accounting",
+    "visual workflow designer"
+  ],
+  "assumptions": [
+    "dispatch recommend, exclusive leases, and workflow start already exist",
+    "managed branches record an owner"
+  ],
+  "openQuestions": []
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a project can add a role to a team member and the change is audited",
+      "result": "pass",
+      "evidence": "test/unit/team-roster.test.mjs"
+    },
+    {
+      "id": "a project can remove a role from a team member and the change is audited",
+      "result": "pass",
+      "evidence": "test/unit/team-roster.test.mjs"
+    },
+    {
+      "id": "a WorkItem can add and remove reviewers, approvers, and watchers from the project roster",
+      "result": "pass",
+      "evidence": "test/unit/team-roster.test.mjs"
+    },
+    {
+      "id": "unknown roles or members from another project fail loud",
+      "result": "pass",
+      "evidence": "test/unit/team-roster.test.mjs"
+    },
+    {
+      "id": "role, repository, CI, and environment WIP policies block a new assignment when the limit is reached",
+      "result": "pass",
+      "evidence": "test/unit/team-roster.test.mjs"
+    },
+    {
+      "id": "humans and agents can use different WIP policies",
+      "result": "pass",
+      "evidence": "test/unit/team-roster.test.mjs"
+    },
+    {
+      "id": "the team capacity view shows overload warnings from those policies",
+      "result": "pass",
+      "evidence": "test/unit/team-roster.test.mjs"
+    },
+    {
+      "id": "customers cannot change the roster, roles, participants, or WIP policies",
+      "result": "pass",
+      "evidence": "test/unit/web-team.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

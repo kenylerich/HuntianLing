@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D5",
+      "source": "user"
+    }
+  ],
+  "goal": "Authors inspect a template map and replay a test run without editing JSON",
+  "actors": ["developer"],
+  "scenarios": [
+    "a caller reads a static workflow map with stages, steps, and layer toggles without running it",
+    "the same template is shown as stage swimlane, role swimlane, dependency graph, and outline",
+    "validation badges appear on incomplete or invalid nodes",
+    "two template versions can be compared for added, removed, and changed steps",
+    "a test run replays over the same workflow map with frame-by-frame states",
+    "the replay report exports as publication evidence",
+    "customers cannot export a replay report"
+  ],
+  "constraints": [
+    "governance dashboard is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "governance dashboard",
+    "removing the fused board cockpit",
+    "live runtime run canvas replay"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

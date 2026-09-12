@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "an image extracts through configured hosted OCR without a per-test understanding stub",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "a PDF with no extractable text falls back to hosted OCR",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "a Word document still extracts without OCR",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "an image without OCR configuration stays pending with a parse error",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "mode llm uses a configured extractor without injecting a test stub",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "mode llm still fails loud when no extractor is configured",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "hosted credentials are supplied at call time or from the environment and are never persisted",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "human approval is still required before candidates become WorkItems",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    },
+    {
+      "id": "customers can upload attachments and run llm analysis on their own intake sessions",
+      "result": "pass",
+      "evidence": "test/unit/intake-hosted.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

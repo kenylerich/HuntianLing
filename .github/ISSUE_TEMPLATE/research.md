@@ -17,5 +17,14 @@ type: Research
 - 证据标准：
 - 交付结论：
 - 可能的后续工作：
+- 交付门禁证明（完成关闭前填写）：
+<!-- huntianling-delivery-gate -->
+  - WorkItem:
+  - Acceptance:
+  - Code:
+  - Review:
+  - CI:
+  - Evidence:
+  - Gates:
 
 </details>

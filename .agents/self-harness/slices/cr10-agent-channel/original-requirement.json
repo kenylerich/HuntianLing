@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR10",
+      "source": "user"
+    }
+  ],
+  "goal": "Agent Channel conversations record decisions and approvals, unresolved questions appear on the board, tasks can split and merge, and agent runtime reads selected channel messages before a collaboration task then writes conclusions back",
+  "actors": ["developer"],
+  "scenarios": [
+    "a caller records a conversation decision through the conversation API",
+    "a caller records a conversation approval through the conversation API",
+    "board and WorkItem views show unresolved team-chat questions and recorded decisions",
+    "task.split creates child collaboration tasks from a parent",
+    "task.merge combines selected tasks into one remaining task",
+    "unknown later catalog types are still rejected at write time",
+    "agent runtime reads selected channel messages before starting a collaboration task and writes conclusions back",
+    "agent runtime refuses to start when the collaboration task has a pending approval",
+    "customers cannot record decisions, approvals, split, or merge"
+  ],
+  "constraints": [
+    "specialist agent roster is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "specialist agent roster",
+    "remaining later catalog types beyond split, merge, decision, and approval",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

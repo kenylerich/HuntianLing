@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-FLOW-002",
+    "REQ-FLOW-003",
+    "REQ-FLOW-004",
+    "REQ-FLOW-005",
+    "REQ-FLOW-012",
+    "REQ-FLOW-013",
+    "REQ-FLOW-015",
+    "REQ-FLOW-017",
+    "REQ-FLOW-019"
+  ],
+  "outcome": "A WorkItem can be inspected against stage gates, planned into a scheduled human-agent run, gated by role-scoped approvals, and controlled from a visible timeline using built-in capabilities and a versioned default template",
+  "acceptance": [
+    "inspecting a transition lists required fields, evidence, reviews, and approvals and names what is missing",
+    "an invalid transition is blocked and the missing items are explained",
+    "override requires actor, reason, and scope and writes an audit record while forbidden lifecycle moves stay blocked",
+    "planning a WorkItem produces steps with dependencies, roles, skills, tools, checks, and handoffs",
+    "starting a plan creates a collaboration task for agent work and does not start blocked or unapproved steps",
+    "an approval request declares requester and required approver roles; approve, reject, and revision-request write role-scoped events",
+    "dependent steps stay queued until required approvals are resolved",
+    "a workflow run shows owner, running and blocked steps, waiting approvals, next action, scheduler reasons, and a timeline",
+    "authorized users can pause, resume, cancel, retry, and reassign steps",
+    "built-in capabilities and the default template are versioned; builtin definitions cannot be mutated in place and a project selects or clones them",
+    "customers cannot manage workflow runs or approvals"
+  ],
+  "inScope": [
+    "stage gates and override audit",
+    "orchestration plans and stored workflow runs",
+    "human approval requests and role-scoped events",
+    "scheduler queue with reasons",
+    "run timeline and step controls",
+    "built-in capability library and default template selection"
+  ],
+  "outOfScope": [
+    "visual designer canvas",
+    "workflow test lab",
+    "custom workflow packs",
+    "template rollback across active runs"
+  ],
+  "assumptions": [
+    "the default template is the user-story Planner, Generator, Evaluator path",
+    "C1 authority remains the Git push and merge gate"
+  ],
+  "openQuestions": []
+}

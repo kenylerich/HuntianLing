@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": ["src/host/web/page.ts"],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "lint": "pass"
+  },
+  "accepted": true
+}

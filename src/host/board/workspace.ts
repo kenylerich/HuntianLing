@@ -2,8 +2,8 @@
  * Resolve the HuntianLing workspace root (#84).
  *
  * Order: explicit option, HUNTIANLING_WORKSPACE, then cwd.
- * Manifests and hooks load relative to this root; board.json lives under
- * `<root>/.huntianling/`.
+ * Manifests and hooks load relative to this root; SQLite and optional JSON
+ * import live under `<root>/.huntianling/`.
  */
 
 import { isAbsolute, resolve } from 'node:path';

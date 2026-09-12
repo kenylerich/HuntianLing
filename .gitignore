@@ -30,6 +30,9 @@ Thumbs.db
 # Test output
 coverage/
 .nyc_output/
+output/playwright/
+.playwright-cli/
+.impeccable/review/
 
 # Recorder / local fixture diff
 fixtures/.recordings.local/

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-INTAKE-002", "REQ-INTAKE-003"],
+  "outcome": "An intake session can extract text from PDF, Word, and image attachments, and LLM analysis can extract structured candidate fields including Bug nodes without writing WorkItems until a human approves",
+  "acceptance": [
+    "uploading a PDF stores a source document and extracts text into parse status, errors, and chunks",
+    "uploading a Word document stores a source document and extracts text into chunks",
+    "an image with understanding or OCR extracts text; an image without understanding stays pending with a parse error",
+    "analysis extracts business goals, actors, scenarios, constraints, risks, assumptions, open questions, and acceptance criteria",
+    "LLM analysis can generate Bug candidates in addition to Epic, Feature, Story, Task, and Research nodes",
+    "generated candidates keep source references to messages, documents, or chunks where possible",
+    "human approval is still required before candidates become WorkItems",
+    "LLM analysis fails loud when no extractor is configured",
+    "customers can upload attachments and run analysis on their own intake sessions"
+  ],
+  "inScope": [
+    "PDF, Word, and image source extraction",
+    "LLM candidate extraction behind an injected extractor",
+    "structured candidate fields and Bug nodes"
+  ],
+  "outOfScope": [
+    "hosted OCR fleets",
+    "clarifying-question forms",
+    "Phase D workflow designer, OAuth, PostgreSQL, and issue sync"
+  ],
+  "assumptions": [
+    "Markdown and plain-text extraction already work",
+    "deterministic candidate generation remains the default when LLM mode is not requested"
+  ],
+  "openQuestions": []
+}

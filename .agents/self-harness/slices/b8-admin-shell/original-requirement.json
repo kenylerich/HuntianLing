@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B8",
+      "source": "user"
+    }
+  ],
+  "goal": "Admin shell manages users, project membership, environment readiness, access settings, and audit",
+  "actors": ["admin"],
+  "scenarios": [
+    "admin lists users and assigns audience",
+    "admin grants and revokes project membership",
+    "developer cannot open admin APIs",
+    "audit events are readable in the admin shell"
+  ],
+  "constraints": ["admin is not the primary editor of requirement text"],
+  "nonGoals": ["OAuth providers", "Business CRUD coverage matrix"],
+  "openQuestions": [],
+  "confirmed": true
+}

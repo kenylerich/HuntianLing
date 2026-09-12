@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a Story that fails Definition of Ready cannot start a delivery run",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "start writes a durable checkpoint outside the in-memory agent runtime",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "interrupt after a persisted step then resume on a new runtime does not re-run that step",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "duplicate or stale events are rejected and do not change run state",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "cancel records a visible reason and a recoverable handoff",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "retry limits block unbounded repair loops",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "driving one ready Story through the run records Planner, Generator, and Evaluator outputs and Evaluator evidence on the WorkItem",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "developer progress shows the Story delivery run and can start, pause, resume, or cancel it",
+      "result": "pass",
+      "evidence": "test/unit/web-delivery.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

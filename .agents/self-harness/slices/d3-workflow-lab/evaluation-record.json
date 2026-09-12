@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "a caller reads a canvas of stages and steps for a template",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d3.test.mjs"
+    },
+    {
+      "id": "editing a draft canvas node updates the template step and reports invalid nodes",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d3.test.mjs"
+    },
+    {
+      "id": "builtin templates cannot be overwritten on the canvas",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d3.test.mjs"
+    },
+    {
+      "id": "validate reports a missing dependency before publish",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d3.test.mjs"
+    },
+    {
+      "id": "Test Lab dry-runs happy-path, missing-approval, resource-conflict, stale-state, and missing-evidence",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d3.test.mjs"
+    },
+    {
+      "id": "publish is blocked until a passing happy-path test run exists",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d3.test.mjs"
+    },
+    {
+      "id": "customers cannot edit the canvas or run the Test Lab",
+      "result": "pass",
+      "evidence": "test/unit/workflow-d3.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

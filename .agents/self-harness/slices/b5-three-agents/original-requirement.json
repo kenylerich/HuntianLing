@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步B5",
+      "source": "user"
+    }
+  ],
+  "goal": "Planner, Generator, and Evaluator run as three task definitions with a User Story method baseline",
+  "actors": ["developer"],
+  "scenarios": [
+    "planner produces a delivery contract without implementation files",
+    "generator self-check cannot accept the slice",
+    "evaluator routes repair back to generator",
+    "user-story method changes planner output"
+  ],
+  "constraints": ["do not call a live model in unit tests"],
+  "nonGoals": ["workflow designer", "Story delivery run UI"],
+  "openQuestions": [],
+  "confirmed": true
+}

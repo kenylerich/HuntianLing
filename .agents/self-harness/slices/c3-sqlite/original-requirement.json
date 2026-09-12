@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步C3",
+      "source": "user"
+    }
+  ],
+  "goal": "Local and private deployments persist board records in SQLite and store uploaded files on the workspace filesystem with database metadata",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "opening a workspace with existing JSON board data loads that data from database tables",
+    "later board writes survive process restart without depending on board.json as the source of truth",
+    "an upload is stored under the workspace storage root with filename, MIME type, size, hash, uploader, project, and path recorded",
+    "an oversize or disallowed file type is rejected",
+    "large file bytes are not stored inside the database"
+  ],
+  "constraints": [
+    "upper layers use one internal database service rather than a concrete driver",
+    "schema migrations are versioned",
+    "the file backend can be replaced later without requiring MinIO"
+  ],
+  "nonGoals": [
+    "PostgreSQL",
+    "hosted GitHub, Gitea, or GitLab adapters",
+    "Phase D catalog work"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

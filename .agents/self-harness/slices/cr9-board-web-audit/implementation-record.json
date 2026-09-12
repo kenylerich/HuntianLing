@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/board/types.ts",
+    "src/host/board/store.ts",
+    "src/host/board/plugin.ts",
+    "src/host/database/types.ts",
+    "src/host/database/sqlite.ts",
+    "src/host/web/auth.ts",
+    "src/host/web/server.ts",
+    "src/host/web/pages/admin.ts",
+    "test/unit/web-cr9.test.mjs",
+    "test/unit/database-sqlite.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

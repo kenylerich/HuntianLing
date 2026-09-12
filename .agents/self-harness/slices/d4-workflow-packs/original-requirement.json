@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D4",
+      "source": "user"
+    }
+  ],
+  "goal": "Third-party packs pass conformance; custom events and node types stay catalogued",
+  "actors": ["developer"],
+  "scenarios": [
+    "the catalog lists built-in node types and system event types",
+    "importing a namespaced pack records its templates, custom events, custom nodes, and extension packages",
+    "conformance fails when a pack uses an unknown node type or an undeclared tool",
+    "a pack cannot be enabled for a project until conformance passes; conflicting extensions fail with an explicit conflict",
+    "custom events require a pack or project namespace and cannot redefine system events",
+    "custom nodes appear in the designer catalog only after conformance, and Test Lab simulates them from fixtures",
+    "customers cannot import packs or register custom events"
+  ],
+  "constraints": [
+    "issue tracker sync is out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "issue tracker sync",
+    "removing the fused board cockpit",
+    "timeout and retry Test Lab scenarios"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

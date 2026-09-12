@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步CR14",
+      "source": "user"
+    }
+  ],
+  "goal": "A validated skill-creator draft can be enabled for Agent execution on a chosen project without auto-enabling unvalidated drafts or other projects",
+  "actors": ["developer"],
+  "scenarios": [
+    "validating a draft does not register it for agent execution",
+    "a validated draft can be enabled for a project and used on an agent run",
+    "an unvalidated draft still cannot be enabled",
+    "enabling for one project does not enable it for another project",
+    "enabling one draft does not enable other drafts",
+    "enabled skill-creator versions are retained in history",
+    "enabled drafts survive process reload",
+    "customers cannot enable skill drafts"
+  ],
+  "constraints": [
+    "technology skill packs are out of scope",
+    "do not start Phase D chrome on the fused board cockpit",
+    "secrets never persist"
+  ],
+  "nonGoals": [
+    "technology skill packs",
+    "auto-enabling unvalidated drafts",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

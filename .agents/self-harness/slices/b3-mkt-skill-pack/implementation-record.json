@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/skills/types.ts",
+    "src/host/skills/original-requirement.ts",
+    "src/host/skills/mkt-pack.ts",
+    "src/host/skills/service.ts",
+    "src/host/skills/plugin.ts",
+    "src/host/plugin.ts",
+    "test/unit/mkt-skill-pack.test.mjs",
+    "test/unit/contract.test.mjs"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

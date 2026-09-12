@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-FLOW-016",
+    "REQ-FLOW-018"
+  ],
+  "outcome": "Authors inspect a template map and replay a test run without editing JSON",
+  "acceptance": [
+    "a caller reads a static workflow map with stages, steps, and layer toggles without running it",
+    "the same template is shown as stage swimlane, role swimlane, dependency graph, and outline",
+    "validation badges appear on incomplete or invalid nodes",
+    "two template versions can be compared for added, removed, and changed steps",
+    "a test run replays over the same workflow map with frame-by-frame states",
+    "the replay report exports as publication evidence",
+    "customers cannot export a replay report"
+  ],
+  "inScope": [
+    "static workflow map with swimlanes, outline, layers, badges, and inspector",
+    "template version diff",
+    "Test Lab replay over the designer map with exportable evidence"
+  ],
+  "outOfScope": [
+    "governance dashboard",
+    "removing the fused board cockpit",
+    "live runtime run canvas replay"
+  ],
+  "assumptions": [
+    "canvas, Test Lab dry-run, and template versioning already exist",
+    "runtime scheduler canvas replay stays with the runtime visualization requirement"
+  ],
+  "openQuestions": []
+}
