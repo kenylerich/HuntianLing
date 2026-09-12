@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "是不是要提交pr解决不生效的问题",
+      "source": "user conversation 2026-09-12"
+    },
+    {
+      "text": "另外就是我们的project的泳道，没有按照issue卡的真实状态进行切换是什么原因？",
+      "source": "user conversation 2026-09-12"
+    }
+  ],
+  "goal": "Publish the repository Issue lifecycle controls through an isolated pull request so Project lane changes can be deployed on master.",
+  "confirmed": true,
+  "actors": [
+    "repository maintainer",
+    "coding Agent"
+  ],
+  "constraints": [
+    "Preserve Grok work in the shared checkout.",
+    "Opening the PR does not deploy it or certify product delivery."
+  ],
+  "openQuestions": []
+}

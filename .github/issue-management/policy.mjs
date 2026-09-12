@@ -9,6 +9,7 @@ import config from './config.json' with { type: 'json' }
 const API_VERSION = '2026-03-10'
 const BODY_LIMIT = 50
 const AUDIT_MARKER = '<!-- dsh-issue-policy -->'
+const DELIVERY_GATE_MARKER = '<!-- huntianling-delivery-gate -->'
 const OWNER_LINE = /^Owner: @([A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?)$/
 const TYPES = new Set(['Idea', 'Feature', 'Bug', 'Research', 'Task'])
 const PRIORITIES = ['p0', 'p1', 'p2', 'p3']
@@ -36,19 +37,50 @@ const LEGACY_LABELS = new Set([
   'web-search',
 ])
 const TERMINAL_STATUSES = new Set(['Done', 'No action'])
-const ACTIVE_STATUS_ORDER = config.statuses.filter((status) => !TERMINAL_STATUSES.has(status))
-const IMPLEMENTATION_PULL_REQUEST_ACTIONS = new Set([
-  'opened',
-  'edited',
-  'synchronize',
-  'reopened',
-  'labeled',
-  'unlabeled',
+const OPEN_STATUSES = new Set(['Inbox', 'Backlog', 'Ready', 'In progress', 'In review'])
+const DEFAULT_ISSUE_STATUS = 'Inbox'
+const CODE_SUBMISSION_STATUSES = new Set(['In progress', 'In review'])
+const RECOVER_CLOSED_WORKFLOW_EVENT = 'recover_closed'
+const RECOVER_ILLEGAL_CLOSED_WORKFLOW_EVENT = 'recover_illegal_closed'
+const WORKFLOW_EVENT_TRANSITIONS = new Map([
+  ['intake', { status: 'Inbox', from: ['Inbox'] }],
+  ['triaged', { status: 'Backlog', from: ['Inbox'] }],
+  ['ready', { status: 'Ready', from: ['Backlog'] }],
+  ['work_started', { status: 'In progress', from: ['Ready'] }],
+  ['review_requested', { status: 'In review', from: ['In progress'] }],
+  ['changes_requested', { status: 'In progress', from: ['In review'] }],
+  ['completed', { status: 'Done', from: ['In review'], issueState: 'closed', stateReason: 'completed' }],
+  [
+    'no_action',
+    {
+      status: 'No action',
+      from: ['Inbox', 'Backlog', 'Ready', 'In progress', 'In review'],
+      issueState: 'closed',
+      stateReason: 'not_planned',
+    },
+  ],
+])
+const DELIVERY_GATE_FIELDS = [
+  ['workItem', 'WorkItem'],
+  ['acceptance', 'Acceptance'],
+  ['code', 'Code'],
+  ['review', 'Review'],
+  ['ci', 'CI'],
+  ['evidence', 'Evidence'],
+  ['gates', 'Gates'],
+]
+const DELIVERY_GATE_FIELD_ALIASES = new Map([
+  ['workitem', 'workItem'],
+  ['work_item', 'workItem'],
+  ['acceptance', 'acceptance'],
+  ['code', 'code'],
+  ['review', 'review'],
+  ['ci', 'ci'],
+  ['evidence', 'evidence'],
+  ['gate', 'gates'],
+  ['gates', 'gates'],
 ])
 
-for (const status of ['In progress', 'In review']) {
-  if (!ACTIVE_STATUS_ORDER.includes(status)) throw new Error(`config.statuses 缺少 ${status}`)
-}
 if (typeof config.lifecycleActor !== 'string' || !config.lifecycleActor) {
   throw new Error('config.lifecycleActor 未设置')
 }
@@ -60,6 +92,9 @@ if (typeof config.startDateField !== 'string' || !config.startDateField) {
 }
 if (typeof config.projectTimeZone !== 'string' || !config.projectTimeZone) {
   throw new Error('config.projectTimeZone 未设置')
+}
+for (const status of new Set([...WORKFLOW_EVENT_TRANSITIONS.values()].map((event) => event.status))) {
+  if (!config.statuses.includes(status)) throw new Error(`config.statuses 缺少 ${status}`)
 }
 Intl.DateTimeFormat('en-US', { timeZone: config.projectTimeZone })
 
@@ -180,49 +215,145 @@ export function requiresPullRequestPolicy({
 }
 
 /**
- * Translate a repository event into one resolving-Issue lifecycle command.
- * @param {string} eventName GitHub event name.
- * @param {{action?: string, review?: {state?: string}}} event GitHub event payload.
- * @returns {'implementation'|'review-requested'|'changes-requested'|null} Lifecycle command.
+ * Resolve a workflow event to the Project lane and optional native Issue state.
+ * @param {string} workflowEvent Workflow event id.
+ * @returns {{status: string, from: string[], issueState?: string, stateReason?: string}} Project and Issue transition.
  */
-export function resolvingIssueStatusCommand(eventName, event) {
-  if (eventName === 'pull_request') {
-    if (event.action === 'review_requested') return 'review-requested'
-    return IMPLEMENTATION_PULL_REQUEST_ACTIONS.has(event.action) ? 'implementation' : null
+export function workflowIssueTransition(workflowEvent) {
+  const transition = WORKFLOW_EVENT_TRANSITIONS.get(workflowEvent)
+  if (!transition) {
+    throw new Error(
+      `workflow_event 必须为：${[
+        ...WORKFLOW_EVENT_TRANSITIONS.keys(),
+        RECOVER_CLOSED_WORKFLOW_EVENT,
+        RECOVER_ILLEGAL_CLOSED_WORKFLOW_EVENT,
+      ].join(', ')}`,
+    )
   }
-  if (
-    eventName === 'pull_request_review' &&
-    event.action === 'submitted' &&
-    event.review?.state?.toLowerCase() === 'changes_requested'
-  ) {
-    return 'changes-requested'
-  }
-  return null
+  return transition
 }
 
 /**
- * Plan one event-directed resolving-Issue status transition.
- * @param {string|null} currentStatus Current Project status.
- * @param {'implementation'|'review-requested'|'changes-requested'} command Lifecycle command.
- * @param {string|null} currentStatusActor Actor that last set the current Project status.
- * @returns {string|null} Status to write, or null when no permitted transition exists.
+ * Validate one workflow-driven Project Status movement.
+ * @param {string|null} currentStatus Current Project Status.
+ * @param {string} workflowEvent Workflow event id.
+ * @returns {void} Resolves when the transition is allowed.
  */
-export function nextResolvingIssueStatus(currentStatus, command, currentStatusActor = null) {
-  let target
-  if (command === 'review-requested') target = 'In review'
-  else if (command === 'implementation' || command === 'changes-requested') target = 'In progress'
-  else throw new Error(`未知 lifecycle command：${command}`)
-
-  const currentIndex = ACTIVE_STATUS_ORDER.indexOf(currentStatus)
-  const targetIndex = ACTIVE_STATUS_ORDER.indexOf(target)
-  if (
-    command === 'changes-requested' &&
-    currentStatus === 'In review' &&
-    currentStatusActor === config.lifecycleActor
-  ) {
-    return target
+export function assertWorkflowIssueTransitionAllowed(currentStatus, workflowEvent) {
+  const transition = workflowIssueTransition(workflowEvent)
+  if (currentStatus === transition.status) return
+  if (!transition.from.includes(currentStatus)) {
+    throw new Error(
+      `workflow_event ${workflowEvent} requires current Status ${transition.from.join(' or ')}, got ${currentStatus ?? 'empty'}`,
+    )
   }
-  return currentIndex >= 0 && currentIndex < targetIndex ? target : null
+}
+
+/**
+ * Parse the visible delivery gate certificate from an Issue body.
+ * @param {string} body Issue Markdown body.
+ * @returns {{present: boolean, fields: Record<string, string>}} Parsed certificate fields.
+ */
+export function parseDeliveryGateCertificate(body) {
+  const markerIndex = body.indexOf(DELIVERY_GATE_MARKER)
+  if (markerIndex === -1) return { present: false, fields: {} }
+  const fields = {}
+  const source = body.slice(markerIndex + DELIVERY_GATE_MARKER.length)
+  for (const line of source.split(/\r?\n/)) {
+    const match = line.match(/^\s*(?:[-*]\s*)?([A-Za-z_]+)\s*[:：]\s*(.+?)\s*$/)
+    if (!match) continue
+    const key = DELIVERY_GATE_FIELD_ALIASES.get(match[1].toLowerCase())
+    if (key !== undefined && fields[key] === undefined) fields[key] = match[2].trim()
+  }
+  return { present: true, fields }
+}
+
+function deliveryGateValueIncomplete(value) {
+  return /^(?:-|n\/a|na|none|null|无|待补|待定|pending|missing|blocked|failed|fail|not done|未完成|缺失|阻塞|失败|未通过)\s*$/iu.test(
+    value.trim(),
+  )
+}
+
+/**
+ * Validate that a completed Issue has a delivery certificate that points at
+ * WorkItem evidence and the gate result.
+ * @param {string} body Issue Markdown body.
+ * @returns {string[]} Delivery gate errors.
+ */
+export function validateDeliveryGateCertificate(body) {
+  const certificate = parseDeliveryGateCertificate(body)
+  if (!certificate.present) {
+    return [`Done 必须包含 ${DELIVERY_GATE_MARKER} 交付门禁证明块`]
+  }
+  const errors = []
+  for (const [key, label] of DELIVERY_GATE_FIELDS) {
+    const value = certificate.fields[key]
+    if (value === undefined) {
+      errors.push(`交付门禁证明缺少 ${label}`)
+    } else if (deliveryGateValueIncomplete(value)) {
+      errors.push(`交付门禁证明 ${label} 仍未完成`)
+    }
+  }
+  const gateValue = certificate.fields.gates ?? ''
+  if (
+    gateValue &&
+    !/^(?:passed|pass|green|approved|ok|success|succeeded|通过|已通过|放行|成功)$/iu.test(gateValue.trim())
+  ) {
+    errors.push('交付门禁证明 Gates 必须明确通过')
+  }
+  return errors
+}
+
+/**
+ * Pick the Project lane used when a completed close is rejected.
+ * @param {string|null} currentStatus Current Project Status.
+ * @returns {string} Recovery Project Status.
+ */
+export function recoveryStatusForBlockedClose(currentStatus) {
+  if (currentStatus && OPEN_STATUSES.has(currentStatus)) return currentStatus
+  return 'In review'
+}
+
+/**
+ * Parse manual Issue workflow inputs from workflow_dispatch.
+ * @param {Record<string, unknown>} inputs GitHub workflow inputs.
+ * @returns {{number?: number, workflowEvent: string, status: string, issueState?: string, stateReason?: string}} Workflow request.
+ */
+export function workflowDispatchIssueRequest(inputs = {}) {
+  const workflowEvent = String(inputs.workflow_event ?? 'intake').trim() || 'intake'
+  if (workflowEvent === RECOVER_ILLEGAL_CLOSED_WORKFLOW_EVENT) {
+    return {
+      workflowEvent,
+      status: 'In review',
+      issueState: 'open',
+    }
+  }
+
+  const rawNumber = String(inputs.issue_number ?? '').trim()
+  if (!/^[1-9]\d*$/.test(rawNumber)) {
+    throw new Error('workflow_dispatch issue_number 必须是正整数')
+  }
+  const number = Number(rawNumber)
+  if (!Number.isSafeInteger(number)) {
+    throw new Error('workflow_dispatch issue_number 超出安全整数范围')
+  }
+
+  if (workflowEvent === RECOVER_CLOSED_WORKFLOW_EVENT) {
+    return {
+      number,
+      workflowEvent,
+      status: 'In review',
+      issueState: 'open',
+    }
+  }
+  const transition = workflowIssueTransition(workflowEvent)
+  return {
+    number,
+    workflowEvent,
+    status: transition.status,
+    ...(transition.issueState !== undefined ? { issueState: transition.issueState } : {}),
+    ...(transition.stateReason !== undefined ? { stateReason: transition.stateReason } : {}),
+  }
 }
 
 /**
@@ -344,6 +475,9 @@ export function validateIssue(issue) {
   if (status === 'Done' && (issue.state !== 'closed' || issue.stateReason !== 'completed')) {
     errors.push('Done 必须对应 Completed 关闭原因')
   }
+  if (status === 'Done') {
+    errors.push(...validateDeliveryGateCertificate(issue.body))
+  }
   if (
     status === 'No action' &&
     (issue.state !== 'closed' || issue.stateReason !== 'not_planned')
@@ -362,8 +496,17 @@ export function validateIssue(issue) {
  * @returns {string[]} Validation errors.
  */
 export function validatePullRequest(input) {
-  if (!requiresPullRequestPolicy(input)) return []
   const errors = []
+  for (const number of input.references.resolving) {
+    const issue = input.issues.get(number)
+    if (!issue) continue
+    if (!CODE_SUBMISSION_STATUSES.has(issue.status ?? null)) {
+      errors.push(
+        `#${number} 必须先通过工作流进入 In progress 或 In review，当前 Status 为 ${issue.status ?? '空'}`,
+      )
+    }
+  }
+  if (!requiresPullRequestPolicy(input)) return errors
   const kinds = input.labels.filter((label) => PR_KINDS.has(label))
   const unknownKinds = input.labels.filter(
     (label) => label.startsWith('kind/') && !PR_KINDS.has(label) && !LEGACY_LABELS.has(label),
@@ -480,14 +623,13 @@ export async function issueSnapshot(number, status = undefined) {
   }
 }
 
-async function projectContext(number, includeStatusActor = false, includeStartDate = false) {
+async function projectContext(number, includeStartDate = false) {
   const data = await graphql(
     `query(
       $organization: String!
       $repository: String!
       $number: Int!
       $project: Int!
-      $includeStatusActor: Boolean!
       $includeStartDate: Boolean!
       $priorityField: String!
       $startDateField: String!
@@ -500,16 +642,6 @@ async function projectContext(number, includeStatusActor = false, includeStartDa
         }
         issue(number: $number) {
           id
-          timelineItems(last: 100, itemTypes: [PROJECT_V2_ITEM_STATUS_CHANGED_EVENT])
-            @include(if: $includeStatusActor) {
-            nodes {
-              ... on ProjectV2ItemStatusChangedEvent {
-                actor { login }
-                project { id }
-                status
-              }
-            }
-          }
           projectItems(first: 20, includeArchived: true) {
             nodes {
               id
@@ -534,7 +666,6 @@ async function projectContext(number, includeStatusActor = false, includeStartDa
       repository: config.repository,
       number,
       project: config.projectNumber,
-      includeStatusActor,
       includeStartDate,
       priorityField: config.priorityField,
       startDateField: config.startDateField,
@@ -567,18 +698,11 @@ async function projectContext(number, includeStatusActor = false, includeStartDa
     throw new Error(`Project ${config.startDateField} 字段必须为 Project Date 字段`)
   }
   const item = issue.projectItems.nodes.find((candidate) => candidate.project.id === project.id)
-  const latestStatusEvent = issue.timelineItems?.nodes
-    ?.filter((event) => event?.project?.id === project.id)
-    .at(-1)
-  const statusActor =
-    latestStatusEvent && latestStatusEvent.status === item?.fieldValueByName?.name
-      ? (latestStatusEvent.actor?.login ?? null)
-      : null
-  return { project, issue, statusField, priorityField, startDateField, item, statusActor }
+  return { project, issue, statusField, priorityField, startDateField, item }
 }
 
 async function ensureProjectItem(number, includeStartDate = false) {
-  const context = await projectContext(number, false, includeStartDate)
+  const context = await projectContext(number, includeStartDate)
   if (context.item) return context
   const data = await graphql(
     `mutation($projectId: ID!, $contentId: ID!) {
@@ -665,11 +789,193 @@ async function updateStatus(context, status) {
   )
 }
 
+/**
+ * Add one Issue to the Project and write a default Status when the item has none.
+ * @param {number} number Same-repository Issue number.
+ * @param {string} status Status used only when the Project item has no Status.
+ * @returns {Promise<object>} Project context with a non-empty Status value.
+ */
+export async function initializeIssueProjectStatus(
+  number,
+  status = DEFAULT_ISSUE_STATUS,
+) {
+  const context = await ensureProjectItem(number)
+  if (context.item.fieldValueByName?.name) return context
+  const option = context.statusField.options.find((candidate) => candidate.name === status)
+  if (!option) throw new Error(`Status 不存在：${status}`)
+  await updateStatus(context, status)
+  return {
+    ...context,
+    item: {
+      ...context.item,
+      fieldValueByName: { name: status, optionId: option.id },
+    },
+  }
+}
+
+async function updateIssueState(number, state, stateReason) {
+  await api(`/repos/${config.organization}/${config.repository}/issues/${number}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      state,
+      ...(stateReason !== undefined ? { state_reason: stateReason } : {}),
+    }),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
 async function setStatus(number, status) {
   await updateStatus(await ensureProjectItem(number), status)
 }
 
-async function upsertAudit(number, errors) {
+async function listClosedCompletedIssueNumbers() {
+  const numbers = []
+  for (let page = 1; ; page += 1) {
+    const issues = await api(
+      `/repos/${config.organization}/${config.repository}/issues?state=closed&per_page=100&page=${page}`,
+    )
+    for (const issue of issues) {
+      if (!issue.pull_request && issue.state_reason === 'completed') numbers.push(issue.number)
+    }
+    if (issues.length < 100) return numbers
+  }
+}
+
+async function assertIssueReadyForLaneTransition(number, workflowEvent, currentStatus) {
+  const issue = await issueSnapshot(number, currentStatus)
+  if (issue === null) throw new Error(`#${number} 不是 Issue`)
+  const errors = validateIssue(issue)
+  const completedErrors = workflowEvent === 'completed' ? validateDeliveryGateCertificate(issue.body) : []
+  if (workflowEvent === 'completed') {
+    errors.push(...completedErrors)
+  }
+  if (errors.length > 0) {
+    return { passed: false, errors, completedErrors }
+  }
+  return { passed: true, errors: [], completedErrors: [] }
+}
+
+async function applyIssueWorkflowTransition(request) {
+  if (request.workflowEvent === RECOVER_ILLEGAL_CLOSED_WORKFLOW_EVENT) {
+    await recoverIllegalClosedIssues()
+    return
+  }
+  if (request.workflowEvent === RECOVER_CLOSED_WORKFLOW_EVENT) {
+    await recoverClosedIssue(request.number)
+    return
+  }
+  const context = await initializeIssueProjectStatus(request.number)
+  assertWorkflowIssueTransitionAllowed(context.item.fieldValueByName?.name ?? null, request.workflowEvent)
+  const gateCheck = await assertIssueReadyForLaneTransition(
+    request.number,
+    request.workflowEvent,
+    context.item.fieldValueByName?.name ?? null,
+  )
+  if (!gateCheck.passed) {
+    await upsertAudit(
+      request.number,
+      gateCheck.errors,
+    )
+    if (request.workflowEvent === 'completed' && gateCheck.completedErrors.length > 0) {
+      throw new Error(`Issue #${request.number} 缺少交付门禁证明，不能完成关闭`)
+    }
+    throw new Error(`Issue #${request.number} 在 ${request.workflowEvent} 前未通过泳道门禁`)
+  }
+  if (request.issueState) {
+    await updateIssueState(request.number, request.issueState, request.stateReason)
+  }
+  await updateStatus(context, request.status)
+  await auditIssue(
+    request.number,
+    [],
+    request.status,
+    `泳道事件 ${request.workflowEvent} 到 ${request.status} 的门禁检查通过`,
+    request.issueState,
+    request.stateReason,
+  )
+}
+
+async function handleClosedIssue(eventIssue) {
+  const number = eventIssue.number
+  const context = await initializeIssueProjectStatus(number)
+  if (eventIssue.state_reason === 'not_planned') {
+    await updateStatus(context, 'No action')
+    await auditIssue(
+      number,
+      [],
+      'No action',
+      `Issue #${number} 已按 ${eventIssue.state_reason} 关闭，No action 泳道校验通过`,
+      'closed',
+      'not_planned',
+    )
+    return
+  }
+
+  const issueBody =
+    typeof eventIssue.body === 'string'
+      ? eventIssue.body
+      : ((await issueSnapshot(number, context.item.fieldValueByName?.name ?? undefined))?.body ?? '')
+  const errors = validateDeliveryGateCertificate(issueBody)
+  if (errors.length > 0) {
+    const recoveryStatus = recoveryStatusForBlockedClose(context.item.fieldValueByName?.name ?? null)
+    await updateIssueState(number, 'open')
+    await updateStatus(context, recoveryStatus)
+    await upsertAudit(number, [
+      ...errors,
+      `非法关闭已恢复到 ${recoveryStatus}，需要补齐未完成任务、证据和门禁检查后再关闭`,
+    ])
+    return
+  }
+
+  await updateStatus(context, 'Done')
+  await auditIssue(
+    number,
+    [],
+    'Done',
+    `Issue #${number} 已完成关闭，Done 泳道校验通过`,
+    'closed',
+    'completed',
+  )
+}
+
+async function recoverClosedIssue(number) {
+  const issue = await issueSnapshot(number)
+  if (issue === null) throw new Error(`#${number} 不是 Issue`)
+  if (issue.state !== 'closed' || issue.stateReason !== 'completed') {
+    return { number, recovered: false, reason: 'not_completed_close' }
+  }
+  const errors = validateDeliveryGateCertificate(issue.body)
+  if (errors.length === 0) {
+    if (issue.status !== 'Done') await setStatus(number, 'Done')
+    process.stdout.write(`Issue #${number} 已有交付门禁证明，保持关闭。\n`)
+    return { number, recovered: false, reason: 'delivery_gate_present' }
+  }
+  const recoveryStatus = recoveryStatusForBlockedClose(issue.status)
+  if (issue.state !== 'open') await updateIssueState(number, 'open')
+  await setStatus(number, recoveryStatus)
+  await upsertAudit(number, [
+    ...errors,
+    `非法关闭已恢复到 ${recoveryStatus}，需要补齐未完成任务、证据和门禁检查后再关闭`,
+  ])
+  return { number, recovered: true, status: recoveryStatus }
+}
+
+export async function recoverIllegalClosedIssues() {
+  const numbers = await listClosedCompletedIssueNumbers()
+  const recovered = []
+  const skipped = []
+  for (const number of numbers) {
+    const result = await recoverClosedIssue(number)
+    if (result.recovered) recovered.push({ number: result.number, status: result.status })
+    else skipped.push({ number: result.number, reason: result.reason })
+  }
+  process.stdout.write(
+    `Recovered ${recovered.length} illegal completed Issue close(s); skipped ${skipped.length} gated Issue close(s).\n`,
+  )
+  return { recovered, skipped }
+}
+
+async function upsertAudit(number, errors, passMessage = '') {
   const comments = await api(
     `/repos/${config.organization}/${config.repository}/issues/${number}/comments?per_page=100`,
   )
@@ -677,11 +983,29 @@ async function upsertAudit(number, errors) {
     (comment) => comment.user?.type === 'Bot' && comment.body?.includes(AUDIT_MARKER),
   )
   if (errors.length === 0) {
-    if (existing) {
-      await api(`/repos/${config.organization}/${config.repository}/issues/comments/${existing.id}`, {
-        method: 'DELETE',
-      })
+    if (!passMessage) {
+      if (existing) {
+        await api(`/repos/${config.organization}/${config.repository}/issues/comments/${existing.id}`, {
+          method: 'DELETE',
+        })
+      }
+      return
     }
+    const body = `${AUDIT_MARKER}\n✅ Issue policy 通过：\n\n- ${passMessage}`
+    if (existing) {
+      if (existing.body === body) return
+      await api(`/repos/${config.organization}/${config.repository}/issues/comments/${existing.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ body }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+      return
+    }
+    await api(`/repos/${config.organization}/${config.repository}/issues/${number}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+      headers: { 'Content-Type': 'application/json' },
+    })
     return
   }
   const body = `${AUDIT_MARKER}\n⚠️ Issue policy 未通过：\n\n${errors.map((error) => `- ${error}`).join('\n')}`
@@ -701,11 +1025,26 @@ async function upsertAudit(number, errors) {
   }
 }
 
-async function auditIssue(number, extraErrors = [], status = undefined) {
+async function auditIssue(
+  number,
+  extraErrors = [],
+  status = undefined,
+  passMessage = '',
+  issueState = undefined,
+  stateReason = undefined,
+) {
   const issue = await issueSnapshot(number, status)
   if (!issue) return []
-  const errors = [...extraErrors, ...validateIssue(issue)]
-  await upsertAudit(number, errors)
+  const checkedIssue = {
+    ...issue,
+    ...(issueState !== undefined ? { state: issueState } : {}),
+    ...(stateReason !== undefined ? { stateReason } : {}),
+  }
+  const errors = [...extraErrors, ...validateIssue(checkedIssue)]
+  const finalPassMessage = errors.length
+    ? ''
+    : (passMessage || `Issue #${number} 当前状态 ${checkedIssue.status ?? 'In review'} 的泳道校验通过`)
+  await upsertAudit(number, errors, finalPassMessage)
   return errors
 }
 
@@ -751,22 +1090,6 @@ async function lifecyclePullRequestSnapshot(number) {
   }
 }
 
-async function transitionResolvingIssues(pull, command) {
-  for (const number of pull.references.resolving) {
-    const context = await projectContext(number, command === 'changes-requested')
-    const target = nextResolvingIssueStatus(
-      context.item?.fieldValueByName?.name ?? null,
-      command,
-      context.statusActor,
-    )
-    if (!target) continue
-    // TODO: Replace this latest-state guard with per-Issue serialization or a
-    // conditional ProjectV2 update; GraphQL currently has no compare-and-swap.
-    await updateStatus(context, target)
-    await auditIssue(number)
-  }
-}
-
 async function runPullRequestCheck(event) {
   const pull = await pullRequestSnapshot(event.pull_request.number)
   const errors = validatePullRequest(pull)
@@ -779,30 +1102,36 @@ async function runPullRequestCheck(event) {
   )
 }
 
-async function runLifecycle(eventName, event) {
+export async function runLifecycle(eventName, event) {
+  if (eventName === 'schedule') {
+    await recoverIllegalClosedIssues()
+    return
+  }
+
   if (eventName === 'issues') {
     const number = event.issue.number
     if (event.action === 'opened') await setStatus(number, 'Inbox')
     if (event.action === 'closed') {
-      const target = event.issue.state_reason === 'not_planned' ? 'No action' : 'Done'
-      await setStatus(number, target)
+      await handleClosedIssue(event.issue)
+      return
     }
     if (event.action === 'reopened') {
       await setStatus(number, 'Inbox')
     }
-    await ensureProjectItem(number)
+    await initializeIssueProjectStatus(number)
     await auditIssue(number)
     return
   }
 
-  if (eventName === 'pull_request' || eventName === 'pull_request_review') {
-    const command = resolvingIssueStatusCommand(eventName, event)
-    if (!command) return
+  if (eventName === 'workflow_dispatch') {
+    const request = workflowDispatchIssueRequest(event.inputs ?? {})
+    await applyIssueWorkflowTransition(request)
+    return
+  }
+
+  if (eventName === 'pull_request' && event.action === 'opened') {
     const pull = await lifecyclePullRequestSnapshot(event.pull_request.number)
-    await transitionResolvingIssues(pull, command)
-    if (eventName === 'pull_request') {
-      await initializePullRequestStartDates(pull, event.action)
-    }
+    await initializePullRequestStartDates(pull, event.action)
   }
 }
 

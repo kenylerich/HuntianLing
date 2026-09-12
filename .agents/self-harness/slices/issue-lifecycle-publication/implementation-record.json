@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    ".github/issue-management/policy.mjs",
+    ".github/issue-management/policy.test.mjs",
+    ".github/workflows/issue-lifecycle.yml",
+    ".github/workflows/ci.yml",
+    ".github/issue-management/README.md",
+    ".github/issue-management/README.zh.md",
+    ".github/issue-management/README.i18n.yaml",
+    "AGENTS.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "skipped",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  },
+  "evidence": [
+    "pnpm run typecheck",
+    "pnpm run build",
+    "node --test .github/issue-management/policy.test.mjs: 46 passed",
+    "Scoped bilingual hash, lifecycle and line-count validation passed",
+    "git diff --check"
+  ],
+  "limitations": [
+    "The master baseline does not have the doc-sync script; scoped bilingual validation covers the added guide.",
+    "Independent evaluation and live Project-write acceptance remain pending.",
+    "The parser validates a declared completion record, not the authenticity of external evidence."
+  ],
+  "executionKind": "external-agent"
+}

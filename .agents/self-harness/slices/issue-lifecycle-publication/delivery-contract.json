@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-ISSUE-001",
+    "REQ-EVIDENCE-001"
+  ],
+  "outcome": "A reviewable PR deploys explicit and gated Project lane controls without including ongoing product development.",
+  "acceptance": [
+    "Explicit workflow events enforce allowed Project transitions; PR metadata does not advance lanes.",
+    "Completed closes without the required delivery record are recovered; negative Gates values cannot pass.",
+    "Recovery preserves non-completed current Issue states and repairs stale Done projections for completed records.",
+    "CI runs the lifecycle regression tests from the candidate change.",
+    "The operator guide states merge/deployment requirements and the limits of manual evidence declarations."
+  ],
+  "inScope": [
+    "Repository Issue lifecycle projection and regression tests",
+    "Operator documentation and PR publication"
+  ],
+  "outOfScope": [
+    "Merging the PR or bulk changing live cards",
+    "Automatic mapping of local D slices to GitHub Issues",
+    "HuntianLing runtime Agent development"
+  ],
+  "assumptions": [
+    "Existing backlog REQ-ISSUE-001 and REQ-EVIDENCE-001 define the product scope; this is their repository-workflow subset."
+  ],
+  "openQuestions": []
+}

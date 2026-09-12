@@ -1,0 +1,4 @@
+source: .github/issue-management/README.md
+target: .github/issue-management/README.zh.md
+source_sha256: c8e0e625bc619556e49259c99e01aabb472ed3de6a040c5ff46b2ca648e011d7
+target_sha256: a787c8f162aff83cc510d5178fbebcd9f20467c251ba325b8b2b6e555358f7db

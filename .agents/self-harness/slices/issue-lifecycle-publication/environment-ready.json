@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "role": "environment",
+  "commands": {
+    "typecheck": "pass",
+    "test": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  },
+  "ready": true,
+  "evidence": [
+    "pnpm install --frozen-lockfile --ignore-scripts",
+    "pnpm run typecheck",
+    "node --test .github/issue-management/policy.test.mjs: 44 baseline tests passed"
+  ],
+  "executionKind": "external-agent"
+}

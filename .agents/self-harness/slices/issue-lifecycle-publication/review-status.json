@@ -1,0 +1,8 @@
+{
+  "status": "pending",
+  "required": [
+    "Independent review of the delivery contract and rerun of checks",
+    "Post-merge verification of explicit workflow events and actual Project lane writes"
+  ],
+  "customerDelivered": false
+}

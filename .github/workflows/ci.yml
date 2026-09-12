@@ -61,3 +61,6 @@ jobs:
 
       - name: Unit tests
         run: pnpm run test
+
+      - name: Issue lifecycle regression tests
+        run: node --test .github/issue-management/policy.test.mjs

@@ -16,16 +16,30 @@ on:
   pull_request:
     types:
       - opened
-      - edited
-      - synchronize
-      - reopened
-      - labeled
-      - unlabeled
-      - review_requested
-  pull_request_review:
-    types:
-      - submitted
+  schedule:
+    - cron: '*/15 * * * *'
   workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to add or move on the Project board; required except recover_illegal_closed
+        required: false
+        type: string
+      workflow_event:
+        description: Workflow event that controls the Project Status lane
+        required: true
+        default: intake
+        type: choice
+        options:
+          - intake
+          - triaged
+          - ready
+          - work_started
+          - review_requested
+          - changes_requested
+          - completed
+          - no_action
+          - recover_closed
+          - recover_illegal_closed
 
 permissions:
   contents: read
@@ -33,7 +47,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: issue-lifecycle-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  group: issue-lifecycle-${{ github.event.issue.number || github.event.pull_request.number || github.event.inputs.issue_number || github.workflow }}
   cancel-in-progress: false
 
 jobs:
@@ -52,7 +66,7 @@ jobs:
       # github.token cannot write kenylerich's user-level Project.
       - name: Create GitHub App token
         id: app-token
-        if: ${{ vars.HUNTIANLING_ISSUE_APP_CLIENT_ID != '' && (github.event_name != 'pull_request_review' || github.event.review.state == 'changes_requested') }}
+        if: ${{ vars.HUNTIANLING_ISSUE_APP_CLIENT_ID != '' }}
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.HUNTIANLING_ISSUE_APP_CLIENT_ID }}
@@ -62,7 +76,6 @@ jobs:
 
       - name: Resolve board token
         id: board-token
-        if: ${{ github.event_name != 'pull_request_review' || github.event.review.state == 'changes_requested' }}
         env:
           APP_TOKEN: ${{ steps.app-token.outputs.token }}
           PROJECT_TOKEN: ${{ secrets.HUNTIANLING_PROJECT_TOKEN }}
@@ -79,7 +92,6 @@ jobs:
           fi
 
       - name: Handle repository event
-        if: ${{ github.event_name != 'pull_request_review' || github.event.review.state == 'changes_requested' }}
         env:
           GH_TOKEN: ${{ steps.board-token.outputs.token }}
           PROJECT_TOKEN: ${{ steps.board-token.outputs.token }}

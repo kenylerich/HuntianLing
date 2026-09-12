@@ -2,23 +2,43 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  assertWorkflowIssueTransitionAllowed,
   countVisibleUnits,
+  initializeIssueProjectStatus,
   initializeIssueStartDate,
   initializePullRequestStartDates,
   issueSnapshot,
-  nextResolvingIssueStatus,
+  parseDeliveryGateCertificate,
   parseReferences,
   projectDate,
+  recoveryStatusForBlockedClose,
   retainIssueReferences,
-  resolvingIssueStatusCommand,
   requiresPullRequestPolicy,
+  runLifecycle,
+  validateDeliveryGateCertificate,
   validateBody,
   validateIssue,
   validatePullRequest,
+  workflowDispatchIssueRequest,
+  workflowIssueTransition,
 } from './policy.mjs'
+
+const projectStatusOptions = [
+  'Inbox',
+  'Backlog',
+  'Ready',
+  'In progress',
+  'In review',
+  'Done',
+  'No action',
+].map((name) => ({
+  id: `${name.toLowerCase().replaceAll(' ', '-')}-option-id`,
+  name,
+}))
 
 const projectGraphqlData = ({
   projectItem = true,
+  status = 'Inbox',
   priority = null,
   priorityField = true,
   priorityType = 'SINGLE_SELECT',
@@ -46,7 +66,7 @@ const projectGraphqlData = ({
               name: 'Status',
               dataType: 'SINGLE_SELECT',
               isIssueField: false,
-              options: [],
+              options: projectStatusOptions,
             },
             ...(priorityField
               ? [
@@ -81,7 +101,10 @@ const projectGraphqlData = ({
               {
                 id: 'item-id',
                 project: { id: 'project-id' },
-                fieldValueByName: { name: 'Inbox', optionId: 'inbox-option-id' },
+                fieldValueByName:
+                  status === null
+                    ? null
+                    : { name: status, optionId: `${status.toLowerCase().replaceAll(' ', '-')}-option-id` },
                 priorityValue:
                   priority === null ? null : { name: priority, optionId: `${priority}-option-id` },
                 startDateValue: startDate === null ? null : { date: startDate },
@@ -113,6 +136,17 @@ const mockGraphql = (t, resolve) => {
 
 const withDetails = (summary) =>
   `${summary}\n\n<details><summary>验收与细节</summary>待补充。</details>`
+
+const deliveryGateCertificate = [
+  '<!-- huntianling-delivery-gate -->',
+  '- WorkItem: HTL-42',
+  '- Acceptance: passed by acceptance coverage',
+  '- Code: PR #17',
+  '- Review: approved by reviewer',
+  '- CI: passed in CI run 2026-09-10',
+  '- Evidence: evidence-board record EV-42',
+  '- Gates: passed',
+].join('\n')
 
 const legalIssue = {
   title: '完成议题管理校验',
@@ -244,7 +278,13 @@ test('reserves PR kind and legacy labels for pull requests', () => {
 
 test('keeps terminal Status aligned with the native close reason', () => {
   assert.deepEqual(
-    validateIssue({ ...legalIssue, status: 'Done', state: 'closed', stateReason: 'completed' }),
+    validateIssue({
+      ...legalIssue,
+      body: withDetails(`完成议题管理校验。\n\n${deliveryGateCertificate}`),
+      status: 'Done',
+      state: 'closed',
+      stateReason: 'completed',
+    }),
     [],
   )
   assert.deepEqual(
@@ -257,6 +297,45 @@ test('keeps terminal Status aligned with the native close reason', () => {
     [],
   )
   assert.ok(validateIssue({ ...legalIssue, status: 'Done' }).includes('Done 必须对应 Completed 关闭原因'))
+  assert.ok(
+    validateIssue({
+      ...legalIssue,
+      status: 'Done',
+      state: 'closed',
+      stateReason: 'completed',
+    }).includes('Done 必须包含 <!-- huntianling-delivery-gate --> 交付门禁证明块'),
+  )
+})
+
+test('requires a delivery gate certificate before an Issue can be Done', () => {
+  assert.deepEqual(parseDeliveryGateCertificate(deliveryGateCertificate), {
+    present: true,
+    fields: {
+      workItem: 'HTL-42',
+      acceptance: 'passed by acceptance coverage',
+      code: 'PR #17',
+      review: 'approved by reviewer',
+      ci: 'passed in CI run 2026-09-10',
+      evidence: 'evidence-board record EV-42',
+      gates: 'passed',
+    },
+  })
+  assert.deepEqual(validateDeliveryGateCertificate(deliveryGateCertificate), [])
+  assert.deepEqual(
+    validateDeliveryGateCertificate('<!-- huntianling-delivery-gate -->\n- WorkItem: HTL-42\n- Gates: pending'),
+    [
+      '交付门禁证明缺少 Acceptance',
+      '交付门禁证明缺少 Code',
+      '交付门禁证明缺少 Review',
+      '交付门禁证明缺少 CI',
+      '交付门禁证明缺少 Evidence',
+      '交付门禁证明 Gates 仍未完成',
+      '交付门禁证明 Gates 必须明确通过',
+    ],
+  )
+  assert.equal(recoveryStatusForBlockedClose('Ready'), 'Ready')
+  assert.equal(recoveryStatusForBlockedClose('Done'), 'In review')
+  assert.equal(recoveryStatusForBlockedClose(null), 'In review')
 })
 
 test('separates resolving and informational references', () => {
@@ -273,6 +352,46 @@ test('converts PR creation timestamps to Shanghai Project dates', () => {
   assert.equal(projectDate('2026-08-27T15:59:59Z', 'Asia/Shanghai'), '2026-08-27')
   assert.equal(projectDate('2026-08-27T16:00:00Z', 'Asia/Shanghai'), '2026-08-28')
   assert.throws(() => projectDate('invalid', 'Asia/Shanghai'), /无效的 PR 创建时间/)
+})
+
+test('parses manual workflow event inputs', () => {
+  assert.deepEqual(
+    workflowDispatchIssueRequest({
+      issue_number: '42',
+      workflow_event: 'work_started',
+    }),
+    { number: 42, workflowEvent: 'work_started', status: 'In progress' },
+  )
+  assert.deepEqual(workflowDispatchIssueRequest({ issue_number: '42' }), {
+    number: 42,
+    workflowEvent: 'intake',
+    status: 'Inbox',
+  })
+  assert.deepEqual(
+    workflowDispatchIssueRequest({
+      issue_number: '42',
+      workflow_event: 'recover_closed',
+    }),
+    { number: 42, workflowEvent: 'recover_closed', status: 'In review', issueState: 'open' },
+  )
+  assert.deepEqual(
+    workflowDispatchIssueRequest({
+      workflow_event: 'recover_illegal_closed',
+    }),
+    { workflowEvent: 'recover_illegal_closed', status: 'In review', issueState: 'open' },
+  )
+  assert.throws(
+    () => workflowDispatchIssueRequest({ issue_number: '0' }),
+    /issue_number 必须是正整数/,
+  )
+  assert.throws(
+    () => workflowDispatchIssueRequest({ workflow_event: 'triaged' }),
+    /issue_number 必须是正整数/,
+  )
+  assert.throws(
+    () => workflowDispatchIssueRequest({ issue_number: '42', workflow_event: 'implementation' }),
+    /workflow_event 必须为/,
+  )
 })
 
 test('initializes every referenced Issue only for a PR opened event', async () => {
@@ -377,6 +496,608 @@ test('preserves an existing Project Start Date', async (t) => {
   assert.equal(requests.length, 1)
 })
 
+test('writes a default Project Status when the card has none', async (t) => {
+  const requests = mockGraphql(t, (request) => {
+    if (request.query.includes('query(')) return projectGraphqlData({ status: null })
+    return { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } }
+  })
+
+  const context = await initializeIssueProjectStatus(42)
+
+  assert.equal(context.item.fieldValueByName.name, 'Inbox')
+  assert.equal(requests.length, 2)
+  assert.match(requests[1].query, /updateProjectV2ItemFieldValue/)
+  assert.deepEqual(requests[1].variables, {
+    projectId: 'project-id',
+    itemId: 'item-id',
+    fieldId: 'status-field-id',
+    optionId: 'inbox-option-id',
+  })
+})
+
+test('adds a missing Project card before writing the default Status', async (t) => {
+  const requests = mockGraphql(t, (request) => {
+    if (request.query.includes('query(')) return projectGraphqlData({ projectItem: false })
+    if (request.query.includes('addProjectV2ItemById')) {
+      return { addProjectV2ItemById: { item: { id: 'new-item-id' } } }
+    }
+    return { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'new-item-id' } } }
+  })
+
+  const context = await initializeIssueProjectStatus(42)
+
+  assert.equal(context.item.id, 'new-item-id')
+  assert.equal(context.item.fieldValueByName.name, 'Inbox')
+  assert.equal(requests.length, 3)
+  assert.deepEqual(requests[1].variables, { projectId: 'project-id', contentId: 'issue-id' })
+  assert.deepEqual(requests[2].variables, {
+    projectId: 'project-id',
+    itemId: 'new-item-id',
+    fieldId: 'status-field-id',
+    optionId: 'inbox-option-id',
+  })
+})
+
+test('keeps an existing Project Status during backfill', async (t) => {
+  const requests = mockGraphql(t, () => projectGraphqlData({ status: 'Ready' }))
+
+  const context = await initializeIssueProjectStatus(42)
+
+  assert.equal(context.item.fieldValueByName.name, 'Ready')
+  assert.equal(requests.length, 1)
+})
+
+test('reopens completed Issue closes that lack delivery gates and restores the review lane', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url === 'https://api.github.com/graphql') {
+      assert.equal(options.headers.Authorization, 'Bearer project-token')
+      if (body.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: 'Done' }) })
+      return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+    }
+    assert.equal(options.headers.Authorization, 'Bearer repository-token')
+    if (url.endsWith('/issues/42')) return Response.json({})
+    if (url.endsWith('/issues/42/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/42/comments')) return Response.json({ id: 'comment-id' })
+    throw new Error(`unexpected request: ${url}`)
+  })
+
+  await runLifecycle('issues', {
+    action: 'closed',
+    issue: {
+      number: 42,
+      state_reason: 'completed',
+      body: withDetails('完成但缺少交付证明。'),
+    },
+  })
+
+  const reopen = requests.find((request) => request.url.endsWith('/issues/42') && request.method === 'PATCH')
+  assert.deepEqual(reopen.body, { state: 'open' })
+  const statusWrite = requests.find((request) =>
+    request.url === 'https://api.github.com/graphql' &&
+    request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrite.body.variables.optionId, 'in-review-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST')
+  assert.match(auditComment.body.body, /非法关闭已恢复到 In review/)
+  assert.match(auditComment.body.body, /交付门禁证明/)
+})
+
+test('writes pass audit when an Issue is closed as no action', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url.endsWith('/issues/42/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/42/comments')) return Response.json({ id: 'comment-id', body: body?.body })
+    if (url === 'https://api.github.com/graphql') {
+      if (body.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: 'In review' }) })
+      return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+    }
+    if (url.endsWith('/issues/42')) {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json({
+        node_id: 'issue-id',
+        title: '转为不做任务',
+        body: withDetails('不做该议题。'),
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'closed',
+        state_reason: 'not_planned',
+      })
+    }
+    throw new Error(`unexpected request: ${url}`)
+  })
+
+  await runLifecycle('issues', {
+    action: 'closed',
+    issue: {
+      number: 42,
+      state_reason: 'not_planned',
+    },
+  })
+
+  const statusWrite = requests.find(
+    (request) =>
+      request.url === 'https://api.github.com/graphql' &&
+      request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrite.body.variables.optionId, 'no-action-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST')
+  assert.ok(auditComment?.body?.body.includes('✅ Issue policy 通过'))
+  assert.ok(auditComment?.body?.body.includes('No action 泳道校验通过'))
+})
+
+test('writes pass audit when an Issue is closed as completed with delivery gates', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url.endsWith('/issues/42/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/42/comments')) return Response.json({ id: 'comment-id', body: body?.body })
+    if (url === 'https://api.github.com/graphql') {
+      if (body.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: 'In review' }) })
+      return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+    }
+    if (url.endsWith('/issues/42')) {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json({
+        node_id: 'issue-id',
+        title: '完成并交付的任务',
+        body: `${withDetails('完成并交付。')}\n\n${deliveryGateCertificate}`,
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'closed',
+        state_reason: 'completed',
+      })
+    }
+    throw new Error(`unexpected request: ${url}`)
+  })
+
+  await runLifecycle('issues', {
+    action: 'closed',
+    issue: {
+      number: 42,
+      state_reason: 'completed',
+    },
+  })
+
+  const statusWrite = requests.find(
+    (request) =>
+      request.url === 'https://api.github.com/graphql' &&
+      request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrite.body.variables.optionId, 'done-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST')
+  assert.ok(auditComment?.body?.body.includes('✅ Issue policy 通过'))
+  assert.ok(auditComment?.body?.body.includes('Done 泳道校验通过'))
+})
+
+test('blocks lane transition when policy gate checks fail', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url.endsWith('/issues/42')) {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json({
+        node_id: 'issue-id',
+        title: '[Bug] 阻塞前端任务',
+        body: withDetails('执行前门禁拦截测试。'),
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'open',
+        state_reason: null,
+      })
+    }
+    if (url.endsWith('/issues/42/comments?per_page=100')) {
+      return Response.json([])
+    }
+    if (url.endsWith('/issues/42/comments')) {
+      return Response.json({ id: 'comment-id', body: body?.body })
+    }
+    assert.equal(url, 'https://api.github.com/graphql')
+    assert.equal(options.headers.Authorization, 'Bearer project-token')
+    if (body?.query?.includes('query(')) {
+      return Response.json({ data: projectGraphqlData({ status: 'Inbox' }) })
+    }
+    if (body?.query?.includes('updateProjectV2ItemFieldValue')) {
+      assert.fail('lane transition should be blocked before status update')
+    }
+    throw new Error(`unexpected request: ${url}`)
+  })
+
+  await assert.rejects(
+    runLifecycle('workflow_dispatch', {
+      inputs: {
+        issue_number: '42',
+        workflow_event: 'triaged',
+      },
+    }),
+    /在 triaged 前未通过泳道门禁/,
+  )
+
+  const auditComment = requests.find(
+    (request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST',
+  )
+  assert.ok(auditComment?.body?.body.includes('Issue 标题不得带 Type、Priority、Status、area 或 Owner 前缀'))
+})
+
+test('writes pass audit when lane transition gate checks pass', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url.endsWith('/issues/42')) {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json({
+        node_id: 'issue-id',
+        title: '完成并有闭环证据的任务',
+        body: withDetails('执行流转门禁通过示例。'),
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'open',
+        state_reason: null,
+      })
+    }
+    if (url.endsWith('/issues/42/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/42/comments')) return Response.json({ id: 'comment-id', body: body?.body })
+    assert.equal(url, 'https://api.github.com/graphql')
+    assert.equal(options.headers.Authorization, 'Bearer project-token')
+    if (body.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: 'Inbox' }) })
+    return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+  })
+
+  await runLifecycle('workflow_dispatch', {
+    inputs: {
+      issue_number: '42',
+      workflow_event: 'triaged',
+    },
+  })
+
+  const statusWrite = requests.find(
+    (request) =>
+      request.url === 'https://api.github.com/graphql' &&
+      request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrite.body.variables.optionId, 'backlog-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST')
+  assert.ok(auditComment?.body?.body.includes('✅ Issue policy 通过'))
+  assert.ok(auditComment?.body?.body.includes('泳道事件 triaged 到 Backlog 的门禁检查通过'))
+})
+
+test('checks no_action transition and writes pass audit', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url.endsWith('/issues/42')) {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      if (method === 'PATCH') return Response.json({})
+      return Response.json({
+        node_id: 'issue-id',
+        title: '停办并保留证据的任务',
+        body: withDetails('执行 no_action 门禁通过示例。'),
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'open',
+        state_reason: null,
+      })
+    }
+    if (url.endsWith('/issues/42/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/42/comments')) return Response.json({ id: 'comment-id', body: body?.body })
+    assert.equal(url, 'https://api.github.com/graphql')
+    assert.equal(options.headers.Authorization, 'Bearer project-token')
+    if (body.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: 'In review' }) })
+      return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+  })
+
+  await runLifecycle('workflow_dispatch', {
+    inputs: {
+      issue_number: '42',
+      workflow_event: 'no_action',
+    },
+  })
+
+  const reopen = requests.find((request) => request.url.endsWith('/issues/42') && request.method === 'PATCH')
+  assert.deepEqual(reopen.body, { state: 'closed', state_reason: 'not_planned' })
+  const statusWrite = requests.find(
+    (request) =>
+      request.url === 'https://api.github.com/graphql' &&
+      request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrite.body.variables.optionId, 'no-action-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST')
+  assert.ok(auditComment?.body?.body.includes('✅ Issue policy 通过'))
+  assert.ok(auditComment?.body?.body.includes('泳道事件 no_action 到 No action 的门禁检查通过'))
+})
+
+test('checks completed transition with delivery gate certificate and writes pass audit', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url.endsWith('/issues/42')) {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      if (method === 'PATCH') return Response.json({})
+      return Response.json({
+        node_id: 'issue-id',
+        title: '完成并交付的任务',
+        body: `${withDetails('完成并交付的任务。')}\n\n${deliveryGateCertificate}`,
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'open',
+        state_reason: null,
+      })
+    }
+    if (url.endsWith('/issues/42/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/42/comments')) return Response.json({ id: 'comment-id', body: body?.body })
+    assert.equal(url, 'https://api.github.com/graphql')
+    assert.equal(options.headers.Authorization, 'Bearer project-token')
+    if (body.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: 'In review' }) })
+      return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+  })
+
+  await runLifecycle('workflow_dispatch', {
+    inputs: {
+      issue_number: '42',
+      workflow_event: 'completed',
+    },
+  })
+
+  const closeRequest = requests.find((request) => request.url.endsWith('/issues/42') && request.method === 'PATCH')
+  assert.deepEqual(closeRequest.body, { state: 'closed', state_reason: 'completed' })
+  const statusWrite = requests.find(
+    (request) =>
+      request.url === 'https://api.github.com/graphql' &&
+      request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrite.body.variables.optionId, 'done-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST')
+  assert.ok(auditComment?.body?.body.includes('✅ Issue policy 通过'))
+  assert.ok(auditComment?.body?.body.includes('泳道事件 completed 到 Done 的门禁检查通过'))
+})
+
+test('workflow dispatch can recover an already closed Issue card', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+    if (url.endsWith('/issues/42') && method === 'GET') {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json({
+        node_id: 'issue-id',
+        title: '恢复非法关闭卡片',
+        body: withDetails('完成但缺少门禁证明。'),
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'closed',
+        state_reason: 'completed',
+      })
+    }
+    if (url === 'https://api.github.com/graphql') {
+      assert.equal(options.headers.Authorization, 'Bearer project-token')
+      if (body.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: 'Done' }) })
+      return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+    }
+    assert.equal(options.headers.Authorization, 'Bearer repository-token')
+    if (url.endsWith('/issues/42') && method === 'PATCH') return Response.json({})
+    if (url.endsWith('/issues/42/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/42/comments')) return Response.json({ id: 'comment-id' })
+    throw new Error(`unexpected request: ${url}`)
+  })
+
+  await runLifecycle('workflow_dispatch', {
+    inputs: {
+      issue_number: '42',
+      workflow_event: 'recover_closed',
+    },
+  })
+
+  const reopen = requests.find((request) => request.url.endsWith('/issues/42') && request.method === 'PATCH')
+  assert.deepEqual(reopen.body, { state: 'open' })
+  const statusWrites = requests.filter((request) =>
+    request.url === 'https://api.github.com/graphql' &&
+    request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrites.at(-1).body.variables.optionId, 'in-review-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/42/comments') && request.method === 'POST')
+  assert.match(auditComment.body.body, /非法关闭已恢复到 In review/)
+})
+
+test('scheduled lifecycle recovers illegal completed closes without touching gated Done cards', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    const body = typeof options.body === 'string' ? JSON.parse(options.body) : null
+    requests.push({ url, method, body })
+
+    if (url.endsWith('/issues?state=closed&per_page=100&page=1')) {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json([
+        { number: 41, state_reason: 'completed' },
+        { number: 42, state_reason: 'not_planned' },
+        { number: 43, state_reason: 'completed', pull_request: {} },
+        { number: 44, state_reason: 'completed' },
+      ])
+    }
+    if (url.endsWith('/issues/41') && method === 'GET') {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json({
+        node_id: 'issue-41-id',
+        title: '恢复缺证据卡片',
+        body: withDetails('完成但缺少交付证明。'),
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'closed',
+        state_reason: 'completed',
+      })
+    }
+    if (url.endsWith('/issues/44') && method === 'GET') {
+      assert.equal(options.headers.Authorization, 'Bearer repository-token')
+      return Response.json({
+        node_id: 'issue-44-id',
+        title: '保持合法完成卡片',
+        body: `${withDetails('合法完成。')}\n\n${deliveryGateCertificate}`,
+        assignees: [],
+        labels: [],
+        type: { name: 'Task' },
+        state: 'closed',
+        state_reason: 'completed',
+      })
+    }
+    if (url === 'https://api.github.com/graphql') {
+      assert.equal(options.headers.Authorization, 'Bearer project-token')
+      if (body.query.includes('query(')) {
+        return Response.json({
+          data: projectGraphqlData({ status: 'Done' }),
+        })
+      }
+      return Response.json({
+        data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } },
+      })
+    }
+
+    assert.equal(options.headers.Authorization, 'Bearer repository-token')
+    if (url.endsWith('/issues/41') && method === 'PATCH') return Response.json({})
+    if (url.endsWith('/issues/41/comments?per_page=100')) return Response.json([])
+    if (url.endsWith('/issues/41/comments')) return Response.json({ id: 'comment-id' })
+    throw new Error(`unexpected request: ${url}`)
+  })
+
+  await runLifecycle('schedule', {})
+
+  const reopens = requests.filter((request) => request.method === 'PATCH' && request.url.endsWith('/issues/41'))
+  assert.deepEqual(reopens.map((request) => request.body), [{ state: 'open' }])
+  assert.equal(requests.some((request) => request.method === 'PATCH' && request.url.endsWith('/issues/44')), false)
+  const statusWrites = requests.filter((request) =>
+    request.url === 'https://api.github.com/graphql' &&
+    request.body?.query.includes('updateProjectV2ItemFieldValue'),
+  )
+  assert.equal(statusWrites.length, 1)
+  assert.equal(statusWrites[0].body.variables.optionId, 'in-review-option-id')
+  const auditComment = requests.find((request) => request.url.endsWith('/issues/41/comments') && request.method === 'POST')
+  assert.match(auditComment.body.body, /非法关闭已恢复到 In review/)
+  assert.match(auditComment.body.body, /交付门禁证明/)
+})
+
 test('adds a referenced Issue to the Project before setting Start Date', async (t) => {
   const requests = mockGraphql(t, (request) => {
     if (request.query.includes('query(')) return projectGraphqlData({ projectItem: false })
@@ -471,8 +1192,8 @@ test('enforces highest resolving Priority without Type or area synchronization',
     labels: ['kind/cleanup', 'p0', 'area/web'],
     references: { all: [2, 3], resolving: [2, 3], related: [] },
     issues: new Map([
-      [2, { type: 'Feature', priority: 'P2', labels: ['area/web'] }],
-      [3, { type: 'Bug', priority: 'P0', labels: ['area/session'] }],
+      [2, { type: 'Feature', priority: 'P2', status: 'In progress', labels: ['area/web'] }],
+      [3, { type: 'Bug', priority: 'P0', status: 'In progress', labels: ['area/session'] }],
     ]),
   }
   assert.deepEqual(validatePullRequest(pull), [])
@@ -504,76 +1225,42 @@ test('requires policy only after a human PR enters review', () => {
   )
 })
 
-test('maps only explicit review handoffs to review status commands', () => {
-  assert.equal(
-    resolvingIssueStatusCommand('pull_request', {
-      action: 'review_requested',
-    }),
-    'review-requested',
+test('maps workflow events to Project Status lanes', () => {
+  assert.deepEqual(workflowIssueTransition('intake'), { status: 'Inbox', from: ['Inbox'] })
+  assert.deepEqual(workflowIssueTransition('triaged'), { status: 'Backlog', from: ['Inbox'] })
+  assert.deepEqual(workflowIssueTransition('ready'), { status: 'Ready', from: ['Backlog'] })
+  assert.deepEqual(workflowIssueTransition('work_started'), { status: 'In progress', from: ['Ready'] })
+  assert.deepEqual(workflowIssueTransition('review_requested'), { status: 'In review', from: ['In progress'] })
+  assert.deepEqual(workflowIssueTransition('changes_requested'), { status: 'In progress', from: ['In review'] })
+  assert.deepEqual(workflowIssueTransition('completed'), {
+    status: 'Done',
+    from: ['In review'],
+    issueState: 'closed',
+    stateReason: 'completed',
+  })
+  assert.deepEqual(workflowIssueTransition('no_action'), {
+    status: 'No action',
+    from: ['Inbox', 'Backlog', 'Ready', 'In progress', 'In review'],
+    issueState: 'closed',
+    stateReason: 'not_planned',
+  })
+  assert.throws(() => workflowIssueTransition('pull_request_opened'), /workflow_event 必须为/)
+})
+
+test('blocks workflow events that skip the required Status lane', () => {
+  assert.equal(assertWorkflowIssueTransitionAllowed('Ready', 'work_started'), undefined)
+  assert.equal(assertWorkflowIssueTransitionAllowed('In progress', 'work_started'), undefined)
+  assert.throws(
+    () => assertWorkflowIssueTransitionAllowed('Backlog', 'work_started'),
+    /requires current Status Ready/,
   )
-  assert.equal(
-    resolvingIssueStatusCommand('pull_request_review', {
-      action: 'submitted',
-      review: { state: 'changes_requested' },
-    }),
-    'changes-requested',
-  )
-  for (const state of ['approved', 'commented']) {
-    assert.equal(
-      resolvingIssueStatusCommand('pull_request_review', {
-        action: 'submitted',
-        review: { state },
-      }),
-      null,
-    )
-  }
-  assert.equal(
-    resolvingIssueStatusCommand('pull_request_review', {
-      action: 'dismissed',
-      review: { state: 'changes_requested' },
-    }),
-    null,
+  assert.throws(
+    () => assertWorkflowIssueTransitionAllowed('Ready', 'completed'),
+    /requires current Status In review/,
   )
 })
 
-test('keeps ordinary pull request events as forward-only implementation signals', () => {
-  for (const action of ['opened', 'edited', 'synchronize', 'reopened', 'labeled', 'unlabeled']) {
-    assert.equal(resolvingIssueStatusCommand('pull_request', { action }), 'implementation')
-  }
-  assert.equal(
-    resolvingIssueStatusCommand('pull_request', { action: 'review_request_removed' }),
-    null,
-  )
-})
-
-test('toggles automation-owned work on request changes and repeated review request', () => {
-  for (const status of ['Inbox', 'Backlog', 'Ready']) {
-    assert.equal(nextResolvingIssueStatus(status, 'implementation'), 'In progress')
-    assert.equal(nextResolvingIssueStatus(status, 'review-requested'), 'In review')
-    assert.equal(nextResolvingIssueStatus(status, 'changes-requested'), 'In progress')
-  }
-  let status = nextResolvingIssueStatus(
-    'In review',
-    'changes-requested',
-    'kenylerich',
-  )
-  assert.equal(status, 'In progress')
-  status = nextResolvingIssueStatus(status, 'review-requested')
-  assert.equal(status, 'In review')
-})
-
-test('preserves human review status and terminal Issues', () => {
-  assert.equal(nextResolvingIssueStatus('In progress', 'implementation'), null)
-  assert.equal(nextResolvingIssueStatus('In review', 'implementation'), null)
-  assert.equal(nextResolvingIssueStatus('In review', 'review-requested'), null)
-  assert.equal(nextResolvingIssueStatus('In review', 'changes-requested', 'tianyicui'), null)
-  assert.equal(nextResolvingIssueStatus('In review', 'changes-requested'), null)
-  assert.equal(nextResolvingIssueStatus('Done', 'review-requested'), null)
-  assert.equal(nextResolvingIssueStatus('No action', 'changes-requested'), null)
-  assert.equal(nextResolvingIssueStatus(null, 'review-requested'), null)
-})
-
-test('keeps lifecycle projection independent of PR metadata enforcement', () => {
+test('keeps workflow status projection independent of PR metadata enforcement', () => {
   const pull = {
     isDraft: false,
     authorType: 'User',
@@ -585,7 +1272,7 @@ test('keeps lifecycle projection independent of PR metadata enforcement', () => 
   }
 
   assert.ok(validatePullRequest(pull).length > 0)
-  assert.equal(nextResolvingIssueStatus('Inbox', 'review-requested'), 'In review')
+  assert.equal(workflowIssueTransition('review_requested').status, 'In review')
 })
 
 test('exempts Draft, Bot, and App PRs', () => {
@@ -657,11 +1344,11 @@ test('allows missing Priority only when resolving Issues are also unprioritized'
     reviewCount: 0,
     labels: ['kind/feature', 'area/web'],
     references: { all: [2], resolving: [2], related: [] },
-    issues: new Map([[2, { priority: null }]]),
+    issues: new Map([[2, { priority: null, status: 'In progress' }]]),
   }
   assert.deepEqual(validatePullRequest(pull), [])
   assert.ok(
-    validatePullRequest({ ...pull, issues: new Map([[2, { priority: 'P2' }]]) }).includes(
+    validatePullRequest({ ...pull, issues: new Map([[2, { priority: 'P2', status: 'In progress' }]]) }).includes(
       'PR Priority 应为 p2',
     ),
   )
@@ -670,4 +1357,80 @@ test('allows missing Priority only when resolving Issues are also unprioritized'
       '有 Priority 的解决型 PR 要求每个被解决 Issue 都设置 Priority',
     ),
   )
+})
+
+test('blocks resolving PRs before the workflow starts development', () => {
+  const pull = {
+    isDraft: true,
+    authorType: 'User',
+    reviewRequestCount: 0,
+    reviewCount: 0,
+    labels: [],
+    references: { all: [2], resolving: [2], related: [] },
+    issues: new Map([[2, { priority: null, status: 'Ready' }]]),
+  }
+
+  assert.ok(
+    validatePullRequest(pull).includes(
+      '#2 必须先通过工作流进入 In progress 或 In review，当前 Status 为 Ready',
+    ),
+  )
+})
+
+test('rejects negated and mixed gate decisions instead of matching success substrings', () => {
+  for (const decision of ['not passed', 'not approved', '未通过：待审核', 'pass but CI failed', 'success pending review']) {
+    const body = deliveryGateCertificate.replace('- Gates: passed', `- Gates: ${decision}`)
+    assert.ok(validateDeliveryGateCertificate(body).length > 0, decision)
+  }
+  for (const decision of ['passed', 'PASS', 'approved', '已通过']) {
+    const body = deliveryGateCertificate.replace('- Gates: passed', `- Gates: ${decision}`)
+    assert.deepEqual(validateDeliveryGateCertificate(body), [], decision)
+  }
+})
+
+test('recovery rechecks current Issue state and repairs a stale certified Done projection', async (t) => {
+  const previousGhToken = process.env.GH_TOKEN
+  const previousProjectToken = process.env.PROJECT_TOKEN
+  process.env.GH_TOKEN = 'repository-token'
+  process.env.PROJECT_TOKEN = 'project-token'
+  t.after(() => {
+    if (previousGhToken === undefined) delete process.env.GH_TOKEN
+    else process.env.GH_TOKEN = previousGhToken
+    if (previousProjectToken === undefined) delete process.env.PROJECT_TOKEN
+    else process.env.PROJECT_TOKEN = previousProjectToken
+  })
+  let current = { state: 'open', reason: 'reopened', status: 'In progress', certificate: false }
+  const mutations = []
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const method = options.method ?? 'GET'
+    if (url.endsWith('/issues/42') && method === 'GET') {
+      return Response.json({
+        node_id: 'issue-id', title: '核对交付状态',
+        body: withDetails('核对状态。') + (current.certificate ? `\n${deliveryGateCertificate}` : ''),
+        assignees: [], labels: [], type: { name: 'Task' },
+        state: current.state, state_reason: current.reason,
+      })
+    }
+    if (url === 'https://api.github.com/graphql') {
+      const request = JSON.parse(options.body)
+      if (request.query.includes('query(')) return Response.json({ data: projectGraphqlData({ status: current.status }) })
+      assert.ok(request.query.includes('updateProjectV2ItemFieldValue'))
+      mutations.push(request.variables)
+      return Response.json({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: 'item-id' } } } })
+    }
+    throw new Error(`unexpected mutation or request: ${method} ${url}`)
+  })
+  const recover = () => runLifecycle('workflow_dispatch', { inputs: { issue_number: '42', workflow_event: 'recover_closed' } })
+  await recover()
+  assert.deepEqual(mutations, [])
+  current = { state: 'closed', reason: 'not_planned', status: 'No action', certificate: false }
+  await recover()
+  assert.deepEqual(mutations, [])
+  current = { state: 'closed', reason: 'completed', status: 'In review', certificate: true }
+  await recover()
+  assert.equal(mutations.length, 1)
+  assert.equal(mutations[0].optionId, 'done-option-id')
+  current = { ...current, status: 'Done' }
+  await recover()
+  assert.equal(mutations.length, 1)
 })
