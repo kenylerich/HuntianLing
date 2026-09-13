@@ -1,9 +1,9 @@
 ---
 doc_status: active
-doc_version: 2026-09-12.23
+doc_version: 2026-09-13.1
 created: 2026-09-10
-last_reviewed: 2026-09-12
-review_after: 2026-10-12
+last_reviewed: 2026-09-13
+review_after: 2026-10-13
 ---
 
 # HuntianLing Requirements Backlog
@@ -14,7 +14,7 @@ Document lifecycle:
 
 | Status | Version | Created | Last reviewed | Review after |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-12.23` | 2026-09-10 | 2026-09-12 | 2026-10-12 |
+| `active` | `2026-09-13.1` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## Summary
 
@@ -191,7 +191,7 @@ Implementation state:
 
 ### REQ-HARNESS-006: Built-In Three-Agent Development System
 
-Status: planned.
+Status: partial; D18 runtime delivery is implemented for prepared local environments.
 
 The plugin must implement Planner, Generator, and Evaluator as three executable Agents in the standard development environment.
 
@@ -207,13 +207,16 @@ Acceptance criteria:
 
 Implementation state:
 
-- `huntianling.agents` ships versioned Planner, Generator, and Evaluator task definitions. Deterministic executors validate outputs, route typed handoffs including repair, refuse Generator self-acceptance, and resume interrupted runs. Live model execution remains planned. Deterministic Evaluator output is demonstration evidence and cannot complete delivery.
+- `huntianling.agents` ships versioned Planner, Generator, and Evaluator task definitions. Runs record execution references, task/session ids, tool calls, artifacts, and method traces.
+- Story Delivery now invokes the three agents through `huntianling-runtime` when the project environment is actually prepared. Generator writes a candidate file with a candidate revision, Evaluator independently checks the candidate revision and acceptance markers, and failed evaluation routes a bounded repair back to Generator.
+- Evaluator evidence is persisted as executed only when it carries verifiable local provenance such as `ci:`/`git:` ids and changed-file links. Manual calls, caller-provided `environmentReady`, and deterministic-only runs still remain demonstration evidence and cannot complete delivery.
+- Live model execution remains a follow-up capability; the local runtime path supplies the first verifiable product delivery loop without creating a second model runtime.
 
 Related requirements: `REQ-AGENT-001`, `REQ-AGENT-002`, `REQ-FLOW-014`, `REQ-FLOW-020`, `REQ-HARNESS-001`, `REQ-HARNESS-003`.
 
 ### REQ-HARNESS-007: Executable Engineering Method Baseline
 
-Status: planned.
+Status: partial; D19 method execution and sensors are implemented for Planner methods.
 
 The standard environment must ship a usable engineering method baseline that guides the three Agents and governs their outputs.
 
@@ -229,12 +232,14 @@ Acceptance criteria:
 Implementation state:
 
 - The default method baseline includes User Story only. Enabling that method adds a `userStory` artifact to Planner output; missing the method Skill blocks the Planner task.
+- Agent runs now record the selected method id/version, method Skill versions, chosen depth, executed Skill-depth steps, input sensors, output-field sensors, and method checks. Invalid Planner output is rejected and leaves a rejected run record with the failed sensor and next-depth guidance.
+- Story Delivery resolves the project default or WorkItem-selected method before the planning step, so the delivery chain is constrained by the same method and Skill records that the board displays. Additional Generator/Evaluator method packs remain future extensions.
 
 Related requirements: `REQ-METHOD-001`, `REQ-METHOD-002`, `REQ-SKILL-001`, `REQ-SKILL-002`, `REQ-FLOW-001`, `REQ-HARNESS-004`, `REQ-HARNESS-006`.
 
 ### REQ-HARNESS-008: Bounded-Slice Commercial Quality
 
-Status: partial.
+Status: partial; D18-D21 bounded delivery acceptance is implemented for the first local runtime slice.
 
 Commercial-quality vibe coding is proven on one confirmed original-requirement slice, not on generating a whole product in one model call. Weak models use Skill depth and sensors rather than assumed model strength.
 
@@ -250,8 +255,10 @@ Related requirements: `REQ-MKT-001`, `REQ-SKILL-005`, `REQ-SKILL-006`, `REQ-HARN
 
 Implementation state:
 
-- A slice records Evaluator criterion-level evidence on the owning WorkItem. Customer-visible delivered updates from executed CI or Git evidence with provenance, not from Generator self-check, demonstration Evaluator output, or edited notes.
-- Tests cover a slice blocked by missing coding or MKT Skill coverage and a slice that lowers depth after repeated validation failure.
+- A slice records Evaluator criterion-level evidence on the owning WorkItem. Customer-visible delivered updates from executed CI, Git, or runtime Evaluator evidence with provenance, not from Generator self-check, demonstration Evaluator output, caller declarations, or edited notes.
+- Story Delivery checkpoints retain candidate revision, artifact refs, task/session/tool refs, pending effects, evidence refs, and budget usage. Resume blocks when candidate code changed after a checkpoint and before evaluation; failed evaluation can still resume into repair.
+- Harness self-development acceptance now prepares a fresh project with the production environment runner, drives Planner/Generator/Evaluator through a real candidate failure, repairs it, re-evaluates independently, and marks customer progress delivered only after executed evidence passes.
+- Tests cover passing runtime delivery, missing Skill/environment blocking, method sensor rejection, repeated validation downgrade, failed evaluation repair, revision-bound resume blocking, and Web-triggered self-development acceptance.
 
 ## Current Baseline
 
@@ -2768,7 +2775,14 @@ Keep the existing D1–D15 sequence and current work. Their matching residuals m
 
 ### D16–D21 — defect correction acceptance
 
-All six slices are planned; a review finding is not an implementation or acceptance record. Their placement after D15 is the requested delivery order; the table's dependencies name technical prerequisites. Grok is the intended implementer. Before each slice, read the linked review, inspect current source and prior repair evidence, and record whether the finding remains reproducible. Independently verified fixes may satisfy a slice without duplicate implementation. Each completion record must link its REQ ids, reviewed design, actual change set, executed checks, reviewer decision, and remaining blockers. Missing live execution remains blocked, even when deterministic tests pass.
+D16-D21 are defect-correction slices. Their placement after D15 is the requested delivery order; the table's dependencies name technical prerequisites. A review finding is not an implementation or acceptance record. Before each slice, read the linked review, inspect current source and prior repair evidence, and record whether the finding remains reproducible. Independently verified fixes may satisfy a slice without duplicate implementation. Each completion record must link its REQ ids, reviewed design, actual change set, executed checks, reviewer decision, and remaining blockers. Missing live hosted execution remains a recorded gap, even when the local runtime loop passes.
+
+Implementation evidence recorded on 2026-09-13:
+
+- D18: Story Delivery invokes Planner, Generator, and Evaluator through `huntianling-runtime` on a project-scoped prepared environment. Generator writes a real candidate file and Evaluator records criterion-level executed evidence with `ci:`/`git:` ids and changed-file links.
+- D19: Agent runs retain selected method version, Skill versions, depth steps, and method sensors. Invalid Planner method output is rejected with sensor evidence and next-depth guidance.
+- D20: Story Delivery checkpoints retain candidate revision, artifact refs, task/session/tool refs, pending effects, evidence refs, and budget usage. Resume blocks if candidate code changes after checkpoint while evaluation is still pending, and allows repair after an already recorded failed evaluation.
+- D21: Harness self-development acceptance starts a fresh project, prepares its environment through the production runner, creates a real candidate failure, repairs it, re-evaluates independently, and reaches customer-visible delivered only after executed evidence passes.
 
 #### D16 — truthful gates
 

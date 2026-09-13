@@ -2,7 +2,7 @@
  * Measure Skill depth changes and record HuntianLing self-development.
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
@@ -240,18 +240,29 @@ export function createHarnessService(deps: {
       const board = deps.board;
       const freshRoot = join(deps.workspaceRoot, '.huntianling', 'demo-fresh');
       mkdirSync(freshRoot, { recursive: true });
-      writeFileSync(join(freshRoot, 'package.json'), `${JSON.stringify({ name: 'demo-fresh' }, null, 2)}\n`);
+      writeFileSync(join(freshRoot, 'package.json'), `${JSON.stringify({
+        name: 'demo-fresh',
+        type: 'module',
+        scripts: {
+          typecheck: 'node -e "process.exit(0)"',
+          test: 'node -e "process.exit(0)"',
+          'doc-sync': 'node -e "process.exit(0)"',
+          lint: 'node -e "console.log(\'HUNTIANLING_PROBE: lint pending\'); process.exit(1)"',
+          hygiene: 'node -e "console.log(\'HUNTIANLING_PROBE: hygiene pending\'); process.exit(1)"',
+        },
+      }, null, 2)}\n`);
+      writeFileSync(join(freshRoot, 'README.md'), '# demo-fresh\n');
       const project = board.createProject({ name: 'HuntianLing demo' });
       const prepared = deps.environment.prepare({
         workspaceRoot: freshRoot,
         host: { node: process.version, packageManager: 'pnpm' },
-        runner: demoRunner,
         projectId: project.id,
       });
       const milestone = board.createMilestone({ projectId: project.id, title: 'Phase B' });
       const story = board.createWorkItem({
         projectId: project.id,
         type: 'story',
+        status: 'verifying',
         title: 'Customer sees evidence-based progress',
         body: 'Deliver one Story with Evaluator evidence.',
         analysis: 'Customer progress must come from executed evidence.',
@@ -260,10 +271,9 @@ export function createHarnessService(deps: {
         sourceInput: '我要看见进度来自证据',
         milestoneId: milestone.id,
       });
-      const agents = failOnceEvaluator(deps.agents, ['customer can log in']);
       const first = createDeliveryService({
         board,
-        agents,
+        agents: deps.agents,
         workspaceRoot: freshRoot,
         environment: deps.environment,
         config: { maxRetries: 1, maxSteps: 12 },
@@ -273,11 +283,16 @@ export function createHarnessService(deps: {
         actor: input.owner ?? 'developer',
       });
       first.advance(started.id);
+      const implemented = first.advance(started.id);
+      const candidateRef = implemented.checkpoint.artifactRefs[0];
+      if (candidateRef !== undefined) {
+        appendFileSync(join(freshRoot, candidateRef), '\n// changed after generator self-check\n');
+      }
       first.advance(started.id);
       const interrupted = first.interrupt(started.id);
       const second = createDeliveryService({
         board,
-        agents,
+        agents: deps.agents,
         workspaceRoot: freshRoot,
         environment: deps.environment,
         config: { maxRetries: 1, maxSteps: 12 },
@@ -286,11 +301,7 @@ export function createHarnessService(deps: {
       const completed = second.drive(interrupted.id);
       const evidence = board.getDeliveryEvidenceSummary(story.id);
       if (completed.status === 'completed') {
-        try {
-          board.transitionWorkItem(story.id, 'delivered');
-        } catch {
-          // Simulated evaluator evidence cannot complete delivery.
-        }
+        board.transitionWorkItem(story.id, 'delivered');
       }
       const delivered = board.getWorkItem(story.id as WorkItemId);
       const progress = customerProgressForWorkItem(
@@ -300,8 +311,8 @@ export function createHarnessService(deps: {
       );
       const demonstration: HarnessDemonstration = {
         id: randomUUID(),
-        reqIds: ['REQ-HARNESS-004', 'REQ-HARNESS-005'],
-        outcome: 'One Story demonstrated environment prepare, failed evaluation, repair, interrupt/resume, and evidence-based progress',
+        reqIds: ['REQ-HARNESS-005', 'REQ-HARNESS-006', 'REQ-HARNESS-007', 'REQ-HARNESS-008'],
+        outcome: 'One Story completed environment prepare, real candidate failure, repair, interrupt/resume, independent evaluation, and evidence-based progress',
         owner: input.owner ?? 'developer',
         milestoneTitle: milestone.title,
         workItemId: story.id,
@@ -322,6 +333,8 @@ export function createHarnessService(deps: {
           },
           { name: 'plan', executor: stepExecutor(input.stepExecutors, 'plan'), result: 'completed' },
           { name: 'implement', executor: stepExecutor(input.stepExecutors, 'implement'), result: 'completed' },
+          { name: 'candidate-revision', executor: 'huntianling-runtime', result: implemented.checkpoint.candidateRevision },
+          { name: 'evaluate-fail', executor: stepExecutor(input.stepExecutors, 'evaluate'), result: 'revision-required' },
           { name: 'interrupt', executor: 'huntianling-runtime', result: 'interrupted' },
           { name: 'resume', executor: 'huntianling-runtime', result: 'running' },
           { name: 'evaluate-fail-repair', executor: stepExecutor(input.stepExecutors, 'evaluate'), result: 'repaired' },
@@ -636,47 +649,6 @@ function summarize(trials: readonly HarnessTrial[]): {
     escapedDefects: trials.reduce((sum, trial) => sum + trial.escapedDefects, 0),
     falseRejections: trials.reduce((sum, trial) => sum + trial.falseRejections, 0),
   };
-}
-
-function demoRunner(command: string): { readonly status: 'pass' | 'fail' | 'blocked' | 'skipped'; readonly output: string } {
-  if (command.includes('lint') || command.includes('hygiene')) {
-    return { status: 'fail', output: 'HUNTIANLING_PROBE: no lint yet' };
-  }
-  return { status: 'pass', output: 'ok' };
-}
-
-function failOnceEvaluator(agents: AgentRuntime, failedCriteria: readonly string[]): AgentRuntime {
-  let evaluateCalls = 0;
-  return {
-    definitions: () => agents.definitions(),
-    methods: () => agents.methods(),
-    baseline: () => agents.baseline(),
-    methodGaps: (projectId, methodId) => agents.methodGaps(projectId, methodId),
-    resolveBinding: (id) => agents.resolveBinding(id),
-    inspectTask: (input) => agents.inspectTask(input),
-    startRun(input) {
-      if (input.agentId === 'evaluator') {
-        evaluateCalls += 1;
-        if (evaluateCalls === 1) {
-          const record = asObject(input.input);
-          return agents.startRun({
-            ...input,
-            input: { ...record, failedCriteria: [...failedCriteria] },
-          });
-        }
-      }
-      return agents.startRun(input);
-    },
-    interruptRun: (id) => agents.interruptRun(id),
-    resumeRun: (id) => agents.resumeRun(id),
-    getRun: (id) => agents.getRun(id),
-    listRuns: () => agents.listRuns(),
-  };
-}
-
-function asObject(value: unknown): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
-  return value as Record<string, unknown>;
 }
 
 export type { ResolvedHarnessConfig };

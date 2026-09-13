@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-HARNESS-002",
+    "REQ-HARNESS-003",
+    "REQ-HARNESS-005",
+    "REQ-HARNESS-006",
+    "REQ-HARNESS-007",
+    "REQ-HARNESS-008",
+    "REQ-SKILL-005",
+    "REQ-SKILL-006",
+    "REQ-METHOD-001",
+    "REQ-FLOW-020",
+    "REQ-AGENT-002",
+    "REQ-MKT-001",
+    "REQ-WEB-007"
+  ],
+  "outcome": "D18-D21 are implemented as one verifiable local runtime delivery loop that preserves truthful evidence gates.",
+  "acceptance": [
+    "AgentRun records execution references, task/session ids, tool calls, artifacts, candidate revisions, method versions, Skill versions, depth steps, and method sensors",
+    "Story Delivery invokes Planner, Generator, and Evaluator through huntianling-runtime only when EnvironmentService has a project-scoped ready result",
+    "Generator writes a real candidate file and self-check evidence; Evaluator independently validates candidate revision and acceptance markers",
+    "Evaluator evidence becomes executed only with verifiable ci/git ids and changed-file links; manual or caller-declared readiness remains demonstration evidence",
+    "A real failed candidate evaluation routes one bounded repair to Generator and re-evaluates the repaired artifact",
+    "Resume blocks when candidate code changes after checkpoint while evaluation is pending, while already recorded failed evaluation can resume into repair",
+    "Harness self-development acceptance prepares a fresh project through the production environment runner and reaches customer-visible delivered only after executed evidence passes",
+    "Bilingual backlog records D18-D21 implementation evidence and keeps hosted live execution, lint, and hygiene as explicit remaining gaps"
+  ],
+  "inScope": [
+    "Agent execution references and method traces",
+    "runtime candidate artifact generation",
+    "Evaluator executed provenance persistence",
+    "Story Delivery checkpoint expansion and migration defaults",
+    "revision-bound resume reconciliation",
+    "fresh-project harness acceptance"
+  ],
+  "outOfScope": [
+    "hosted live-model execution",
+    "distributed scheduling",
+    "new specialist agents",
+    "new board UI surfaces"
+  ],
+  "assumptions": [
+    "The first product loop may use the local HuntianLing runtime adapter as the verifiable execution source.",
+    "Hosted SCM/CI/live-model integrations remain separately tracked residual capabilities."
+  ],
+  "openQuestions": []
+}

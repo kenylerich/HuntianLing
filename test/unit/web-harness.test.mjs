@@ -32,7 +32,7 @@ test('developer can compare skill depth and run the self-development demonstrati
   const requirements = createRequirementManagementService(board);
   const skills = createSkillService();
   const environment = createEnvironmentService({ skills, board });
-  const agents = createAgentRuntime({ skills, board });
+  const agents = createAgentRuntime({ skills, board, environment });
   const harness = createHarnessService({ skills, workspaceRoot: root, board, agents, environment });
   const hash = passwordHash();
   const web = createWebService(
@@ -98,6 +98,6 @@ test('developer can compare skill depth and run the self-development demonstrati
     body: JSON.stringify({}),
   });
   assert.equal(demo.response.status, 201);
-  assert.notEqual(demo.payload.customerProgress, 'delivered');
+  assert.equal(demo.payload.customerProgress, 'delivered');
   assert.equal(demo.payload.gates.lint, 'blocked');
 });

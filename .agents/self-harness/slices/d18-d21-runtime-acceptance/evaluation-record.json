@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "AgentRun records execution references, task/session ids, tool calls, artifacts, candidate revisions, method versions, Skill versions, depth steps, and method sensors",
+      "result": "pass",
+      "evidence": "test/unit/agents-runtime.test.mjs; test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "Story Delivery invokes Planner, Generator, and Evaluator through huntianling-runtime only when EnvironmentService has a project-scoped ready result",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs; test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "Generator writes a real candidate file and self-check evidence; Evaluator independently validates candidate revision and acceptance markers",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "Evaluator evidence becomes executed only with verifiable ci/git ids and changed-file links; manual or caller-declared readiness remains demonstration evidence",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs; test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "A real failed candidate evaluation routes one bounded repair to Generator and re-evaluates the repaired artifact",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "Resume blocks when candidate code changes after checkpoint while evaluation is pending, while already recorded failed evaluation can resume into repair",
+      "result": "pass",
+      "evidence": "test/unit/story-delivery.test.mjs"
+    },
+    {
+      "id": "Harness self-development acceptance prepares a fresh project through the production environment runner and reaches customer-visible delivered only after executed evidence passes",
+      "result": "pass",
+      "evidence": "test/unit/harness-measure.test.mjs; test/unit/harness-cr8.test.mjs; test/unit/web-harness.test.mjs"
+    },
+    {
+      "id": "Bilingual backlog records D18-D21 implementation evidence and keeps hosted live execution, lint, and hygiene as explicit remaining gaps",
+      "result": "pass",
+      "evidence": "pnpm run doc-sync"
+    }
+  ],
+  "decision": "pass",
+  "round": 1,
+  "residualGaps": [
+    "hosted live-model execution remains a recorded gap",
+    "lint and hygiene package scripts remain HUNTIANLING_PROBE blockers"
+  ]
+}

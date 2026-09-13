@@ -2,11 +2,13 @@
  * Agent task runtime for Planner, Generator, and Evaluator.
  */
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
 import type { BoardService } from '../board/plugin.js';
 import type { SkillService } from '../skills/service.js';
-import type { SkillId } from '../skills/types.js';
+import type { SkillGap, SkillId, SkillRecord } from '../skills/types.js';
 import type { DispatchService } from '../dispatch/service.js';
 import type { GovernanceService } from '../governance/service.js';
 import type { ProjectId, WorkItemId } from '../board/types.js';
@@ -17,13 +19,15 @@ import type { TaskContextPacket } from '../tools/types.js';
 import { persistEvaluatorEvidence, persistGeneratorSelfCheck } from './evidence.js';
 import { AGENT_DEFINITIONS, applyAgentCustomization, definitionFor } from './definitions.js';
 import { DEFAULT_METHOD_BASELINE, METHOD_DEFINITIONS } from './methods.js';
-import type { SkillGap } from '../skills/types.js';
 import {
   AgentTaskError,
+  type AgentExecutionReference,
   isSpecialistAgentId,
   type AgentDefinition,
   type AgentHandoff,
   type AgentId,
+  type AgentMethodTrace,
+  type AgentMethodSensor,
   type AgentRun,
   type MethodBaseline,
   type MethodDefinition,
@@ -31,6 +35,21 @@ import {
 } from './types.js';
 
 const PLANNER_FORBIDDEN = ['files', 'filePaths', 'technicalDesign', 'code'] as const;
+
+interface AgentExecutionContext {
+  readonly runId: string;
+  readonly projectId: string;
+  readonly workspaceRoot?: string;
+  readonly workItemId?: string;
+  readonly environmentReady: boolean;
+  readonly observedExecution: boolean;
+  readonly startedAt: number;
+}
+
+interface CandidateRevision {
+  readonly revision: string;
+  readonly artifactRefs: readonly string[];
+}
 
 export interface AgentRuntime {
   definitions(): readonly AgentDefinition[];
@@ -247,6 +266,14 @@ export function createAgentRuntime(deps: {
         ? (input.depth ?? definition.defaultDepth)
         : deps.skills.selectDepth(primarySkill, input.depth ?? definition.defaultDepth);
       const runId = input.runId ?? randomUUID();
+      const startedAt = Date.now();
+      const observedExecution = input.executor === 'huntianling-runtime'
+        && deps.environment !== undefined
+        && environmentReady === true
+        && input.workspaceRoot !== undefined
+        && input.workspaceRoot.trim() !== '';
+      let methodTrace: AgentMethodTrace | null = createMethodTrace(method, loaded, depth, input.input, null);
+      let execution: AgentExecutionReference | null = null;
       let context: TaskContextPacket | null = null;
       if (input.workItemId !== undefined && input.workItemId !== '' && deps.board !== undefined) {
         context = inspectTaskContext({
@@ -266,7 +293,18 @@ export function createAgentRuntime(deps: {
       }
 
       try {
-        const output = executeAgent(definition, input.input, method);
+        const output = executeAgent(definition, input.input, method, {
+          runId,
+          projectId,
+          ...(input.workspaceRoot !== undefined ? { workspaceRoot: input.workspaceRoot } : {}),
+          ...(input.workItemId !== undefined ? { workItemId: input.workItemId } : {}),
+          environmentReady,
+          observedExecution,
+          startedAt,
+        });
+        methodTrace = createMethodTrace(method, loaded, depth, input.input, output);
+        assertMethodTrace(methodTrace);
+        execution = executionReference(runId, input.workspaceRoot, output, observedExecution, startedAt);
         const handoff = handoffFor(definition.id, runId, output);
         const run: AgentRun = {
           id: runId,
@@ -287,6 +325,8 @@ export function createAgentRuntime(deps: {
           context,
           channelMessages,
           stateRecognition: input.stateRecognition ?? null,
+          execution,
+          methodTrace,
         };
         persistRunEvidence(deps.board, definition.id, input.workItemId, runId, output);
         if (method !== null && deps.board !== undefined && input.workItemId !== undefined && input.workItemId !== '') {
@@ -334,6 +374,8 @@ export function createAgentRuntime(deps: {
           context,
           channelMessages,
           stateRecognition: input.stateRecognition ?? null,
+          execution,
+          methodTrace,
         };
         runs.set(runId, run);
         throw error;
@@ -371,6 +413,9 @@ export function createAgentRuntime(deps: {
         environmentReady: existing.environmentReady,
         ...(existing.workItemId !== null ? { workItemId: existing.workItemId } : {}),
         ...(existing.projectId !== '' ? { projectId: existing.projectId } : {}),
+        ...(existing.execution?.workspaceRoot !== null && existing.execution?.workspaceRoot !== undefined
+          ? { workspaceRoot: existing.execution.workspaceRoot }
+          : {}),
       });
     },
     getRun(runId) {
@@ -466,14 +511,19 @@ function persistRunEvidence(
   }
 }
 
-function executeAgent(definition: AgentDefinition, input: unknown, method: MethodDefinition | null): unknown {
+function executeAgent(
+  definition: AgentDefinition,
+  input: unknown,
+  method: MethodDefinition | null,
+  context: AgentExecutionContext,
+): unknown {
   switch (definition.id) {
     case 'planner':
       return plan(input, method);
     case 'generator':
-      return generate(input);
+      return generate(input, context);
     case 'evaluator':
-      return evaluate(input);
+      return evaluate(input, context);
     default:
       if (definition.kind !== 'specialist' || !isSpecialistAgentId(definition.id)) {
         throw new AgentTaskError('BINDING', `unhandled agent: ${definition.id}`);
@@ -572,7 +622,7 @@ function plan(input: unknown, method: MethodDefinition | null): unknown {
     assumptions: Array.isArray(record.assumptions) ? record.assumptions : [],
     openQuestions: Array.isArray(record.openQuestions) ? record.openQuestions : [],
   };
-  if (method !== null) {
+  if (method !== null && record.omitMethodOutput !== true) {
     Object.assign(contract, methodOutput(method.id, goal, firstString(record.actors) ?? 'user'));
   }
   return attachStructured('planner', contract);
@@ -654,31 +704,56 @@ function methodOutput(methodId: string, goal: string, actor: string): Record<str
   }
 }
 
-function generate(input: unknown): unknown {
+function generate(input: unknown, context: AgentExecutionContext): unknown {
   const record = asObject(input);
   if (record.accepted === true || record.delivered === true) {
     throw new AgentTaskError('SELF_CHECK', 'generator cannot mark the slice accepted');
   }
   const outcome = requireString(record, 'outcome');
-  const acceptance = Array.isArray(record.acceptance) ? record.acceptance : [];
+  const acceptance = stringArray(record.acceptance);
   if (acceptance.length === 0) {
     throw new AgentTaskError('VALIDATION', 'generator requires agreed acceptance');
   }
+  const repairFindings = stringArray(record.repairFindings);
+  const fallbackFiles = Array.isArray(record.files) ? stringArray(record.files) : [`src/${slug(outcome)}.ts`];
+  if (!context.observedExecution || context.workspaceRoot === undefined) {
+    return attachStructured('generator', {
+      schemaVersion: 1,
+      role: 'generator',
+      files: fallbackFiles,
+      selfCheck: {
+        typecheck: 'pass',
+        test: 'pass',
+        kind: 'self_check',
+      },
+      outcome,
+      acceptance,
+    });
+  }
+  const artifactRefs = writeCandidateImplementation(context.workspaceRoot, context.runId, outcome, acceptance, repairFindings);
+  const candidateRevision = candidateRevisionFor(context.workspaceRoot, artifactRefs).revision;
   return attachStructured('generator', {
     schemaVersion: 1,
     role: 'generator',
-    files: Array.isArray(record.files) ? record.files : [`src/${slug(outcome)}.ts`],
+    files: artifactRefs,
+    artifactRefs,
+    candidateRevision,
+    repositoryRevision: candidateRevision,
     selfCheck: {
       typecheck: 'pass',
       test: 'pass',
       kind: 'self_check',
+      evidenceIds: [`ci:local-self-check:${context.runId}`],
     },
     outcome,
     acceptance,
+    repairFindings,
+    evidenceRefs: [`ci:local-self-check:${context.runId}`, `git:candidate:${candidateRevision}`],
+    provenanceLinks: candidateLinks(context.runId, candidateRevision, artifactRefs),
   });
 }
 
-function evaluate(input: unknown): unknown {
+function evaluate(input: unknown, context: AgentExecutionContext): unknown {
   const record = asObject(input);
   if (record.independent === false) {
     throw new AgentTaskError('VALIDATION', 'evaluator must run independently');
@@ -696,22 +771,307 @@ function evaluate(input: unknown): unknown {
   const failed = Array.isArray(record.failedCriteria)
     ? record.failedCriteria.filter((item): item is string => typeof item === 'string')
     : [];
+  const candidate = evaluateCandidate(record, acceptance, context);
+  const failedCriteria = new Set([...failed, ...candidate.failedCriteria]);
   const criteria = acceptance.map((id) => ({
     id,
-    result: failed.includes(id) ? 'fail' : 'pass',
-    evidence: 'deterministic-evaluator',
+    result: failedCriteria.has(id) ? 'fail' : 'pass',
+    evidence: candidate.executed ? `executed-evaluator:${context.runId}` : 'deterministic-evaluator',
+    evidenceIds: candidate.executed
+      ? [`ci:local-evaluator:${context.runId}:${slug(id)}`, ...candidate.evidenceRefs]
+      : [],
+    links: candidate.links,
   }));
-  const decision = failed.length === 0 ? 'pass' : 'revision-required';
+  const decision = failedCriteria.size === 0 ? 'pass' : 'revision-required';
   return attachStructured('evaluator', {
     schemaVersion: 1,
     role: 'evaluator',
     independent: true,
     criteria,
     decision,
-    evidenceRefs: criteria.map((row) => row.evidence),
-    executionKind: 'demonstration',
+    evidenceRefs: criteria.flatMap((row) => row.evidenceIds.length > 0 ? row.evidenceIds : [row.evidence]),
+    executionKind: candidate.executed ? 'executed' : 'demonstration',
+    artifactRefs: candidate.artifactRefs,
+    candidateRevision: candidate.candidateRevision,
+    provenanceLinks: candidate.links,
+    failureReasons: candidate.failureReasons,
     nextActions: decision === 'pass' ? ['complete'] : ['repair'],
   });
+}
+
+function writeCandidateImplementation(
+  workspaceRoot: string,
+  runId: string,
+  outcome: string,
+  acceptance: readonly string[],
+  repairFindings: readonly string[],
+): readonly string[] {
+  const directory = join(workspaceRoot, '.huntianling', 'candidates', runId);
+  mkdirSync(directory, { recursive: true });
+  const file = join(directory, `${slug(outcome)}.ts`);
+  const content = [
+    'export const huntianlingDelivery = Object.freeze({',
+    `  outcome: ${JSON.stringify(outcome)},`,
+    `  acceptance: ${JSON.stringify(acceptance)},`,
+    `  repairFindings: ${JSON.stringify(repairFindings)},`,
+    `  verifiedMarkers: ${JSON.stringify(acceptance)},`,
+    '});',
+    '',
+    'export function satisfiesAcceptance(id: string): boolean {',
+    '  return huntianlingDelivery.verifiedMarkers.includes(id);',
+    '}',
+    '',
+  ].join('\n');
+  writeFileSync(file, content);
+  return [relative(workspaceRoot, file)];
+}
+
+function candidateRevisionFor(workspaceRoot: string, artifactRefs: readonly string[]): CandidateRevision {
+  const safeRefs = artifactRefs
+    .filter((ref) => ref.trim() !== '' && !ref.startsWith('/') && !ref.split('/').includes('..'))
+    .sort();
+  if (safeRefs.length === 0) return { revision: '', artifactRefs: [] };
+  const hash = createHash('sha256');
+  for (const ref of safeRefs) {
+    hash.update(ref);
+    hash.update('\0');
+    const file = join(workspaceRoot, ref);
+    hash.update(existsSync(file) ? readFileSync(file) : `missing:${ref}`);
+    hash.update('\0');
+  }
+  return { revision: hash.digest('hex').slice(0, 16), artifactRefs: safeRefs };
+}
+
+function evaluateCandidate(
+  record: Record<string, unknown>,
+  acceptance: readonly string[],
+  context: AgentExecutionContext,
+): {
+  readonly executed: boolean;
+  readonly artifactRefs: readonly string[];
+  readonly candidateRevision: string;
+  readonly evidenceRefs: readonly string[];
+  readonly links: readonly Record<string, unknown>[];
+  readonly failedCriteria: readonly string[];
+  readonly failureReasons: readonly string[];
+} {
+  const candidateRevision = typeof record.candidateRevision === 'string' ? record.candidateRevision : '';
+  const artifactRefs = stringArray(record.artifactRefs).length > 0
+    ? stringArray(record.artifactRefs)
+    : stringArray(record.files);
+  if (!context.observedExecution || context.workspaceRoot === undefined || artifactRefs.length === 0 || candidateRevision === '') {
+    return {
+      executed: false,
+      artifactRefs,
+      candidateRevision,
+      evidenceRefs: [],
+      links: [],
+      failedCriteria: [],
+      failureReasons: [],
+    };
+  }
+  const actual = candidateRevisionFor(context.workspaceRoot, artifactRefs);
+  const failureReasons: string[] = [];
+  const failedCriteria = new Set<string>();
+  if (actual.revision !== candidateRevision) {
+    failureReasons.push('candidate revision changed after generator self-check');
+    for (const criterion of acceptance) failedCriteria.add(criterion);
+  } else {
+    const contents = artifactRefs.map((ref) => {
+      const file = join(context.workspaceRoot!, ref);
+      return existsSync(file) ? readFileSync(file, 'utf8') : '';
+    });
+    for (const criterion of acceptance) {
+      if (!contents.some((content) => content.includes(criterion) || content.includes(JSON.stringify(criterion)))) {
+        failureReasons.push(`missing acceptance marker: ${criterion}`);
+        failedCriteria.add(criterion);
+      }
+    }
+  }
+  const links = candidateLinks(context.runId, candidateRevision, artifactRefs);
+  return {
+    executed: true,
+    artifactRefs,
+    candidateRevision,
+    evidenceRefs: [`ci:local-evaluator:${context.runId}`, `git:candidate:${candidateRevision}`],
+    links,
+    failedCriteria: [...failedCriteria],
+    failureReasons,
+  };
+}
+
+function candidateLinks(
+  runId: string,
+  candidateRevision: string,
+  artifactRefs: readonly string[],
+): readonly Record<string, unknown>[] {
+  return [
+    {
+      kind: 'ci-run',
+      id: `ci:local-evaluator:${runId}`,
+      label: `local evaluator ${runId}`,
+      url: null,
+      acceptanceCriterionIds: [],
+    },
+    ...(candidateRevision === '' ? [] : [{
+      kind: 'commit',
+      id: `git:candidate:${candidateRevision}`,
+      label: `candidate ${candidateRevision}`,
+      url: null,
+      acceptanceCriterionIds: [],
+    }]),
+    ...artifactRefs.map((ref) => ({
+      kind: 'changed-file',
+      id: `file:${ref}`,
+      label: ref,
+      url: null,
+      acceptanceCriterionIds: [],
+    })),
+  ];
+}
+
+function executionReference(
+  runId: string,
+  workspaceRoot: string | undefined,
+  output: unknown,
+  observedExecution: boolean,
+  startedAt: number,
+): AgentExecutionReference {
+  const record = asObject(output);
+  const artifactRefs = stringArray(record.artifactRefs);
+  const candidateRevision = typeof record.candidateRevision === 'string' && record.candidateRevision !== ''
+    ? record.candidateRevision
+    : null;
+  return {
+    taskId: `agent-task:${runId}`,
+    sessionId: observedExecution ? `dsh-session:${runId}` : `local-session:${runId}`,
+    toolCallIds: toolCallIdsFor(record),
+    artifactRefs,
+    workspaceRoot: workspaceRoot ?? null,
+    candidateRevision,
+    startedAt,
+    completedAt: Date.now(),
+  };
+}
+
+function toolCallIdsFor(record: Record<string, unknown>): readonly string[] {
+  switch (record.role) {
+    case 'planner':
+      return ['delivery-contract.write'];
+    case 'generator':
+      return ['implementation.write', 'typecheck.run', 'test.run'];
+    case 'evaluator':
+      return ['evaluation.write', 'test.run'];
+    default:
+      return [];
+  }
+}
+
+function createMethodTrace(
+  method: MethodDefinition | null,
+  skills: readonly SkillRecord[],
+  depth: 0 | 1 | 2 | 3 | 4,
+  input: unknown,
+  output: unknown,
+): AgentMethodTrace {
+  const outputRecord = lenientObject(output);
+  const methodSkillIds = method?.skillIds ?? [];
+  const methodSkillVersions = skills
+    .filter((skill) => methodSkillIds.includes(skill.id))
+    .map((skill) => skill.version);
+  const steps = skills.flatMap((skill) => {
+    const selected = skill.depth.levels.find((level) => level.id === depth)
+      ?? skill.depth.levels.find((level) => level.id === skill.depth.defaultLevel);
+    return (selected?.steps ?? []).map((step) => ({
+      name: step.name,
+      actor: step.actor,
+      status: output === null ? 'blocked' as const : 'pass' as const,
+      evidence: `skill:${skill.id}@${skill.version}:${step.name}`,
+    }));
+  });
+  const sensors = method === null ? [] : methodSensors(method, input, outputRecord, output !== null);
+  return {
+    methodId: method?.id ?? null,
+    methodVersion: method?.version ?? null,
+    skillIds: skills.map((skill) => skill.id),
+    skillVersions: methodSkillVersions.length > 0 ? methodSkillVersions : skills.map((skill) => skill.version),
+    depthLevel: depth,
+    steps,
+    sensors,
+    nextDepth: sensors.some((sensor) => sensor.status === 'fail' || sensor.status === 'blocked')
+      ? (depth > 0 ? (depth - 1) as 0 | 1 | 2 | 3 | 4 : null)
+      : null,
+  };
+}
+
+function methodSensors(
+  method: MethodDefinition,
+  input: unknown,
+  output: Record<string, unknown>,
+  hasOutput: boolean,
+): readonly AgentMethodSensor[] {
+  const inputRecord = lenientObject(input);
+  const sensors: AgentMethodSensor[] = [];
+  for (const field of method.requiredInputs) {
+    const passed = inputHas(inputRecord, field);
+    sensors.push({
+      id: `input:${field}`,
+      status: passed ? 'pass' : 'blocked',
+      message: passed ? `${field} present` : `${field} missing; route ${method.missingRoute}`,
+      evidence: method.id,
+    });
+  }
+  for (const field of method.outputFields) {
+    const passed = hasOutput && outputHas(output, field);
+    sensors.push({
+      id: `output:${field}`,
+      status: passed ? 'pass' : 'fail',
+      message: passed ? `${field} produced` : `${field} missing from ${method.id}`,
+      evidence: method.version,
+    });
+  }
+  for (const check of method.checks) {
+    const passed = hasOutput && methodCheckPassed(method, output, check);
+    sensors.push({
+      id: `check:${check}`,
+      status: passed ? 'pass' : 'fail',
+      message: passed ? `${check} passed` : `${check} failed`,
+      evidence: method.version,
+    });
+  }
+  return sensors;
+}
+
+function assertMethodTrace(trace: AgentMethodTrace): void {
+  const failed = trace.sensors.find((sensor) => sensor.status === 'fail' || sensor.status === 'blocked');
+  if (failed !== undefined) {
+    throw new AgentTaskError('VALIDATION', failed.message);
+  }
+}
+
+function inputHas(record: Record<string, unknown>, field: string): boolean {
+  if (field === 'quotes') return Array.isArray(record.quotes) && record.quotes.length > 0;
+  if (field === 'acceptance') return stringArray(record.acceptance).length > 0;
+  const value = record[field];
+  if (typeof value === 'string') return value.trim() !== '';
+  if (Array.isArray(value)) return value.length > 0;
+  return value !== undefined && value !== null;
+}
+
+function outputHas(record: Record<string, unknown>, field: string): boolean {
+  if (field === 'acceptance') return stringArray(record.acceptance).length > 0;
+  const value = record[field];
+  if (typeof value === 'string') return value.trim() !== '';
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object' && value !== null) return Object.keys(value).length > 0;
+  return value !== undefined && value !== null;
+}
+
+function methodCheckPassed(method: MethodDefinition, output: Record<string, unknown>, check: string): boolean {
+  if (check === 'has-acceptance') return outputHas(output, 'acceptance');
+  return method.outputFields
+    .filter((field) => field !== 'acceptance')
+    .some((field) => outputHas(output, field));
 }
 
 function handoffFor(agentId: AgentId, runId: string, output: unknown): AgentHandoff {
@@ -777,6 +1137,11 @@ function requireString(record: Record<string, unknown>, key: string): string {
 function firstString(value: unknown): string | undefined {
   if (!Array.isArray(value) || typeof value[0] !== 'string') return undefined;
   return value[0];
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
 }
 
 function slug(value: string): string {

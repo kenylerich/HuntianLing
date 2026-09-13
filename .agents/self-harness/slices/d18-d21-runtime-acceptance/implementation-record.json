@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/agents/types.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/agents/evidence.ts",
+    "src/host/delivery/types.ts",
+    "src/host/delivery/service.ts",
+    "src/host/delivery/store.ts",
+    "src/host/harness/service.ts",
+    "test/unit/agents-runtime.test.mjs",
+    "test/unit/story-delivery.test.mjs",
+    "test/unit/harness-measure.test.mjs",
+    "test/unit/harness-cr8.test.mjs",
+    "test/unit/web-harness.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md",
+    "docs/requirements/backlog.i18n.yaml"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "build": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "diffCheck": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  },
+  "summary": [
+    "AgentRun gained execution references and method traces with sensors.",
+    "Runtime Generator writes candidate artifacts in prepared local environments and Runtime Evaluator verifies candidate revisions before writing executed evidence.",
+    "Story Delivery records candidate revision, artifacts, task references, pending effects, and repair input in checkpoints.",
+    "Harness self-development acceptance no longer uses demoRunner or forced evaluator results."
+  ]
+}

@@ -5,7 +5,7 @@
 import type { CollabService } from '../collab/service.js';
 import type { StepStateRecognition } from '../workflow/types.js';
 import type { ChannelMessage } from '../collab/types.js';
-import type { SkillDepthId, SkillExecutor, SkillId } from '../skills/types.js';
+import type { SkillDepthActor, SkillDepthId, SkillExecutor, SkillId } from '../skills/types.js';
 import type { TaskContextPacket, ToolId } from '../tools/types.js';
 
 export const CODING_AGENT_IDS = ['planner', 'generator', 'evaluator'] as const;
@@ -96,6 +96,44 @@ export interface AgentHandoff {
   readonly runId: string;
 }
 
+export type AgentTraceStatus = 'pass' | 'fail' | 'blocked' | 'skipped';
+
+export interface AgentMethodTraceStep {
+  readonly name: string;
+  readonly actor: SkillDepthActor;
+  readonly status: AgentTraceStatus;
+  readonly evidence: string;
+}
+
+export interface AgentMethodSensor {
+  readonly id: string;
+  readonly status: AgentTraceStatus;
+  readonly message: string;
+  readonly evidence: string;
+}
+
+export interface AgentMethodTrace {
+  readonly methodId: string | null;
+  readonly methodVersion: string | null;
+  readonly skillIds: readonly SkillId[];
+  readonly skillVersions: readonly string[];
+  readonly depthLevel: SkillDepthId;
+  readonly steps: readonly AgentMethodTraceStep[];
+  readonly sensors: readonly AgentMethodSensor[];
+  readonly nextDepth: SkillDepthId | null;
+}
+
+export interface AgentExecutionReference {
+  readonly taskId: string;
+  readonly sessionId: string;
+  readonly toolCallIds: readonly string[];
+  readonly artifactRefs: readonly string[];
+  readonly workspaceRoot: string | null;
+  readonly candidateRevision: string | null;
+  readonly startedAt: number;
+  readonly completedAt: number;
+}
+
 export interface AgentRun {
   readonly id: string;
   readonly agentId: AgentId;
@@ -115,6 +153,8 @@ export interface AgentRun {
   readonly context: TaskContextPacket | null;
   readonly channelMessages: readonly ChannelMessage[];
   readonly stateRecognition: StepStateRecognition | null;
+  readonly execution: AgentExecutionReference | null;
+  readonly methodTrace: AgentMethodTrace | null;
 }
 
 export interface StartRunInput {

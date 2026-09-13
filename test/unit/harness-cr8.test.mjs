@@ -232,7 +232,7 @@ test('self-development demonstration steps are labeled manual, external-agent, o
   const skills = createSkillService();
   const board = createBoardService(root);
   const environment = createEnvironmentService({ skills, board });
-  const agents = createAgentRuntime({ skills, board });
+  const agents = createAgentRuntime({ skills, board, environment });
   const harness = createHarnessService({ skills, workspaceRoot: root, board, agents, environment });
   const demo = harness.demonstrateSelfDevelopment({
     owner: 'maintainer',
@@ -245,6 +245,7 @@ test('self-development demonstration steps are labeled manual, external-agent, o
   assert.equal(demo.steps.find((step) => step.name === 'live-model-trials').executor, 'manual');
   assert.equal(demo.steps.find((step) => step.name === 'live-model-trials').result, 'unbound');
   assert.ok(demo.steps.some((step) => step.name === 'skill-coverage'));
+  assert.equal(demo.customerProgress, 'delivered');
   assert.equal(demo.gates.lint, 'blocked');
 });
 

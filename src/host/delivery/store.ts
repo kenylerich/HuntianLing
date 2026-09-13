@@ -25,12 +25,25 @@ export function loadDeliveryRuns(workspaceRoot: string): StoryDeliveryRun[] {
     if (parsed.schemaVersion !== SCHEMA_VERSION) {
       throw new Error(`unsupported story delivery schema ${String(parsed.schemaVersion)}`);
     }
-    return parsed.runs ?? [];
+    return (parsed.runs ?? []).map(normalizeRun);
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
     if (code === 'ENOENT') return [];
     throw error;
   }
+}
+
+function normalizeRun(run: StoryDeliveryRun): StoryDeliveryRun {
+  return {
+    ...run,
+    checkpoint: {
+      ...run.checkpoint,
+      candidateRevision: run.checkpoint.candidateRevision ?? '',
+      artifactRefs: run.checkpoint.artifactRefs ?? [],
+      taskReferences: run.checkpoint.taskReferences ?? [],
+      pendingEffects: run.checkpoint.pendingEffects ?? [],
+    },
+  };
 }
 
 export function saveDeliveryRuns(workspaceRoot: string, runs: readonly StoryDeliveryRun[]): void {

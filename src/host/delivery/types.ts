@@ -42,6 +42,16 @@ export interface DeliveryBudgetUsage {
   readonly retries: number;
 }
 
+export interface StoryDeliveryTaskReference {
+  readonly step: StoryDeliveryStep;
+  readonly agentRunId: string;
+  readonly taskId: string;
+  readonly sessionId: string;
+  readonly toolCallIds: readonly string[];
+  readonly artifactRefs: readonly string[];
+  readonly candidateRevision: string | null;
+}
+
 export interface StoryDeliveryCheckpoint {
   readonly seq: number;
   readonly designRevision: string;
@@ -52,6 +62,10 @@ export interface StoryDeliveryCheckpoint {
   readonly blockers: readonly string[];
   readonly decisions: Readonly<Record<string, unknown>>;
   readonly repositoryRevision: string;
+  readonly candidateRevision: string;
+  readonly artifactRefs: readonly string[];
+  readonly taskReferences: readonly StoryDeliveryTaskReference[];
+  readonly pendingEffects: readonly string[];
   readonly evidenceRefs: readonly string[];
   readonly budgetUsage: DeliveryBudgetUsage;
   readonly nextAction: string;

@@ -1,9 +1,9 @@
 ---
 doc_status: active
-doc_version: 2026-09-12.23
+doc_version: 2026-09-13.1
 created: 2026-09-10
-last_reviewed: 2026-09-12
-review_after: 2026-10-12
+last_reviewed: 2026-09-13
+review_after: 2026-10-13
 ---
 
 # HuntianLing 需求 Backlog
@@ -14,7 +14,7 @@ review_after: 2026-10-12
 
 | 状态 | 版本 | 创建日期 | 最近复审 | 下次复审 |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-12.23` | 2026-09-10 | 2026-09-12 | 2026-10-12 |
+| `active` | `2026-09-13.1` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## 摘要
 
@@ -191,7 +191,7 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 ### REQ-HARNESS-006: 内置三 Agent 开发系统
 
-状态：规划中。
+状态：部分实现；D18 的运行时交付已在准备好的本地环境中实现。
 
 插件必须将 Planner、Generator 和 Evaluator 实现为标准开发环境中的三个可执行 Agent。
 
@@ -207,13 +207,16 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 实现状态：
 
-- `huntianling.agents` 提供有版本的 Planner、Generator、Evaluator 任务定义。确定性执行器校验输出、路由含 repair 的类型化交接、拒绝 Generator 自我验收，并恢复中断运行。真实模型执行仍在规划中。确定性 Evaluator 输出是 demonstration 证据，不能完成交付。
+- `huntianling.agents` 提供有版本的 Planner、Generator、Evaluator 任务定义。运行会记录 execution reference、任务/会话 id、工具调用、产物和方法 trace。
+- Story Delivery 现在会在项目环境真实准备完成后，通过 `huntianling-runtime` 调用三个 Agent。Generator 写入候选文件和候选版本，Evaluator 独立检查候选版本及验收标记，失败评价会把有界修复路由回 Generator。
+- Evaluator 证据只有在带有 `ci:`/`git:` id、changed-file 链接等可验证本地出处时才持久化为 executed。人工调用、调用方传入的 `environmentReady`、以及仅确定性运行仍是 demonstration 证据，不能完成交付。
+- 真实模型执行仍是后续能力；本地 runtime 路径提供首个可验证产品交付闭环，不另建第二套模型运行时。
 
 关联需求：`REQ-AGENT-001`、`REQ-AGENT-002`、`REQ-FLOW-014`、`REQ-FLOW-020`、`REQ-HARNESS-001`、`REQ-HARNESS-003`。
 
 ### REQ-HARNESS-007: 可执行工程方法基线
 
-状态：规划中。
+状态：部分实现；D19 的方法执行和传感器已覆盖 Planner 方法。
 
 标准环境必须内置可用的工程方法基线，指导三个 Agent 并约束其输出。
 
@@ -229,12 +232,14 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 实现状态：
 
 - 默认方法基线目前只含 User Story。启用该方法会在 Planner 输出中增加 `userStory` 产物；缺少方法 Skill 时 Planner 任务不能启动。
+- Agent 运行现在记录所选方法 id/版本、方法 Skill 版本、所选深度、已执行的 Skill 深度步骤、输入传感器、输出字段传感器和方法检查。无效 Planner 输出会被拒绝，并留下包含失败传感器和下一深度建议的 rejected run 记录。
+- Story Delivery 在计划步骤前解析项目默认方法或 WorkItem 所选方法，因此交付链会被看板展示的同一套方法和 Skill 记录约束。更多 Generator/Evaluator 方法包仍是后续扩展。
 
 关联需求：`REQ-METHOD-001`、`REQ-METHOD-002`、`REQ-SKILL-001`、`REQ-SKILL-002`、`REQ-FLOW-001`、`REQ-HARNESS-004`、`REQ-HARNESS-006`。
 
 ### REQ-HARNESS-008: 切片级商业质量
 
-状态：部分实现。
+状态：部分实现；D18-D21 的首个本地 runtime 切片验收已实现。
 
 商业质量的 vibe coding 在一条已确认的原始需求切片上证明，而不是一次模型调用生成整个产品。弱模型使用 Skill 深度和传感器，而不是假定模型很强。
 
@@ -250,8 +255,10 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 实现状态：
 
-- 切片把 Evaluator 的逐条标准证据写到所属 WorkItem。客户可见的已交付由带出处的已执行 CI 或 Git 证据更新，而不是 Generator 自检、demonstration Evaluator 输出或手工备注。
-- 测试覆盖因缺少 coding 或 MKT Skill 覆盖被拦住的切片，以及校验反复失败后降档的切片。
+- 切片把 Evaluator 的逐条标准证据写到所属 WorkItem。客户可见的已交付由带出处的已执行 CI、Git 或 runtime Evaluator 证据更新，而不是 Generator 自检、demonstration Evaluator 输出、调用方声明或手工备注。
+- Story Delivery 检查点保留候选版本、产物引用、任务/会话/工具引用、待处理副作用、证据引用和预算使用。若中断后、评价前候选代码变化，恢复会阻塞；若评价已经失败并要求修复，恢复仍可进入 repair。
+- Harness 自身开发验收现在使用生产环境 runner 准备全新项目，驱动 Planner/Generator/Evaluator 经历真实候选失败、修复和独立复评，并且只在 executed 证据通过后把客户进度标为已交付。
+- 测试覆盖 runtime 交付通过、缺少 Skill/环境阻塞、方法传感器拒绝、反复校验失败降档、失败评价修复、基于版本的恢复阻塞，以及 Web 触发的自身开发验收。
 
 ## 当前基线
 
@@ -2757,7 +2764,14 @@ GET /api/v1/work-items/:id/audit-events
 
 ### D16–D21 — 缺陷修正验收
 
-六个切片均为待实现；审查发现不等于实现或验收记录。放在 D15 之后是用户要求的交付顺序；表中依赖列表示技术前置。预期实现者为 Grok。每个切片开始前，先读取关联审查，检查最新源码和既有修复证据，记录问题是否仍可复现。已独立验证的修复可以满足切片，无须重复实现。每份完成记录必须关联 REQ 编号、已审查设计、实际变更集、执行检查、审查决定和剩余阻塞。缺少真实执行时，即使确定性测试通过，仍保持阻塞。
+D16-D21 是缺陷修正切片。放在 D15 之后是用户要求的交付顺序；表中依赖列表示技术前置。审查发现不等于实现或验收记录。每个切片开始前，先读取关联审查，检查最新源码和既有修复证据，记录问题是否仍可复现。已独立验证的修复可以满足切片，无须重复实现。每份完成记录必须关联 REQ 编号、已审查设计、实际变更集、执行检查、审查决定和剩余阻塞。缺少托管 live 执行时，即使本地 runtime 闭环通过，也继续记录为缺口。
+
+2026-09-13 已记录的实现证据：
+
+- D18：Story Delivery 在项目级已准备环境上通过 `huntianling-runtime` 调用 Planner、Generator 和 Evaluator。Generator 写入真实候选文件，Evaluator 用 `ci:`/`git:` id 和 changed-file 链接记录逐条 executed 证据。
+- D19：Agent run 保留所选方法版本、Skill 版本、深度步骤和方法传感器。无效 Planner 方法输出会带着传感器证据和下一深度建议被拒绝。
+- D20：Story Delivery 检查点保留候选版本、产物引用、任务/会话/工具引用、待处理副作用、证据引用和预算使用。若评价仍待执行而 checkpoint 后候选代码发生变化，恢复会阻塞；若失败评价已经记录并要求修复，则允许恢复进入 repair。
+- D21：Harness 自身开发验收从全新项目开始，用生产 runner 准备环境，制造真实候选失败，完成修复和独立复评，并且只在 executed 证据通过后进入客户可见已交付。
 
 #### D16 — 真实门禁
 
