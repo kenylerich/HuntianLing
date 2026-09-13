@@ -1,6 +1,6 @@
 ---
 doc_status: active
-doc_version: 2026-09-13.1
+doc_version: 2026-09-13.2
 created: 2026-09-10
 last_reviewed: 2026-09-13
 review_after: 2026-10-13
@@ -14,13 +14,15 @@ Document lifecycle:
 
 | Status | Version | Created | Last reviewed | Review after |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-13.1` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
+| `active` | `2026-09-13.2` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## Summary
 
 HuntianLing is a dsh plugin whose interface is a standard development board and whose backend prepares a standard vibe-coding environment. After login, customer, developer, and admin shells share WorkItem records. MKT collects original requirements; Planner, Generator, and Evaluator run behind the developer board. Skills declare capability boundary and depth so weak models still complete bounded slices with sensors. [Harness Engineering Product Direction](harness-engineering.md) explains the source articles, alignment assessment, and self-development method.
 
 This document collects the product requirements discussed for HuntianLing. It is the planning source for future WorkItems; implementation may split any item into Epics, Features, Requirements/Stories, Tasks, Bugs, Research, and Milestones on the internal board.
+
+Customer acceptance on commit `614dcd6` is **revision-required**. The [2026-09-13 review](reviews/2026-09-13-customer-acceptance.md) records false delivery, execution gaps, and customer API exposure. Implementation entries describe components, not accepted capability. D16 and D18-D21 remain incomplete against their full criteria.
 
 ## Table of Contents
 
@@ -191,7 +193,7 @@ Implementation state:
 
 ### REQ-HARNESS-006: Built-In Three-Agent Development System
 
-Status: partial; D18 runtime delivery is implemented for prepared local environments.
+Status: partial; D18 customer acceptance failed. Local candidate generation is deterministic and does not prove dsh Agent execution.
 
 The plugin must implement Planner, Generator, and Evaluator as three executable Agents in the standard development environment.
 
@@ -209,14 +211,14 @@ Implementation state:
 
 - `huntianling.agents` ships versioned Planner, Generator, and Evaluator task definitions. Runs record execution references, task/session ids, tool calls, artifacts, and method traces.
 - Story Delivery now invokes the three agents through `huntianling-runtime` when the project environment is actually prepared. Generator writes a candidate file with a candidate revision, Evaluator independently checks the candidate revision and acceptance markers, and failed evaluation routes a bounded repair back to Generator.
-- Evaluator evidence is persisted as executed only when it carries verifiable local provenance such as `ci:`/`git:` ids and changed-file links. Manual calls, caller-provided `environmentReady`, and deterministic-only runs still remain demonstration evidence and cannot complete delivery.
-- Live model execution remains a follow-up capability; the local runtime path supplies the first verifiable product delivery loop without creating a second model runtime.
+- Evaluator output can be persisted as executed using generated `ci:`/`git:` ids and changed-file links without validating actual execution. The acceptance review reproduces delivery of a throwing candidate and forged evidence; this gate needs correction.
+- Live model execution is missing. The local candidate path does not satisfy the required customer delivery loop.
 
 Related requirements: `REQ-AGENT-001`, `REQ-AGENT-002`, `REQ-FLOW-014`, `REQ-FLOW-020`, `REQ-HARNESS-001`, `REQ-HARNESS-003`.
 
 ### REQ-HARNESS-007: Executable Engineering Method Baseline
 
-Status: partial; D19 method execution and sensors are implemented for Planner methods.
+Status: partial; D19 Planner metadata and output sensors exist. Their use by actual dsh tasks remains unverified.
 
 The standard environment must ship a usable engineering method baseline that guides the three Agents and governs their outputs.
 
@@ -239,7 +241,7 @@ Related requirements: `REQ-METHOD-001`, `REQ-METHOD-002`, `REQ-SKILL-001`, `REQ-
 
 ### REQ-HARNESS-008: Bounded-Slice Commercial Quality
 
-Status: partial; D18-D21 bounded delivery acceptance is implemented for the first local runtime slice.
+Status: partial; D18-D21 customer acceptance is revision-required. Passing component tests do not establish commercial delivery.
 
 Commercial-quality vibe coding is proven on one confirmed original-requirement slice, not on generating a whole product in one model call. Weak models use Skill depth and sensors rather than assumed model strength.
 
@@ -2777,12 +2779,14 @@ Keep the existing D1–D15 sequence and current work. Their matching residuals m
 
 D16-D21 are defect-correction slices. Their placement after D15 is the requested delivery order; the table's dependencies name technical prerequisites. A review finding is not an implementation or acceptance record. Before each slice, read the linked review, inspect current source and prior repair evidence, and record whether the finding remains reproducible. Independently verified fixes may satisfy a slice without duplicate implementation. Each completion record must link its REQ ids, reviewed design, actual change set, executed checks, reviewer decision, and remaining blockers. Missing live hosted execution remains a recorded gap, even when the local runtime loop passes.
 
-Implementation evidence recorded on 2026-09-13:
+Implementation and acceptance state recorded on 2026-09-13:
 
-- D18: Story Delivery invokes Planner, Generator, and Evaluator through `huntianling-runtime` on a project-scoped prepared environment. Generator writes a real candidate file and Evaluator records criterion-level executed evidence with `ci:`/`git:` ids and changed-file links.
-- D19: Agent runs retain selected method version, Skill versions, depth steps, and method sensors. Invalid Planner method output is rejected with sensor evidence and next-depth guidance.
-- D20: Story Delivery checkpoints retain candidate revision, artifact refs, task/session/tool refs, pending effects, evidence refs, and budget usage. Resume blocks if candidate code changes after checkpoint while evaluation is still pending, and allows repair after an already recorded failed evaluation.
-- D21: Harness self-development acceptance starts a fresh project, prepares its environment through the production runner, creates a real candidate failure, repairs it, re-evaluates independently, and reaches customer-visible delivered only after executed evidence passes.
+- D18: Candidate files and execution-labelled records exist, but Generator writes acceptance-marker templates and Evaluator matches text. A throwing candidate passes; generated task/session/tool ids do not prove dsh execution. Acceptance is revision-required.
+- D19: Method versions, Skill versions, depth records, and Planner output sensors exist. Actual Agent execution and behavior sensors remain required before acceptance.
+- D20: Checkpoints retain candidate hashes and reject drift before pending evaluation. Changing code after evaluation still permits delivery with stale evidence. Acceptance is revision-required.
+- D21: Fresh-project preparation runs, but the demonstration uses no-op checks, prefilled requirements, and marker templates. No customer implementation or self-development changeset is proven. Acceptance is revision-required.
+
+Repair obligations from the [customer acceptance review](reviews/2026-09-13-customer-acceptance.md): close D16 evidence forgery; complete D18-D21 against actual behavior; wire local CI (`REQ-CI-001`) and OAuth exchange (`REQ-AUTH-004`); enforce customer API projection (`REQ-WEB-007`, `REQ-AUTH-001`); connect confirmation and authenticated workspaces (`REQ-MKT-001`, `REQ-WEB-006`, `REQ-WEB-007`). This review authorizes no delivery or Issue closure. Run `pnpm run test:e2e:customer` alongside plugin smoke; failed checks remain release blockers.
 
 #### D16 — truthful gates
 

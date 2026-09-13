@@ -1,6 +1,6 @@
 ---
 doc_status: active
-doc_version: 2026-09-13.1
+doc_version: 2026-09-13.2
 created: 2026-09-10
 last_reviewed: 2026-09-13
 review_after: 2026-10-13
@@ -14,13 +14,15 @@ review_after: 2026-10-13
 
 | 状态 | 版本 | 创建日期 | 最近复审 | 下次复审 |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-13.1` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
+| `active` | `2026-09-13.2` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## 摘要
 
 HuntianLing 是 dsh 插件：界面是标准开发看板，后端准备标准 vibe coding 环境。登录后客户、开发和管理员界面共享 WorkItem 记录。MKT 收集原始需求；Planner、Generator 和 Evaluator 在开发看板背后运行。Skill 声明能力边界和深度，使弱模型仍能在传感器约束下完成有边界的切片。[Harness Engineering 产品定位](harness-engineering.zh.md) 说明原文背景、方向审视和自身开发方法。
 
 本文档收集已经讨论过的 HuntianLing 产品需求。它是未来 WorkItems 的规划来源；实现时可以把任何条目拆分为 Epics、Features、Requirements/Stories、Tasks、Bugs、Research 和 Milestones，并在内部看板继续跟踪。
+
+提交 `614dcd6` 的客户验收为 **revision-required**。[2026-09-13 评审](reviews/2026-09-13-customer-acceptance.zh.md) 记录了错误交付、执行缺口和客户 API 数据暴露。实现条目说明现有组件，不代表已验收能力。D16 和 D18-D21 仍未满足完整验收标准。
 
 ## 目录
 
@@ -191,7 +193,7 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 ### REQ-HARNESS-006: 内置三 Agent 开发系统
 
-状态：部分实现；D18 的运行时交付已在准备好的本地环境中实现。
+状态：部分实现；D18 客户验收失败。本地候选生成是确定性逻辑，不能证明 dsh Agent 执行。
 
 插件必须将 Planner、Generator 和 Evaluator 实现为标准开发环境中的三个可执行 Agent。
 
@@ -209,14 +211,14 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 - `huntianling.agents` 提供有版本的 Planner、Generator、Evaluator 任务定义。运行会记录 execution reference、任务/会话 id、工具调用、产物和方法 trace。
 - Story Delivery 现在会在项目环境真实准备完成后，通过 `huntianling-runtime` 调用三个 Agent。Generator 写入候选文件和候选版本，Evaluator 独立检查候选版本及验收标记，失败评价会把有界修复路由回 Generator。
-- Evaluator 证据只有在带有 `ci:`/`git:` id、changed-file 链接等可验证本地出处时才持久化为 executed。人工调用、调用方传入的 `environmentReady`、以及仅确定性运行仍是 demonstration 证据，不能完成交付。
-- 真实模型执行仍是后续能力；本地 runtime 路径提供首个可验证产品交付闭环，不另建第二套模型运行时。
+- Evaluator 输出可凭生成的 `ci:`/`git:` id 和 changed-file 链接保存为 executed，并未核实实际执行。验收评审复现了异常候选与伪造证据仍能交付，此门禁需要修正。
+- 真实模型执行缺失。本地候选路径尚未满足所要求的客户交付闭环。
 
 关联需求：`REQ-AGENT-001`、`REQ-AGENT-002`、`REQ-FLOW-014`、`REQ-FLOW-020`、`REQ-HARNESS-001`、`REQ-HARNESS-003`。
 
 ### REQ-HARNESS-007: 可执行工程方法基线
 
-状态：部分实现；D19 的方法执行和传感器已覆盖 Planner 方法。
+状态：部分实现；D19 已有 Planner 元数据和输出传感器，但尚未验证实际 dsh 任务使用它们。
 
 标准环境必须内置可用的工程方法基线，指导三个 Agent 并约束其输出。
 
@@ -239,7 +241,7 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 ### REQ-HARNESS-008: 切片级商业质量
 
-状态：部分实现；D18-D21 的首个本地 runtime 切片验收已实现。
+状态：部分实现；D18-D21 客户验收为 revision-required。组件测试通过不能证明商业交付。
 
 商业质量的 vibe coding 在一条已确认的原始需求切片上证明，而不是一次模型调用生成整个产品。弱模型使用 Skill 深度和传感器，而不是假定模型很强。
 
@@ -2766,12 +2768,14 @@ GET /api/v1/work-items/:id/audit-events
 
 D16-D21 是缺陷修正切片。放在 D15 之后是用户要求的交付顺序；表中依赖列表示技术前置。审查发现不等于实现或验收记录。每个切片开始前，先读取关联审查，检查最新源码和既有修复证据，记录问题是否仍可复现。已独立验证的修复可以满足切片，无须重复实现。每份完成记录必须关联 REQ 编号、已审查设计、实际变更集、执行检查、审查决定和剩余阻塞。缺少托管 live 执行时，即使本地 runtime 闭环通过，也继续记录为缺口。
 
-2026-09-13 已记录的实现证据：
+2026-09-13 已记录的实现与验收状态：
 
-- D18：Story Delivery 在项目级已准备环境上通过 `huntianling-runtime` 调用 Planner、Generator 和 Evaluator。Generator 写入真实候选文件，Evaluator 用 `ci:`/`git:` id 和 changed-file 链接记录逐条 executed 证据。
-- D19：Agent run 保留所选方法版本、Skill 版本、深度步骤和方法传感器。无效 Planner 方法输出会带着传感器证据和下一深度建议被拒绝。
-- D20：Story Delivery 检查点保留候选版本、产物引用、任务/会话/工具引用、待处理副作用、证据引用和预算使用。若评价仍待执行而 checkpoint 后候选代码发生变化，恢复会阻塞；若失败评价已经记录并要求修复，则允许恢复进入 repair。
-- D21：Harness 自身开发验收从全新项目开始，用生产 runner 准备环境，制造真实候选失败，完成修复和独立复评，并且只在 executed 证据通过后进入客户可见已交付。
+- D18：已有候选文件及标注为执行的记录，但 Generator 写入验收标记模板，Evaluator 只匹配文本。抛异常的候选仍通过；生成的任务、会话和工具 id 不能证明 dsh 执行。验收为 revision-required。
+- D19：已有方法版本、Skill 版本、深度记录和 Planner 输出传感器。验收仍需实际 Agent 执行和行为传感器。
+- D20：检查点保留候选哈希，并在待评价前拒绝版本漂移；但评价后修改代码，旧证据仍允许交付。验收为 revision-required。
+- D21：全新项目准备可以运行，但演示使用空检查、预填需求和标记模板，未证明客户功能实现或自身开发变更集。验收为 revision-required。
+
+[客户验收评审](reviews/2026-09-13-customer-acceptance.zh.md) 的修复义务：封堵 D16 证据伪造；按实际行为完成 D18-D21；接通本地 CI（`REQ-CI-001`）和 OAuth exchange（`REQ-AUTH-004`）；执行客户 API 投影隔离（`REQ-WEB-007`、`REQ-AUTH-001`）；连接确认与认证工作区（`REQ-MKT-001`、`REQ-WEB-006`、`REQ-WEB-007`）。此评审不授权交付或关闭 Issue。除插件烟测外须执行 `pnpm run test:e2e:customer`，失败检查继续阻止发布。
 
 #### D16 — 真实门禁
 

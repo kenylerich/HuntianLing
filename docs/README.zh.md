@@ -1,8 +1,8 @@
 ---
 doc_status: active
-doc_version: 2026-09-12.2
+doc_version: 2026-09-13.1
 created: 2026-09-10
-last_reviewed: 2026-09-12
+last_reviewed: 2026-09-13
 review_after: 2026-12-10
 ---
 
@@ -28,7 +28,8 @@ review_after: 2026-12-10
 | 文档 | 状态 | 版本 | 下次复审 | 用途 |
 | --- | --- | --- | --- | --- |
 | [requirements/harness-engineering.zh.md](requirements/harness-engineering.zh.md) | `active` | `2026-09-11.8` | 2026-10-11 | 产品定位、背景原文、方向审视和自身开发方法。 |
-| [requirements/backlog.zh.md](requirements/backlog.zh.md) | `active` | `2026-09-12.14` | 2026-10-12 | 实现时使用的产品需求事实源。 |
+| [requirements/backlog.zh.md](requirements/backlog.zh.md) | `active` | `2026-09-13.2` | 2026-10-13 | 实现时使用的产品需求事实源。 |
+| [requirements/reviews/2026-09-13-customer-acceptance.zh.md](requirements/reviews/2026-09-13-customer-acceptance.zh.md) | `active` | `2026-09-13.1` | 2026-09-27 | 客户 HTTP 与浏览器验收、运行时反例及未完成修复义务。 |
 | [requirements/reviews/2026-09-12-runtime-alignment.zh.md](requirements/reviews/2026-09-12-runtime-alignment.zh.md) | `active` | `2026-09-12.2` | 2026-09-26 | 按日期保存的运行能力问题、虚假完成复现及 D16–D21 交接。 |
 | [requirements/reviews/2026-09-10.zh.md](requirements/reviews/2026-09-10.zh.md) | `active` | `2026-09-11.2` | 2026-09-24 | 按日期保存的评审包；当前交付顺序由 backlog 负责。 |
 | [architecture/main-board-design.zh.md](architecture/main-board-design.zh.md) | `active` | `2026-09-11.6` | 2026-10-10 | 主看板信息架构、视图、卡片模型、API 和实现切片。 |
