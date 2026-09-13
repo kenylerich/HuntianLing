@@ -227,26 +227,19 @@ test('orchestration replay stays distinct from a live-model trial', () => {
   assert.notEqual(replay.id, live.id);
 });
 
-test('self-development demonstration steps are labeled manual, external-agent, or HuntianLing-runtime', () => {
+test('executor labels cannot authorize an unapproved self-development demonstration', () => {
   const root = workspace();
   const skills = createSkillService();
   const board = createBoardService(root);
   const environment = createEnvironmentService({ skills, board });
   const agents = createAgentRuntime({ skills, board, environment });
   const harness = createHarnessService({ skills, workspaceRoot: root, board, agents, environment });
-  const demo = harness.demonstrateSelfDevelopment({
+  assert.throws(() => harness.demonstrateSelfDevelopment({
     owner: 'maintainer',
     stepExecutors: { plan: 'external-agent', implement: 'manual', evaluate: 'huntianling-runtime' },
-  });
-  assert.equal(demo.steps.find((step) => step.name === 'environment.prepare').executor, 'huntianling-runtime');
-  assert.equal(demo.steps.find((step) => step.name === 'plan').executor, 'external-agent');
-  assert.equal(demo.steps.find((step) => step.name === 'implement').executor, 'manual');
-  assert.equal(demo.steps.find((step) => step.name === 'evaluate-pass').executor, 'huntianling-runtime');
-  assert.equal(demo.steps.find((step) => step.name === 'live-model-trials').executor, 'manual');
-  assert.equal(demo.steps.find((step) => step.name === 'live-model-trials').result, 'unbound');
-  assert.ok(demo.steps.some((step) => step.name === 'skill-coverage'));
-  assert.equal(demo.customerProgress, 'in_development');
-  assert.equal(demo.gates.lint, 'blocked');
+  }), /original requirement.*approval/);
+  assert.deepEqual(agents.listRuns(), []);
+  assert.deepEqual(harness.listDemonstrations(), []);
 });
 
 test('customers cannot run harness comparisons or coverage scans', async (t) => {

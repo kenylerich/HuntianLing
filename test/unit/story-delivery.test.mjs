@@ -12,6 +12,7 @@ import { DeliveryError } from '../../lib/host/delivery/types.js';
 import { deliveryStorePath } from '../../lib/host/delivery/store.js';
 import { createEnvironmentService } from '../../lib/host/environment/service.js';
 import { createSkillService } from '../../lib/host/skills/service.js';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 
 function workspace() {
   return mkdtempSync(join(tmpdir(), 'huntianling-delivery-'));
@@ -42,7 +43,7 @@ function countingAgents(board) {
 function readyStory(board) {
   const project = board.createProject({ name: 'p' });
   const milestone = board.createMilestone({ projectId: project.id, title: 'M1' });
-  const story = board.createWorkItem({
+  const story = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '客户能登录',

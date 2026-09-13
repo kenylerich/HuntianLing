@@ -2,5 +2,5 @@
 # Update both documents, then run: pnpm run doc-sync:write
 source: docs/requirements/reviews/2026-09-13-customer-acceptance.md
 target: docs/requirements/reviews/2026-09-13-customer-acceptance.zh.md
-source_sha256: fd0506086b0ac18c9eb2bd1a33e61dbe7d8695d7af2f0eed7b3a602178924f39
-target_sha256: 0ea028c8adf20f5f6ea10010cd6745102eead11ef2d9b37c0178081b889f3a2c
+source_sha256: d97eb751cddfcb48f72fc5811c9313b52377fd4959a36a90e3b7beb9437ae977
+target_sha256: 7451da8e3339c5122f27cefb5cc855a7ddb9374c5dfcb9fc38444aa21801fc31

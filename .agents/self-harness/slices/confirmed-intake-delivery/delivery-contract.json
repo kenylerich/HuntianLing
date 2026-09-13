@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-MKT-001", "REQ-INTAKE-003", "REQ-HARNESS-006", "REQ-HARNESS-008"],
+  "outcome": "Only an approved, current original requirement can supply inputs to board-bound planning and implementation.",
+  "acceptance": [
+    "Unapproved WorkItems and caller-supplied confirmation cannot start board-bound planning or implementation",
+    "Approved inputs preserve source quotes, goals, actors, and acceptance across reload",
+    "Changed source, candidate, or WorkItem scope invalidates approval and blocks continuation",
+    "The explicit approval action can renew matching scope; generic status edits cannot issue approval",
+    "Delivery and HTTP planning use the same confirmation checks without fabricating inputs"
+  ],
+  "inScope": ["Existing developer promotion path", "Persisted approval binding and freshness", "Planner and Generator entry checks", "Delivery start and continuation", "Focused API and storage regression"],
+  "outOfScope": ["Real dsh execution", "Configurable confirmation policies", "OAuth", "Full repository coverage and duplication repair", "Issue closure"],
+  "assumptions": ["Board Host callers are trusted; Web routes authenticate approval actors", "Standalone no-board deterministic exercises are not product approval"],
+  "openQuestions": [],
+  "executionOwner": "external-agent",
+  "issues": [92]
+}

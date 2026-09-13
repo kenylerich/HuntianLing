@@ -206,9 +206,9 @@ export interface WebServiceDependencies {
   readonly environment?: EnvironmentService;
   readonly scm?: ScmService;
   readonly ci?: CiService;
-  readonly agents?: AgentRuntime;
-  readonly delivery?: DeliveryService;
-  readonly harness?: HarnessService;
+  readonly agents?: AgentRuntime | undefined;
+  readonly delivery?: DeliveryService | undefined;
+  readonly harness?: HarnessService | undefined;
   readonly authority?: AuthorityService;
   readonly database?: DatabaseService;
   readonly workflow?: WorkflowService;
@@ -1486,11 +1486,12 @@ export function createWebService(
       environment,
       scm,
       ci,
-      agents,
+      get agents() { return 'agents' in deps ? deps.agents : agents; },
+      get delivery() { return deps.delivery; },
+      get harness() { return deps.harness; },
       skills,
       governance,
       issueSync,
-      ...(deps.delivery !== undefined ? { delivery: deps.delivery } : {}),
     };
     const nextServer = createServer((req, res) => {
       void handleRequest(resolvedDeps, config, authManager, service, req, res);
@@ -3112,13 +3113,14 @@ async function handleApiV1(
 
   const intakeApprove = /^\/api\/v1\/intake\/sessions\/([^/]+)\/approve$/.exec(url.pathname);
   if (intakeApprove !== null && method === 'POST') {
+    denyCustomer(auth, 'intake approval requires a developer');
     const body = await readJsonObject(req);
     const session = authorizeIntakeSession(deps, auth, idFromMatch<IntakeSessionId>(intakeApprove));
     const candidateIds = optionalIdArray<IntakeCandidateId>(body, 'candidateIds');
-    const actorId = optionalString(body, 'actorId');
+    const actorId = auth.principal?.username ?? 'developer';
     sendJson(res, 200, deps.board.approveIntakeCandidates(session.id, {
       ...(candidateIds !== undefined ? { candidateIds } : {}),
-      ...(actorId !== undefined ? { actorId } : {}),
+      actorId,
     }));
     return;
   }
@@ -6988,7 +6990,6 @@ async function handleSkillToolApi(
         quotes: [{ text: item.body || item.title, source: 'work-item' }],
         goal: item.title,
         outcome: item.title,
-        confirmed: true,
         independent: true,
         acceptance: item.acceptance.length > 0 ? item.acceptance : ['the agreed acceptance can be verified'],
         ...(findings !== undefined ? { findings } : {}),
@@ -7074,13 +7075,7 @@ async function handleSkillToolApi(
       projectId: item.projectId,
       workItemId: item.id,
       methodId,
-      input: {
-        quotes: [{ text: item.body || item.title, source: 'work-item' }],
-        goal: item.title,
-        actors: ['user'],
-        confirmed: true,
-        acceptance: item.acceptance.length > 0 ? item.acceptance : ['the agreed acceptance can be verified'],
-      },
+      input: {},
     });
     sendJson(res, 200, { run, workItem: deps.board.getWorkItem(item.id) });
     return true;

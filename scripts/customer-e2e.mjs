@@ -166,9 +166,32 @@ try {
     assert.ok(response.status >= 400, `Unexpected delivery status ${response.status}`);
     assert.match(response.data.error, /evidence|executed/i);
   });
+  await check('unapproved-story-is-blocked', ['REQ-MKT-001', 'REQ-HARNESS-006'], async () => {
+    const denied = await request(`${itemPath}/story-delivery/start`, developer, 'POST', { drive: true, confirmed: true });
+    assert.equal(denied.status, 409);
+    assert.match(denied.data.error, /original requirement.*approval/);
+    const plan = await request(`${itemPath}/plan`, developer, 'POST', { methodId: 'user-story', confirmed: true });
+    assert.equal(plan.status, 400);
+    assert.match(plan.data.error, /original requirement.*approval/);
+  });
   await check('unprepared-story-is-blocked', ['REQ-HARNESS-001'], async () => {
-    const run = await ok(`${itemPath}/story-delivery/start`, developer, 'POST', { drive: true });
+    for (const [field, value] of [['goal', 'Cancel an unshipped order'], ['actors', 'order customer'],
+      ['scenarios', 'Cancel before shipping'], ['confirm', 'yes']]) {
+      await ok(`${sessionPath}/follow-ups`, customer, 'POST', { field, value });
+    }
+    const candidates = await ok(`${sessionPath}/candidates`, developer);
+    const candidate = candidates.candidates.find(row => row.type === 'story');
+    await ok(`/api/v1/intake/candidates/${candidate.id}`, developer, 'PATCH', { openQuestions: [] });
+    const approved = await ok(`${sessionPath}/approve`, developer, 'POST', { candidateIds: [candidate.id] });
+    const story = approved.workItems.find(row => row.id === candidate.workItemId);
+    await ok(`/api/work-items/${story.id}`, developer, 'PATCH', { milestoneId: milestones.milestones[0].id });
+    const planned = await ok(`/api/v1/work-items/${story.id}/plan`, developer, 'POST', { methodId: 'user-story' });
+    assert.equal(planned.run.input.sourceApproval.candidateId, candidate.id);
+    assert.equal(planned.run.input.sourceApproval.actorId, 'developer');
+    assert.ok(ctx.get('huntianling.agents').getRun(planned.run.id));
+    const run = await ok(`/api/v1/work-items/${story.id}/story-delivery/start`, developer, 'POST', { drive: true });
     assert.equal(run.status, 'blocked');
+    assert.ok(run.checkpoint.blockers.some(reason => /environment/i.test(reason)), JSON.stringify(run.checkpoint));
   });
   await check('manual-ci-prefix-cannot-deliver', ['REQ-HARNESS-003', 'REQ-EVIDENCE-001'], async () => {
     const revision = workItemDesignRevision(item);

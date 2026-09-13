@@ -13,6 +13,7 @@ import type { DispatchService } from '../dispatch/service.js';
 import type { GovernanceService } from '../governance/service.js';
 import type { ProjectId, WorkItemId } from '../board/types.js';
 import type { EnvironmentService } from '../environment/service.js';
+import { confirmedRequirementRevision, resolveConfirmedRequirement } from '../intake/confirmation.js';
 import { inspectTaskContext } from '../tools/feedback.js';
 import { createToolRegistry, type ToolRegistry } from '../tools/registry.js';
 import type { TaskContextPacket } from '../tools/types.js';
@@ -131,7 +132,7 @@ export function createAgentRuntime(deps: {
         throw new AgentTaskError('MISSING_INPUT', 'task inspect requires huntianling.board');
       }
       const method = input.methodId !== undefined ? requireMethod(input.methodId) : null;
-      return inspectTaskContext({
+      const context = inspectTaskContext({
         board: deps.board,
         tools,
         definition,
@@ -141,6 +142,18 @@ export function createAgentRuntime(deps: {
         ...(input.environmentReady !== undefined ? { environmentReady: input.environmentReady } : {}),
         ...(input.input !== undefined ? { input: input.input } : {}),
       }, input.workItemId);
+      if (definition.id !== 'planner' && definition.id !== 'generator') return context;
+      try {
+        const item = deps.board.getWorkItem(input.workItemId as WorkItemId);
+        if (item === undefined) throw new Error('approved WorkItem not found');
+        resolveConfirmedRequirement(deps.board, item);
+        return context;
+      } catch (error) {
+        return { ...context, ready: false, missing: [...context.missing, {
+          field: 'sourceApproval', blocking: true,
+          reason: error instanceof Error ? error.message : 'original requirement approval unavailable',
+        }] };
+      }
     },
     startRun(input) {
       let definition = runtime.resolveBinding(input.agentId);
@@ -148,6 +161,24 @@ export function createAgentRuntime(deps: {
       if (projectId === '' && input.workItemId !== undefined && input.workItemId !== '' && deps.board !== undefined) {
         const item = deps.board.getWorkItem(input.workItemId as WorkItemId);
         if (item !== undefined) projectId = item.projectId;
+      }
+      if (definition.id === 'planner' || definition.id === 'generator') {
+        if (deps.board !== undefined || input.workItemId !== undefined || input.executor === 'huntianling-runtime') {
+          const item = input.workItemId === undefined ? undefined
+            : deps.board?.getWorkItem(input.workItemId as WorkItemId);
+          if (item === undefined || deps.board === undefined || item.projectId !== projectId) {
+            throw new AgentTaskError('MISSING_INPUT', 'planning and implementation require an approved WorkItem in the current project');
+          }
+          let confirmed: Record<string, unknown>;
+          try {
+            confirmed = resolveConfirmedRequirement(deps.board, item);
+          } catch (error) {
+            throw new AgentTaskError('MISSING_INPUT', error instanceof Error ? error.message : 'original requirement approval unavailable');
+          }
+          input = { ...input, input: definition.id === 'planner'
+            ? { ...asObject(input.input), ...confirmed }
+            : { ...asObject(input.input), outcome: confirmed.goal, acceptance: confirmed.acceptance, sourceApproval: confirmed.sourceApproval } };
+        }
       }
       if (projectId !== '' && deps.board !== undefined) {
         const project = deps.board.listProjects({ includeArchived: true }).find((item) => item.id === projectId);
@@ -397,6 +428,19 @@ export function createAgentRuntime(deps: {
       }
       if (existing.status !== 'interrupted') {
         return existing;
+      }
+      if (deps.board !== undefined && (existing.agentId === 'planner' || existing.agentId === 'generator')) {
+        const item = existing.workItemId === null ? undefined : deps.board.getWorkItem(existing.workItemId as WorkItemId);
+        if (item === undefined) throw new AgentTaskError('MISSING_INPUT', 'approved WorkItem not found');
+        let confirmed: Record<string, unknown>;
+        try {
+          confirmed = resolveConfirmedRequirement(deps.board, item);
+        } catch (error) {
+          throw new AgentTaskError('MISSING_INPUT', error instanceof Error ? error.message : 'original requirement approval unavailable');
+        }
+        if (confirmedRequirementRevision(confirmed) !== confirmedRequirementRevision(asObject(existing.input))) {
+          throw new AgentTaskError('MISSING_INPUT', 'original requirement approval changed; start a new Agent run');
+        }
       }
       if (existing.output !== null) {
         const restored: AgentRun = { ...existing, status: 'completed' };

@@ -42,9 +42,6 @@ const WebPlugin: Plugin<WebConfig> = {
     const environment = ctx.get('huntianling.environment') as EnvironmentService | undefined;
     const scm = ctx.get('huntianling.scm') as ScmService | undefined;
     const ci = ctx.get('huntianling.ci') as CiService | undefined;
-    const agents = ctx.get('huntianling.agents') as AgentRuntime | undefined;
-    const delivery = ctx.get('huntianling.delivery') as DeliveryService | undefined;
-    const harness = ctx.get('huntianling.harness') as HarnessService | undefined;
     const authority = ctx.get('huntianling.authority') as AuthorityService | undefined;
     const database = ctx.get('huntianling.database') as DatabaseService | undefined;
     const workflow = ctx.get('huntianling.workflow') as WorkflowService | undefined;
@@ -59,9 +56,9 @@ const WebPlugin: Plugin<WebConfig> = {
       ...(environment !== undefined ? { environment } : {}),
       ...(scm !== undefined ? { scm } : {}),
       ...(ci !== undefined ? { ci } : {}),
-      ...(agents !== undefined ? { agents } : {}),
-      ...(delivery !== undefined ? { delivery } : {}),
-      ...(harness !== undefined ? { harness } : {}),
+      get agents() { return ctx.get('huntianling.agents') as AgentRuntime | undefined; },
+      get delivery() { return ctx.get('huntianling.delivery') as DeliveryService | undefined; },
+      get harness() { return ctx.get('huntianling.harness') as HarnessService | undefined; },
       ...(authority !== undefined ? { authority } : {}),
       ...(database !== undefined ? { database } : {}),
       ...(workflow !== undefined ? { workflow } : {}),

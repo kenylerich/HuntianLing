@@ -73,28 +73,18 @@ test('promotion requires a comparison that already met a predeclared threshold',
   assert.equal(service.isPromoted(MKT_SKILL_EXTRACT, 3), false);
 });
 
-test('self-development demonstration records fail, repair, interrupt, resume, and evidence progress', () => {
+test('a self-development demonstration without original-requirement approval cannot start delivery', () => {
   const root = workspace();
   const skills = createSkillService();
   const board = createBoardService(root);
   const environment = createEnvironmentService({ skills, board });
   const agents = createAgentRuntime({ skills, board, environment });
   const service = harness(root, { skills, board, environment, agents });
-  const demo = service.demonstrateSelfDevelopment({
+  assert.throws(() => service.demonstrateSelfDevelopment({
     owner: 'maintainer',
     selfHarnessSliceRefs: ['b10-story-delivery'],
-  });
-  assert.deepEqual(demo.reqIds, ['REQ-HARNESS-005', 'REQ-HARNESS-006', 'REQ-HARNESS-007', 'REQ-HARNESS-008']);
-  assert.equal(demo.customerProgress, 'in_development');
-  assert.equal(demo.gates.lint, 'blocked');
-  assert.equal(demo.gates.hygiene, 'blocked');
-  assert.notEqual(demo.gates.lint, 'pass');
-  assert.equal(demo.freshProjectReady, true);
-  assert.ok(demo.gaps.some((gap) => /live model/.test(gap)));
-  assert.ok(demo.steps.some((step) => step.name === 'interrupt'));
-  assert.ok(demo.steps.some((step) => step.name === 'candidate-revision' && step.result !== ''));
-  assert.ok(demo.steps.some((step) => step.name === 'evaluate-fail'));
-  assert.ok(demo.steps.some((step) => step.name === 'evaluate-fail-repair'));
-  assert.equal(demo.selfHarnessSliceRefs[0], 'b10-story-delivery');
-  assert.equal(service.listDemonstrations().length, 1);
+  }), /original requirement.*approval/);
+  assert.deepEqual(agents.listRuns(), []);
+  assert.deepEqual(service.listDemonstrations(), []);
+  assert.equal(board.listWorkItems().some(item => item.status === 'delivered'), false);
 });

@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "assessedBy": "external-agent",
+  "executionOwner": "external-agent",
+  "assessedAt": "2026-09-13T12:08:40Z",
+  "deliveryContract": ".agents/self-harness/slices/confirmed-intake-delivery/delivery-contract.json",
+  "deliveryContractSha256": "1a5b96c185cd6a0a14495855123e2fbedee3f68db5eff0fb4c6a7f0ed29d2906",
+  "reqIds": ["REQ-MKT-001", "REQ-INTAKE-003", "REQ-HARNESS-006", "REQ-HARNESS-008"],
+  "scope": "Independent review of the persisted developer-promotion confirmation slice, including authenticated loopback API, direct board-bound and disconnected Planner/Generator, Delivery continuation, SQLite reload, user-only clarification parsing, AgentsPlugin hard dependencies, Web dependency getters, and the actual Cordis root composition. This is external-agent evaluation, not live dsh Agent execution or full Issue 92 acceptance.",
+  "criteria": [
+    {
+      "id": "AC-1",
+      "acceptance": "Unapproved WorkItems and caller-supplied confirmation cannot start board-bound planning or implementation",
+      "result": "pass",
+      "evidence": "E2 passes fresh unapproved WorkItems, caller confirmed:true, forged sourceApproval, missing WorkItem, wrong-project scope, and both direct roles across manual/external-agent/huntianling-runtime executor tags. Disconnected Planner and Generator reject supplied WorkItem ids with no runs or candidate artifacts. E2 and E4 exercise the real Cordis HTTP composition: unapproved planning is denied and approved runs belong to the registered agents service. The original F1 probe now passes: rejected -> ordinary approved leaves Planner HTTP 400, Generator denied, Delivery denied and fresh SQLite-backed resolution denied, with approval null. Explicit authenticated renewal restores planning."
+    },
+    {
+      "id": "AC-2",
+      "acceptance": "Approved inputs preserve source quotes, goals, actors, and acceptance across reload",
+      "result": "pass",
+      "evidence": "E2 includes independent HTTP-only session creation, customer message submission, analysis, candidate update, authenticated developer promotion, and planning. Forged actorId is ignored; the stored actor is reviewer. Caller goal/quotes/acceptance replacements do not replace approved inputs. A fresh Board over the same temporary SQLite store returns deeply equal confirmed inputs. Existing tests additionally preserve document chunk and full-text quotes through reload."
+    },
+    {
+      "id": "AC-3",
+      "acceptance": "Changed source, candidate, or WorkItem scope invalidates approval and blocks continuation",
+      "result": "pass",
+      "evidence": "E2 independently changes WorkItem title, body, sourceInput, and acceptance; both Planner and Generator reject each drift, fresh SQLite-backed Board resolution rejects it, and mismatched candidate reapproval fails. Candidate actor changes require explicit renewal. User-source changes block the next delivery step and interrupted Agent resume; replacing the approval cannot resume old Planner/Generator runs or an old delivery checkpoint after recreating Board, Runtime, and Delivery. Unchanged checkpoint recovery succeeds. Existing tests also cover attachment drift. Assistant/system parser inputs cannot alter draft fields or answer questions after the latest clarify.ts repair; these are parser defense tests, not a demonstrated current API injection."
+    },
+    {
+      "id": "AC-4",
+      "acceptance": "The explicit approval action can renew matching scope; generic status edits cannot issue approval",
+      "result": "pass",
+      "evidence": "E2 verifies explicit renewal and rejects ordinary candidate status:approved. Session rejection now clears approvals in the same snapshot update; an ordinary status change cannot restore them. The original independent authenticated F1 probe passes, including both runtime/Delivery denial and SQLite reload, followed by successful explicit renewal bound to reviewer rather than a forged actor. A separate independent legacy fixture writes a rejected session retaining an old approval into temporary SQLite, reloads it, then tries ordinary approved and ready_for_analysis updates: both clear the old approval and remain denied after another reload. The repository regression also verifies another session's approved inputs remain unchanged."
+    },
+    {
+      "id": "AC-5",
+      "acceptance": "Delivery and HTTP planning use the same confirmation checks without fabricating inputs",
+      "result": "pass",
+      "evidence": "E2 and E4 verify authenticated HTTP planning and Delivery against both service factories and the actual Cordis root composition. Unapproved /plan returns 400; approved /plan preserves original inputs and its run id is found in ctx.get('huntianling.agents'). Approved HTTP Delivery returns 201 and is blocked by the missing prepared environment, not a missing service. Direct-runtime probes verify approved source fields replace caller-provided fields; continuation and reload recheck approval. Source inspection confirms both paths use resolveConfirmedRequirement. Executed late-service tests verify agents/delivery/harness getters register and withdraw after Web starts, without stale-service side effects or implicit runtime fallback when the explicit agents getter returns undefined. This passes this slice's input-resolution criterion, not actual dsh execution or customer delivery."
+    }
+  ],
+  "decision": "pass",
+  "findings": [],
+  "resolvedFindings": [
+    {
+      "id": "F1",
+      "priority": "P1",
+      "status": "resolved-independently-verified",
+      "title": "Generic session status updates revive a rejected approval without explicit reapproval",
+      "file": "src/host/board/store.ts",
+      "line": 2024,
+      "relatedLocations": ["src/host/intake/confirmation.ts:45", "src/host/web/server.ts:2980"],
+      "beforeRepairReproduction": [
+        "Create an isolated requirement and explicitly approve its candidate, retaining the persisted approval.",
+        "As an authenticated project developer, PATCH /api/v1/intake/sessions/:id with status:rejected; HTTP planning then returns 400.",
+        "PATCH the same session with status:approved using the ordinary update route; do not call /approve.",
+        "POST /api/v1/work-items/:id/plan returns 200. Direct manual Generator status is completed and Delivery.start status is running.",
+        "Recreate Board from the temporary SQLite store: the old approval is unchanged and resolveConfirmedRequirement succeeds."
+      ],
+      "beforeRepairObserved": {
+        "beforeReject": "independent-reviewer",
+        "afterGenericPatch": "independent-reviewer",
+        "plannerStatus": 200,
+        "generatorStatus": "completed",
+        "deliveryStatus": "running",
+        "reloadedResolution": "allowed",
+        "approvalStillEqual": true
+      },
+      "expected": "Rejected approval remains unusable until the explicit approval action issues a current approval. Ordinary status edits must not restore execution authorization.",
+      "beforeRepairCause": "updateIntakeSession persisted status changes without invalidating candidate approvals; resolveConfirmedRequirement rejected only while the session was currently rejected. Returning to approved removed that check while every stored digest still matched.",
+      "repairVerification": "E2 passes the original F1 probe, strengthened with explicit Generator, Delivery, reload, null-approval and authenticated-renewal assertions. It also passes an independent legacy rejected-SQLite probe and the repository's other-session isolation regression. updateIntakeSession now clears matching-session approvals when either old or new status is rejected, in the same snapshot update.",
+      "afterRepairObserved": {
+        "plannerStatus": 400,
+        "generatorStatus": "denied",
+        "deliveryStatus": "denied",
+        "reloadedResolution": "denied",
+        "approval": null,
+        "explicitRenewalPlannerStatus": 200,
+        "explicitRenewalActor": "reviewer"
+      },
+      "probe": "/private/tmp/htl-confirmation-review.JuYxHJ/review-confirmation.test.mjs:209"
+    }
+  ],
+  "executionEvidence": [
+    {
+      "id": "E1",
+      "workingDirectory": "/private/tmp/htl-confirmation-review.JuYxHJ",
+      "command": "./node_modules/.bin/tsc -p tsconfig.src.json",
+      "exitCode": 0,
+      "result": "pass",
+      "observed": "Rebuilt the isolated source copy after refreshing the F1 session-revocation repair in board/store.ts, retaining the verified AgentsPlugin/runtime, Web getter, confirmation and clarification repairs."
+    },
+    {
+      "id": "E2",
+      "workingDirectory": "/private/tmp/htl-confirmation-review.JuYxHJ",
+      "command": "env TMPDIR=/private/tmp/htl-confirmation-review.JuYxHJ/tmp node --test test/unit/intake-confirmation.test.mjs test/unit/mkt-clarify.test.mjs test/unit/web-late-services.test.mjs review-confirmation.test.mjs review-composition.test.mjs",
+      "exitCode": 0,
+      "result": "pass",
+      "tests": 44,
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "breakdown": {
+        "intake-confirmation.test.mjs": { "tests": 19, "passed": 19, "failed": 0 },
+        "mkt-clarify.test.mjs": { "tests": 5, "passed": 5, "failed": 0 },
+        "web-late-services.test.mjs": { "tests": 2, "passed": 2, "failed": 0 },
+        "review-confirmation.test.mjs": { "tests": 14, "passed": 14, "failed": 0 },
+        "review-composition.test.mjs": { "tests": 4, "passed": 4, "failed": 0 }
+      },
+      "executionPermissions": "Narrow approved escalation for isolated loopback listeners after sandbox listen EPERM. Authenticated synthetic-account probes and the repository's existing token-protected standalone late-service fixture; no external accounts, providers, production repositories, or security-setting changes. The legacy SQLite setup mutates only its own temporary database.",
+      "clarificationAssessment": "Board/API already reject non-user follow-up-answer messages. Independent pure-function probes supply assistant/system arrays directly and verify goal, actors, scenarios, constraints, nonGoals, and confirmation remain unchanged, and questions remain open. Corresponding user answers change those fields and mark questions answered. This verifies parser defense for untrusted/reloaded input, not a current Board/API injection."
+    },
+    {
+      "id": "E3",
+      "workingDirectory": "/Users/kenyle/workspace/agent/deepseek-harness-plugin",
+      "command": "diff -qr src /private/tmp/htl-confirmation-review.JuYxHJ/src",
+      "exitCode": 0,
+      "result": "pass",
+      "observed": "All source files matched the tested temporary build after the final run. The official customer-e2e script also matched by diff -q. Hashes below identify the evaluated snapshot, not future main-line changes."
+    },
+    {
+      "id": "E4",
+      "workingDirectory": "/private/tmp/htl-confirmation-review.JuYxHJ",
+      "command": "env TMPDIR=/private/tmp/htl-confirmation-review.JuYxHJ/tmp node scripts/customer-e2e.mjs",
+      "exitCode": 0,
+      "result": "pass",
+      "checks": 15,
+      "passed": 15,
+      "failed": 0,
+      "observed": "The repository's actual Cordis root plugin and HTTP suite pass all 15 checks. Unapproved Story delivery is rejected with 409 and unapproved /plan with 400. Approved /plan carries persisted candidate/actor approval and its run id is present in the registered agents service. Delivery reaches its environment gate. The suite also verifies isolated roles, project access, intake/attachments, hierarchy, projections, evidence denial, logout, and native diagnostic-only CI using dependency-free temporary scripts and pnpm install --offline --ignore-scripts. No external account, provider, production repository or live dsh task is used."
+    }
+  ],
+  "compositionReevaluation": {
+    "status": "pass-for-tested-composition",
+    "resolvedObservation": "Before the Web getter repair, this evaluator reproduced customer-e2e 13/15 with both delivery checks failing, and an independent root-composition probe showed Delivery registered in ctx while HTTP returned 400 huntianling.delivery is required. Main reported discovering the production-composition chain independently. After its repair, E4 is 15/15 and all four independent composition/disconnected-runtime probes pass. The missing-service observation is resolved, not an open finding.",
+    "sourceInspection": "AgentsPlugin injects skills, board and environment as hard dependencies and requires all three before creating the runtime. Runtime's Planner/Generator guard also activates for any supplied workItemId even without Board. WebPlugin reads optional agents/delivery/harness via ctx.get getters; server.start overrides spread-created values with getters again. An explicitly supplied agents property resolving undefined is returned as undefined rather than selecting the fallback runtime. E2 now also executes all three late-service getter registration/withdrawal paths and the standalone absent-property fallback; this is not a complete Cordis hot-reload matrix.",
+    "probeCorrection": "The initial independent Delivery probe expected 200, but the source route returns 201 for creation. After missing-service repair it returned 201 with the correct environment blocker; the temporary probe was corrected to assert 201 and rerun. This assertion correction is not a product defect or weakened approval check."
+  },
+  "evidenceRetention": {
+    "results": "Independent tool output from this evaluation task; final post-F1-repair execution is E1-E4. Earlier failed and exploratory runs are retained as resolved history, not counted as additional passing cases.",
+    "probePath": "/private/tmp/htl-confirmation-review.JuYxHJ/review-confirmation.test.mjs",
+    "probeSha256": "480536bbaaa3981300c3b96bc55e95e9ca6dd0bf0f3708a70faffa7791102dc7",
+    "compositionProbePath": "/private/tmp/htl-confirmation-review.JuYxHJ/review-composition.test.mjs",
+    "compositionProbeSha256": "642f87c1bf1907e9a0e86ee7d59f956789c8950627a6f813a941280ff35f1440",
+    "limitation": "Probe and compiled build are retained temporary local artifacts, not committed fixtures. No product or repository test files were edited by this evaluator."
+  },
+  "baseCommit": "1349752e5c59e03ae633cde12ad1c2c48eefad8b",
+  "verifiedSourceSha256": {
+    "src/host/intake/clarify.ts": "d2d1fffd2f8c23cdee03a5bd0d9fba79ecf38435914f5684bdd2c8852ca4bde8",
+    "src/host/intake/confirmation.ts": "eccc2e2e46f2926cb81ac8d3556131c07ced8c38c9e206af77a384ce1ff80305",
+    "src/host/board/store.ts": "d7d5359d2ce42fc920a94a64ef5ee205feb759c19fc2c1c39556fb4a3209b259",
+    "src/host/board/types.ts": "574885e125ac58457595299a6004cc4869c33d797a63606b75b0c2fb74f97b55",
+    "src/host/agents/runtime.ts": "6d006914fac3548c7d27e6096e2d8321415f3334e20be4652766c35f329135b7",
+    "src/host/agents/plugin.ts": "9b7495aad714ea7fefcb407754b0c5313f3bf599762ade58692d698b39a1128e",
+    "src/host/delivery/service.ts": "5492ee03965ed27d5b4db5e5f77bc1a6d897096320096f28435eef6f5da69672",
+    "src/host/delivery/types.ts": "1807142e88a387bb08ccc78d5233ae103d18637aae4377e9967c3c95a4b5d62f",
+    "src/host/web/server.ts": "44d4f52e7669f78240469fa726d7e913728f50eea77d863dc9b9ca3d8806d5b2",
+    "src/host/web/plugin.ts": "245640ac569350447211c543aaa8cf1fce2d9989c9b99546fce6c6895431ccc9",
+    "src/host/plugin.ts": "c274196ef6515c23b21de74e22d80111c303c6002fa1a284cb170f681f29e6a5",
+    "scripts/customer-e2e.mjs": "bcec232232868910a19b20ef8049164d0a885143130e4a7ac22aa33df88e4d8a",
+    "test/unit/intake-confirmation.test.mjs": "b5c59f5a9bde0bae49ba7f865d6d45adfcf0338ef91dce1e3911241c9bdd8933",
+    "test/unit/web-late-services.test.mjs": "b915715d7022f00457dc6e2a880acee44e305cf9d930a58605ea521edf2a1103",
+    "test/unit/mkt-clarify.test.mjs": "90824a9428b89d54f5fa1f85107b1ecf6ffc3d41741d3f236014f4cd776de8a7",
+    "test/helpers/approved-intake.mjs": "9a0a07bd5e48b9c2feb8631e869af9447864cc803c93202a13d374c915f59050"
+  },
+  "wholeIssue92": {
+    "accepted": false,
+    "assessment": "Not evaluated as a complete Issue. This slice covers the existing persisted developer-promotion path only; configurable customer/developer/combined confirmation policies remain planned. Real dsh execution, MKT human/Agent equivalence, fresh-project end-to-end acceptance, and production gates are not established by these focused checks. No Issue closure is authorized."
+  },
+  "pushMergeReady": false,
+  "remainingSliceBlockers": [],
+  "outsideSliceBlockers": [
+    "Overall Issue 92 and broader D18-D21 acceptance remain incomplete or unverified.",
+    "Repository-wide coverage and duplication are not rerun here; prior user-reported failures are not converted to passes."
+  ],
+  "limitations": [
+    "Successful manual Generator and Delivery states here demonstrate entry authorization only, not real dsh code execution, accepted delivery, or containment guarantees.",
+    "Only evaluation-record.json is written in the repository. No repair-handoff, documentation, product, test, producer integration, or security-setting edits are performed.",
+    "This revision incorporates the latest same-slice composition repair without altering another slice's evaluation. It does not authorize push, merge, or Issue closure."
+  ]
+}

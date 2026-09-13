@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -41,7 +42,7 @@ function setup() {
     concurrentWorkLimit: 1,
   });
   const milestone = board.createMilestone({ projectId: project.id, title: 'MVP' });
-  const item = board.createWorkItem({
+  const item = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     status: 'ready',
@@ -246,7 +247,7 @@ test('WorkItem feedback links to the run and skill versions; accept updates and 
   assert.equal(captured.agentId, 'planner');
   assert.ok(captured.skillVersions.length > 0);
   assert.equal(captured.runId, run.id);
-  assert.ok(captured.openQuestions.includes('SSO?'));
+  assert.deepEqual(captured.openQuestions, []);
   assert.ok(captured.nextActions.length > 0);
   const listed = dispatch.listFeedback(item.id);
   assert.equal(listed.length, 1);
@@ -256,7 +257,7 @@ test('WorkItem feedback links to the run and skill versions; accept updates and 
   assert.equal(dispatch.listFeedback(item.id)[0].status, 'rejected');
   const second = dispatch.captureRun(run);
   dispatch.decideFeedback(second.id, { actor: 'dev', decision: 'accept' });
-  assert.equal(board.getWorkItem(item.id).analysis, 'Customer can log in');
+  assert.equal(board.getWorkItem(item.id).analysis, run.input.goal);
   assert.ok(board.listAuditEvents({ projectId: item.projectId, action: 'agent_feedback.rejected' }).length > 0);
 });
 

@@ -31,6 +31,7 @@ import {
 import { createDatabaseService } from '../database/service.js';
 import type { BoardDocument, DatabaseService } from '../database/types.js';
 import { extractIntakeSource, type ImageUnderstandingAdapter } from '../intake/extract.js';
+import { candidateScopeRevision, intakeSourceRevision, originalWorkItemRevision } from '../intake/confirmation.js';
 import { createHostedIntakeAdapters } from '../intake/hosted.js';
 import type { IntakeConfig, IntakeHostedTransport, IntakeOcrAdapter } from '../intake/types.js';
 import { buildIntakeCandidates, type IntakeLlmExtractor } from '../intake/candidates.js';
@@ -1085,6 +1086,7 @@ function normalizeStoredIntakeCandidateRequirement(
     assumptions: stringList(candidate.assumptions),
     status,
     workItemId: candidate.workItemId ?? null,
+    approval: candidate.approval ?? null,
     createdAt: candidate.createdAt ?? 0,
     updatedAt: candidate.updatedAt ?? candidate.createdAt ?? 0,
   };
@@ -2020,6 +2022,9 @@ export class BoardStore {
     this.snapshot = {
       ...this.snapshot,
       intakeSessions: this.snapshot.intakeSessions.map((item) => (item.id === next.id ? next : item)),
+      intakeCandidates: this.snapshot.intakeCandidates.map((candidate) =>
+        candidate.sessionId === session.id && (session.status === 'rejected' || next.status === 'rejected')
+          ? { ...candidate, approval: null } : candidate),
     };
     this.appendAuditEvent({
       projectId: next.projectId,
@@ -2233,6 +2238,9 @@ export class BoardStore {
     if (input.status !== undefined && !INTAKE_CANDIDATE_STATUSES.includes(input.status)) {
       throw new Error(`invalid intake candidate status: ${input.status}`);
     }
+    if (input.status === 'approved') {
+      throw new Error('use intake approval to approve a candidate');
+    }
     if (input.title !== undefined) this.assertNonBlank(input.title, 'intake candidate title');
     if (input.parentCandidateId !== undefined && input.parentCandidateId !== null) {
       this.requireIntakeCandidateInSession(candidate.sessionId, input.parentCandidateId);
@@ -2265,6 +2273,7 @@ export class BoardStore {
       ...(input.confidence !== undefined ? { confidence: normalizeConfidence(input.confidence) } : {}),
       ...(input.openQuestions !== undefined ? { openQuestions: [...input.openQuestions] } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
+      approval: null,
       updatedAt: Date.now(),
     };
     this.validateIntakeCandidateHierarchy(next);
@@ -2298,6 +2307,19 @@ export class BoardStore {
     if (!selectedCandidates.some((candidate) => candidate.status !== 'rejected')) {
       throw new Error('at least one selected intake candidate must be approvable');
     }
+    if (input.actorId !== undefined) this.assertNonBlank(input.actorId, 'approval actor');
+    for (const candidate of selectedCandidates) {
+      if (candidate.workItemId === null || candidate.status === 'rejected') continue;
+      const item = this.requireCard(candidate.workItemId);
+      const parentId = candidate.parentCandidateId === null ? null
+        : candidates.find((parent) => parent.id === candidate.parentCandidateId)?.workItemId;
+      if (item.projectId !== candidate.projectId || item.type !== candidate.type || item.parentId !== parentId
+        || item.title !== candidate.title || item.body !== candidate.body
+        || item.sourceInput !== summarizeIntakeCandidateSourceInput(candidate)
+        || JSON.stringify(item.acceptance) !== JSON.stringify(candidate.acceptance)) {
+        throw new Error('candidate and WorkItem scope differ; reconcile both before approval');
+      }
+    }
     const workItemByCandidate = new Map<IntakeCandidateId, WorkItemId>();
     const approvedUpdates = new Map<IntakeCandidateId, WorkItemId>();
     const workItems: WorkItem[] = [];
@@ -2308,6 +2330,7 @@ export class BoardStore {
       if (candidate.status === 'rejected') continue;
       if (candidate.workItemId !== null) {
         workItems.push(this.requireCard(candidate.workItemId));
+        approvedUpdates.set(candidate.id, candidate.workItemId);
         continue;
       }
       const parentId = candidate.parentCandidateId === null
@@ -2334,13 +2357,22 @@ export class BoardStore {
       workItems.push(workItem);
     }
     const updatedAt = Date.now();
+    const sourceRevision = intakeSourceRevision(this.getIntakeSessionBundle(session.id));
     const nextCandidates = this.snapshot.intakeCandidates.map((candidate) => {
       const workItemId = approvedUpdates.get(candidate.id);
       if (workItemId === undefined) return candidate;
+      const workItem = this.requireCard(workItemId);
       return {
         ...candidate,
         status: 'approved' as IntakeCandidateStatus,
         workItemId,
+        approval: {
+          actorId: input.actorId ?? 'developer',
+          approvedAt: updatedAt,
+          candidateRevision: candidateScopeRevision(candidate),
+          workItemRevision: originalWorkItemRevision(workItem),
+          sourceRevision,
+        },
         updatedAt,
       };
     });

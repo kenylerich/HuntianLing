@@ -13,6 +13,7 @@ import type { BoardService } from '../board/plugin.js';
 import type { WorkItem, WorkItemId } from '../board/types.js';
 import type { EnvironmentService } from '../environment/service.js';
 import { validateDefinitionOfReady } from '../board/work-item.js';
+import { confirmedRequirementRevision, resolveConfirmedRequirement } from '../intake/confirmation.js';
 import { loadDeliveryRuns, saveDeliveryRuns } from './store.js';
 import {
   DeliveryError,
@@ -69,6 +70,12 @@ export function createDeliveryService(deps: {
       if (readyError !== null) {
         throw new DeliveryError('NOT_READY', readyMessage(readyError.kind));
       }
+      let sourceApprovalRevision: string;
+      try {
+        sourceApprovalRevision = confirmedRequirementRevision(resolveConfirmedRequirement(deps.board, item));
+      } catch (error) {
+        throw new DeliveryError('NOT_READY', error instanceof Error ? error.message : 'original requirement approval unavailable');
+      }
       if (runs.some((run) => run.workItemId === item.id && ACTIVE.includes(run.status))) {
         throw new DeliveryError('CONFLICT', `story ${item.id} already has an active delivery run`);
       }
@@ -76,7 +83,7 @@ export function createDeliveryService(deps: {
       const now = Date.now();
       const revision = workItemDesignRevision(item);
       const runId = randomUUID();
-      const checkpoint = emptyCheckpoint(item, actor, revision);
+      const checkpoint = { ...emptyCheckpoint(item, actor, revision), sourceApprovalRevision };
       const environmentReady = deps.environment === undefined
         ? input.environmentReady === true
         : deps.environment.canStartImplementation(deps.workspaceRoot, item.projectId);
@@ -183,6 +190,16 @@ export function createDeliveryService(deps: {
           reason: candidateBlocker,
           blockers: [candidateBlocker],
           nextAction: 'revalidate candidate',
+        });
+        persist(blocked);
+        return blocked;
+      }
+      const sourceBlocker = confirmationBlocker(deps.board, item, run.checkpoint);
+      if (sourceBlocker !== null) {
+        const blocked = withStatus(run, 'blocked', {
+          key: `stale-source:${runId}:${run.checkpoint.seq}`,
+          type: 'story_delivery.source_stale', actor, reason: sourceBlocker,
+          blockers: [sourceBlocker], nextAction: 'review original requirement and start a new run',
         });
         persist(blocked);
         return blocked;
@@ -337,6 +354,8 @@ export function createDeliveryService(deps: {
     }
 
     try {
+      const sourceBlocker = confirmationBlocker(deps.board, item, run.checkpoint);
+      if (sourceBlocker !== null) throw new DeliveryError('NOT_READY', sourceBlocker);
       const { output, agentRunId, taskReference } = runAgentStep(deps.board, deps.agents, run, item, step, deps.workspaceRoot);
       const decisions = { ...run.checkpoint.decisions, [step]: output };
       const agentRunIds = [...run.agentRunIds, agentRunId];
@@ -469,7 +488,7 @@ function runAgentStep(
       workspaceRoot,
       depth: 1,
       ...(methodId !== null ? { methodId } : {}),
-      input: plannerInput(item),
+      input: resolveConfirmedRequirement(board, item),
     });
     return agentStepResult(step, planned);
   }
@@ -614,15 +633,13 @@ function candidateRevisionFor(workspaceRoot: string, artifactRefs: readonly stri
   return hash.digest('hex').slice(0, 16);
 }
 
-function plannerInput(item: WorkItem): Record<string, unknown> {
-  const quote = item.sourceInput.trim() === '' ? item.body : item.sourceInput;
-  return {
-    quotes: [{ text: quote, source: 'work-item' }],
-    goal: item.title,
-    actors: ['developer'],
-    confirmed: true,
-    acceptance: [...item.acceptance],
-  };
+function confirmationBlocker(board: BoardService, item: WorkItem, checkpoint: StoryDeliveryCheckpoint): string | null {
+  try {
+    const current = confirmedRequirementRevision(resolveConfirmedRequirement(board, item));
+    return checkpoint.sourceApprovalRevision === current ? null : 'original requirement approval changed after checkpoint';
+  } catch (error) {
+    return error instanceof Error ? error.message : 'original requirement approval unavailable';
+  }
 }
 
 function requireStory(board: BoardService, workItemId: string): WorkItem {

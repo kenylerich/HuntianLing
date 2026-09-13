@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -31,7 +32,7 @@ test('developer can start pause resume and cancel a Story delivery run', async (
   const requirements = createRequirementManagementService(board);
   const project = board.createProject({ name: '交付项目' });
   const milestone = board.createMilestone({ projectId: project.id, title: 'M1' });
-  const story = board.createWorkItem({
+  const story = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '客户能登录',

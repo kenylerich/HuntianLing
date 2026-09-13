@@ -1,6 +1,6 @@
 ---
 doc_status: active
-doc_version: 2026-09-13.5
+doc_version: 2026-09-13.6
 created: 2026-09-10
 last_reviewed: 2026-09-13
 review_after: 2026-10-13
@@ -843,6 +843,7 @@ Acceptance criteria:
 Implementation state:
 
 - Missing goal, actors, scenarios, or confirm returns clarifying questions to the customer MKT dialog. Structured follow-ups fill the original-requirement draft. Confirm tracks it with source quotes; until then it stays untracked. Agent Channel `customer.question_needed` appears in that dialog. Customers do not need the developer shell to answer.
+- Developer promotion records its actor, time, candidate revision, source revision, and linked WorkItem scope. Board-bound Planner and Generator resolve this record instead of trusting `confirmed` or caller-provided scope. Missing source quotes, actors, scenarios, acceptance, or unresolved questions block execution. Source or scope changes require renewed approval; existing delivery checkpoints cannot resume against a replacement approval. Rejecting a session revokes its approvals; ordinary status edits cannot restore them. Generic candidate edits cannot issue approval, and HTTP approval records the signed-in actor. Configurable customer-only and combined confirmation policies remain planned (`REQ-INTAKE-003`, `REQ-HARNESS-006`, `REQ-HARNESS-008`).
 
 Related requirements: `REQ-INTAKE-001`, `REQ-INTAKE-002`, `REQ-INTAKE-003`, `REQ-MKT-002`, `REQ-SKILL-005`, `REQ-SKILL-006`, `REQ-WEB-007`.
 

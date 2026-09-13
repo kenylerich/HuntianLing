@@ -400,6 +400,13 @@ export interface IntakeCandidateRequirement {
   readonly assumptions: readonly string[];
   readonly status: IntakeCandidateStatus;
   readonly workItemId: WorkItemId | null;
+  readonly approval?: {
+    readonly actorId: string;
+    readonly approvedAt: number;
+    readonly candidateRevision: string;
+    readonly workItemRevision: string;
+    readonly sourceRevision: string;
+  } | null;
   readonly createdAt: number;
   readonly updatedAt: number;
 }

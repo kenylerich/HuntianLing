@@ -11,6 +11,7 @@ import { createCollabService } from '../../lib/host/collab/service.js';
 import { hasExecutedDeliveryEvidence } from '../../lib/host/board/executed-evidence.js';
 import { SKILL_PLANNER_USER_STORY } from '../../lib/host/skills/coding-pack.js';
 import { createSkillService } from '../../lib/host/skills/service.js';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 
 function runtime() {
   return createAgentRuntime({ skills: createSkillService() });
@@ -47,7 +48,7 @@ test('planner rejects implementation file paths', () => {
     () =>
       agents.startRun({
         agentId: 'planner',
-        executor: 'manual',
+        executor: 'external-agent',
         input: { ...original, files: ['src/host/web/page.ts'] },
       }),
     (error) => error instanceof AgentTaskError && error.code === 'VALIDATION',
@@ -58,7 +59,7 @@ test('user-story method changes planner output', () => {
   const agents = runtime();
   const withoutMethod = agents.startRun({
     agentId: 'planner',
-    executor: 'manual',
+    executor: 'external-agent',
     input: original,
   });
   assert.equal(withoutMethod.output.userStory, undefined);
@@ -67,7 +68,7 @@ test('user-story method changes planner output', () => {
 
   const withMethod = agents.startRun({
     agentId: 'planner',
-    executor: 'manual',
+    executor: 'external-agent',
     methodId: 'user-story',
     input: original,
   });
@@ -80,7 +81,7 @@ test('method execution records method version, skill depth steps, and passing se
   const agents = runtime();
   const run = agents.startRun({
     agentId: 'planner',
-    executor: 'huntianling-runtime',
+    executor: 'external-agent',
     methodId: 'user-story',
     depth: 1,
     input: original,
@@ -99,7 +100,7 @@ test('method sensors reject invalid planner output and keep a rejected run recor
     () =>
       agents.startRun({
         agentId: 'planner',
-        executor: 'huntianling-runtime',
+        executor: 'external-agent',
         runId: 'invalid-method-output',
         methodId: 'user-story',
         input: { ...original, omitMethodOutput: true },
@@ -121,7 +122,7 @@ test('missing required method skill blocks the planner task', () => {
     () =>
       agents.startRun({
         agentId: 'planner',
-        executor: 'manual',
+        executor: 'external-agent',
         methodId: 'user-story',
         projectId: 'p1',
         input: original,
@@ -152,7 +153,7 @@ test('agent runtime refuses a collaboration task missing required fields', () =>
     () =>
       agents.startRun({
         agentId: 'planner',
-        executor: 'manual',
+        executor: 'external-agent',
         input: original,
         collaborationTaskId: incomplete.payload.taskId,
         collab,
@@ -173,7 +174,7 @@ test('agent runtime refuses a collaboration task missing required fields', () =>
   });
   const run = agents.startRun({
     agentId: 'planner',
-    executor: 'manual',
+    executor: 'external-agent',
     input: original,
     collaborationTaskId: ready.payload.taskId,
     collab,
@@ -183,12 +184,12 @@ test('agent runtime refuses a collaboration task missing required fields', () =>
 
 test('generator cannot mark the slice accepted and requires a ready environment', () => {
   const agents = runtime();
-  const planned = agents.startRun({ agentId: 'planner', executor: 'manual', input: original });
+  const planned = agents.startRun({ agentId: 'planner', executor: 'external-agent', input: original });
   assert.throws(
     () =>
       agents.startRun({
         agentId: 'generator',
-        executor: 'manual',
+        executor: 'external-agent',
         input: planned.output,
       }),
     (error) => error instanceof AgentTaskError && error.code === 'ENVIRONMENT',
@@ -197,7 +198,7 @@ test('generator cannot mark the slice accepted and requires a ready environment'
     () =>
       agents.startRun({
         agentId: 'generator',
-        executor: 'manual',
+        executor: 'external-agent',
         environmentReady: true,
         input: { ...planned.output, accepted: true },
       }),
@@ -205,7 +206,7 @@ test('generator cannot mark the slice accepted and requires a ready environment'
   );
   const generated = agents.startRun({
     agentId: 'generator',
-    executor: 'manual',
+    executor: 'external-agent',
     environmentReady: true,
     input: planned.output,
   });
@@ -215,10 +216,10 @@ test('generator cannot mark the slice accepted and requires a ready environment'
 
 test('evaluator pass cannot be generator self-check and repair routes to generator', () => {
   const agents = runtime();
-  const planned = agents.startRun({ agentId: 'planner', executor: 'manual', input: original });
+  const planned = agents.startRun({ agentId: 'planner', executor: 'external-agent', input: original });
   const generated = agents.startRun({
     agentId: 'generator',
-    executor: 'manual',
+    executor: 'external-agent',
     environmentReady: true,
     input: planned.output,
   });
@@ -226,7 +227,7 @@ test('evaluator pass cannot be generator self-check and repair routes to generat
     () =>
       agents.startRun({
         agentId: 'evaluator',
-        executor: 'manual',
+        executor: 'external-agent',
         input: {
           ...generated.output,
           independent: true,
@@ -238,7 +239,7 @@ test('evaluator pass cannot be generator self-check and repair routes to generat
   );
   const passed = agents.startRun({
     agentId: 'evaluator',
-    executor: 'manual',
+    executor: 'external-agent',
     input: { ...generated.output, independent: true, acceptance: planned.output.acceptance },
   });
   assert.equal(passed.output.independent, true);
@@ -247,7 +248,7 @@ test('evaluator pass cannot be generator self-check and repair routes to generat
 
   const repair = agents.startRun({
     agentId: 'evaluator',
-    executor: 'manual',
+    executor: 'external-agent',
     input: {
       ...generated.output,
       independent: true,
@@ -264,7 +265,7 @@ test('evaluator persists criterion checks and generator self-check cannot delive
   const root = mkdtempSync(join(tmpdir(), 'huntianling-agents-evidence-'));
   const board = createBoardService(root);
   const project = board.createProject({ name: 'p' });
-  const story = board.createWorkItem({
+  const story = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '证据写入',
@@ -274,7 +275,7 @@ test('evaluator persists criterion checks and generator self-check cannot delive
     acceptance: ['customer progress is visible'],
   });
   const agents = createAgentRuntime({ skills: createSkillService(), board });
-  const planned = agents.startRun({ agentId: 'planner', executor: 'manual', input: original });
+  const planned = agents.startRun({ agentId: 'planner', executor: 'manual', workItemId: story.id, input: original });
   const generated = agents.startRun({
     agentId: 'generator',
     executor: 'manual',
@@ -320,7 +321,7 @@ test('evaluator persists criterion checks and generator self-check cannot delive
 
 test('interrupted handoff can be resumed', () => {
   const agents = runtime();
-  const planned = agents.startRun({ agentId: 'planner', executor: 'manual', input: original });
+  const planned = agents.startRun({ agentId: 'planner', executor: 'external-agent', input: original });
   const interrupted = agents.interruptRun(planned.id);
   assert.equal(interrupted.status, 'interrupted');
   const resumed = agents.resumeRun(planned.id);

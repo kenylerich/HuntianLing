@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -40,7 +41,7 @@ function emptyProject() {
   const environment = createEnvironmentService({ skills, board });
   const project = board.createProject({ name: 'Runtime review' });
   const milestone = board.createMilestone({ projectId: project.id, title: 'M1' });
-  const story = board.createWorkItem({
+  const story = approvedWorkItem(board, {
     projectId: project.id,
     milestoneId: milestone.id,
     type: 'story',

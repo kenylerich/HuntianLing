@@ -1,6 +1,6 @@
 ---
 doc_status: active
-doc_version: 2026-09-13.5
+doc_version: 2026-09-13.6
 created: 2026-09-10
 last_reviewed: 2026-09-13
 review_after: 2026-10-13
@@ -832,6 +832,7 @@ MKT 是需求收集角色。人或 Agent 都可以执行。只有输入、Skill�
 实现状态：
 
 - 缺少 goal、actors、scenarios 或 confirm 时，澄清问题回到客户 MKT 对话框。结构化 follow-up 填写 original-requirement 草稿。确认后带 source quotes 跟踪；确认前保持 untracked。Agent Channel 的 `customer.question_needed` 出现在该对话框。客户不必进入开发界面即可回答。
+- 开发者提升记录审批人、时间、候选版本、来源版本和关联 WorkItem 范围。绑定看板的 Planner 与 Generator 读取该记录，不信任 `confirmed` 或调用方提供的范围。来源原话、角色、场景、验收缺失或存在未决问题时阻止执行。来源或范围变化后必须重新审批；已有交付检查点不能沿用替换后的审批恢复。拒绝会话会撤销其审批，普通状态编辑不能恢复。普通候选编辑不能签发审批，HTTP 审批记录登录身份。可配置的仅客户确认及组合确认策略仍属规划（`REQ-INTAKE-003`、`REQ-HARNESS-006`、`REQ-HARNESS-008`）。
 
 关联需求：`REQ-INTAKE-001`、`REQ-INTAKE-002`、`REQ-INTAKE-003`、`REQ-MKT-002`、`REQ-SKILL-005`、`REQ-SKILL-006`、`REQ-WEB-007`。
 

@@ -26,7 +26,7 @@ async function json(url, options = {}) {
   return { response, payload };
 }
 
-test('developer can compare skill depth and run the self-development demonstration', async (t) => {
+test('developer can compare skill depth but an unapproved self-development demo cannot run or deliver', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'huntianling-web-harness-'));
   const board = createBoardService(root);
   const requirements = createRequirementManagementService(board);
@@ -97,7 +97,12 @@ test('developer can compare skill depth and run the self-development demonstrati
     headers: { cookie, 'content-type': 'application/json' },
     body: JSON.stringify({}),
   });
-  assert.equal(demo.response.status, 201);
-  assert.equal(demo.payload.customerProgress, 'in_development');
-  assert.equal(demo.payload.gates.lint, 'blocked');
+  assert.equal(demo.response.status, 409);
+  assert.equal(demo.payload.code, 'NOT_READY');
+  assert.match(demo.payload.error, /original requirement.*approval/);
+  assert.deepEqual(agents.listRuns(), []);
+  assert.deepEqual(harness.listDemonstrations(), []);
+  const items = board.listWorkItems();
+  assert.ok(items.some((item) => item.type === 'story'));
+  assert.equal(items.some((item) => item.status === 'delivered'), false);
 });

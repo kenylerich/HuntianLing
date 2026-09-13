@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -57,7 +58,7 @@ function setup() {
 }
 
 function story(board, project, extras = {}) {
-  return board.createWorkItem({
+  return approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     status: 'verifying',
@@ -235,7 +236,8 @@ test('agent-run provenance records source inputs, model identity, skill versions
   });
   const provenance = governance.getRunProvenance(run.id);
   assert.ok(provenance);
-  assert.ok(provenance.sourceInputs.includes('客户能登录'));
+  assert.deepEqual(provenance.sourceInputs, [...run.input.quotes.map(quote => quote.text), run.input.goal]);
+  assert.ok(provenance.sourceInputs.some(text => text.includes('客户能登录')));
   assert.match(provenance.modelIdentity, /manual:planner/);
   assert.ok(provenance.skillVersions.length > 0);
   assert.ok(provenance.generatedOutput.includes('Customer can log in') || provenance.generatedOutput.length > 0);

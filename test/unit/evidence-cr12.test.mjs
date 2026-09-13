@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import { attachMockExecutionReceipt } from '../helpers/execution-receipt.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
@@ -36,7 +37,7 @@ function setupBoard() {
 }
 
 function readyStory(board, project, milestone, extras = {}) {
-  return board.createWorkItem({
+  return approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '登录',

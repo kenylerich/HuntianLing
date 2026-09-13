@@ -87,7 +87,7 @@ export function collectMktDraft(
 export function listClarifyingQuestions(messages: readonly IntakeMessage[]): readonly IntakeClarifyingQuestion[] {
   const answered = new Set(
     messages
-      .filter((message) => message.kind === 'follow-up-answer' && message.field !== null)
+      .filter((message) => message.role === 'user' && message.kind === 'follow-up-answer' && message.field !== null)
       .map((message) => message.field as MktFollowUpField),
   );
   return messages
@@ -138,7 +138,7 @@ function missingMktFields(input: {
 function collectAnswers(messages: readonly IntakeMessage[]): Partial<Record<MktFollowUpField, string>> {
   const answers: Partial<Record<MktFollowUpField, string>> = {};
   for (const message of messages) {
-    if (message.kind !== 'follow-up-answer' || message.field === null) continue;
+    if (message.role !== 'user' || message.kind !== 'follow-up-answer' || message.field === null) continue;
     answers[message.field] = message.body;
   }
   for (const message of messages) {

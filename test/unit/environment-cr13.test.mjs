@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -68,7 +69,7 @@ function countingAgents(board) {
 function readyStory(board) {
   const project = board.createProject({ name: 'p' });
   const milestone = board.createMilestone({ projectId: project.id, title: 'M1' });
-  return board.createWorkItem({
+  return approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '客户能登录',

@@ -2,5 +2,5 @@
 # Update both documents, then run: pnpm run doc-sync:write
 source: docs/requirements/backlog.md
 target: docs/requirements/backlog.zh.md
-source_sha256: d013a29e60e2cb0a80c93ad92777e17714498f29276ce0dcfa38958c69e2697d
-target_sha256: b38238e842dcf3e864bbb90b46bb08694fd863a30449efd4d1e080f6925b3b22
+source_sha256: 4b7d0c0d042727f896985530a3e28d6a4929d7d10632d74d9b4be94370b81dea
+target_sha256: 3723d08e6e2edad2842bbecd6db30cdba4a4cc8ba2253fd5811d1427724a2868

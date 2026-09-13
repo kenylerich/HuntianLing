@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "executionOwner": "external-agent",
+  "baseCommit": "1349752e5c59e03ae633cde12ad1c2c48eefad8b",
+  "reqIds": ["REQ-MKT-001", "REQ-INTAKE-003", "REQ-HARNESS-006", "REQ-HARNESS-008"],
+  "files": [
+    "src/host/intake/confirmation.ts",
+    "src/host/intake/clarify.ts",
+    "src/host/board/store.ts",
+    "src/host/board/types.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/agents/plugin.ts",
+    "src/host/delivery/service.ts",
+    "src/host/delivery/types.ts",
+    "src/host/web/server.ts",
+    "src/host/web/plugin.ts",
+    "scripts/customer-e2e.mjs",
+    "test/helpers/approved-intake.mjs",
+    "test/unit/intake-confirmation.test.mjs",
+    "test/unit/web-late-services.test.mjs",
+    "test/unit/agents-runtime.test.mjs",
+    "test/unit/dispatch-leases.test.mjs",
+    "test/unit/environment-cr13.test.mjs",
+    "test/unit/environment-d17.test.mjs",
+    "test/unit/evidence-cr12.test.mjs",
+    "test/unit/gates-d16.test.mjs",
+    "test/unit/governance-d13.test.mjs",
+    "test/unit/harness-cr8.test.mjs",
+    "test/unit/harness-measure.test.mjs",
+    "test/unit/method-d6.test.mjs",
+    "test/unit/skill-d9.test.mjs",
+    "test/unit/story-delivery.test.mjs",
+    "test/unit/tool-feedback.test.mjs",
+    "test/unit/web-delivery.test.mjs",
+    "test/unit/web-harness.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md",
+    "docs/requirements/backlog.i18n.yaml",
+    "docs/requirements/reviews/2026-09-13-customer-acceptance.md",
+    "docs/requirements/reviews/2026-09-13-customer-acceptance.zh.md",
+    "docs/requirements/reviews/2026-09-13-customer-acceptance.i18n.yaml"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "pass",
+    "hygiene": "pass"
+  },
+  "checks": [
+    "pnpm run typecheck, build, lint and hygiene passed",
+    "pnpm run test: 505 passed, zero failed, one PostgreSQL test skipped because no database URL was configured in this run",
+    "node --test test/unit/intake-confirmation.test.mjs test/unit/web-late-services.test.mjs: 21 passed",
+    "pnpm run test:e2e:customer: 15 production Cordis HTTP checks passed after the revocation repair",
+    "pnpm run doc-sync:write and doc-sync validate the bilingual document pairs",
+    "git diff --check passed",
+    "pnpm run duplication failed: 98 clones, 2.00%, with the unchanged zero threshold"
+  ],
+  "implementation": [
+    "Persist developer approval actor, time, source, candidate and WorkItem revisions; resolve original source quotes and approved scope for board-bound Planner and Generator",
+    "Reject missing, stale, incomplete and caller-forged confirmation; recheck Delivery steps, checkpoints and Agent resumes",
+    "Explicit reapproval renews matching scope without creating duplicate WorkItems; generic candidate updates cannot grant approval",
+    "Session rejection revokes all approvals in that session in the persisted snapshot; ordinary status edits cannot restore them",
+    "AgentsPlugin waits for required Board and Environment services; Web retains live optional service getters and refuses withdrawn services",
+    "Use promoted intake fixtures in board-bound tests; keep standalone method exercises external-agent and reject the unapproved self-development demonstration"
+  ],
+  "review": {
+    "record": ".agents/self-harness/slices/confirmed-intake-delivery/evaluation-record.json",
+    "handoff": "evaluate",
+    "repairedFinding": "Independent F1: ordinary session PATCH revived a rejected approval. Added persisted revocation and HTTP, direct runtime, Delivery, SQLite and unrelated-session regression. The evaluator owns the final decision."
+  },
+  "artifacts": [
+    "output/verification/confirmed-intake-delivery/htl-confirmation-final-unit.log",
+    "output/verification/confirmed-intake-delivery/htl-confirmation-revocation.log",
+    "output/verification/confirmed-intake-delivery/htl-confirmation-customer.log",
+    "output/verification/confirmed-intake-delivery/htl-confirmation-final-duplication.log"
+  ],
+  "remaining": [
+    "Issue 92 meaningful fresh-project delivery and configurable confirmation policies",
+    "Actual dsh task/session/tool execution, contained CI and hosted receipts",
+    "OAuth and full customer acceptance",
+    "Baseline full coverage failed at 1349752; full coverage was not rerun for this slice and remains a blocker",
+    "Zero-duplication gate, remote CI, push and merge"
+  ],
+  "mergeReady": false
+}
