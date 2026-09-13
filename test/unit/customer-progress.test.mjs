@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { withExecutionVerification } from '../../lib/host/board/executed-evidence.js';
 
 import { customerProgressForWorkItem, hasExecutedDeliveryEvidence } from '../../lib/host/web/customer-progress.js';
 
@@ -65,6 +66,8 @@ test('delivered with a passing check is delivered', () => {
       designRevision: 'rev-1',
     }],
   });
+  assert.equal(hasExecutedDeliveryEvidence(passing), false);
+  passing.checks = passing.checks.map(check => withExecutionVerification(check, () => true));
   assert.equal(hasExecutedDeliveryEvidence(passing), true);
   assert.equal(customerProgressForWorkItem('delivered', passing), 'delivered');
 });
@@ -134,6 +137,7 @@ test('stale executed evidence after a design revision is not delivered', () => {
       designRevision: 'old-revision',
     }],
   });
+  passing.checks = passing.checks.map(check => withExecutionVerification(check, () => true));
   assert.equal(hasExecutedDeliveryEvidence(passing), true);
   assert.equal(hasExecutedDeliveryEvidence(passing, item), false);
   assert.equal(customerProgressForWorkItem('delivered', passing, item), 'in_development');

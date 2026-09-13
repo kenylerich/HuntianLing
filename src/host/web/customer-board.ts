@@ -54,9 +54,6 @@ export function createCustomerBoard(board: BoardService, projectId: ProjectId): 
 
   const quotedMessageIds = new Set<string>();
   const workItemIdsFromCandidates = new Set<string>();
-  const waitingOnCustomer = bundles.some((bundle) =>
-    bundle.questions.some((question) => question.status === 'open'),
-  );
   for (const bundle of bundles) {
     for (const candidate of bundle.candidates) {
       if (candidate.workItemId !== null) workItemIdsFromCandidates.add(candidate.workItemId);
@@ -68,6 +65,7 @@ export function createCustomerBoard(board: BoardService, projectId: ProjectId): 
 
   const requirements: CustomerRequirementView[] = [];
   for (const bundle of bundles) {
+    const waitingOnCustomer = bundle.questions.some((question) => question.status === 'open');
     for (const message of bundle.messages) {
       if (message.role !== 'user' || message.kind === 'follow-up-answer' || quotedMessageIds.has(message.id)) continue;
       requirements.push({
@@ -80,7 +78,7 @@ export function createCustomerBoard(board: BoardService, projectId: ProjectId): 
     }
     for (const candidate of bundle.candidates) {
       if (candidate.status === 'rejected' || candidate.workItemId !== null) continue;
-      requirements.push(requirementFromCandidate(candidate));
+      requirements.push(requirementFromCandidate(candidate, waitingOnCustomer));
     }
   }
   for (const item of workItems) {
@@ -105,9 +103,8 @@ export function createCustomerBoard(board: BoardService, projectId: ProjectId): 
   };
 }
 
-function requirementFromCandidate(candidate: IntakeCandidateRequirement): CustomerRequirementView {
+function requirementFromCandidate(candidate: IntakeCandidateRequirement, waiting: boolean): CustomerRequirementView {
   const quotes = candidate.sourceRefs.map((ref) => ref.quote).filter((quote) => quote.trim() !== '');
-  const waiting = candidate.openQuestions.length > 0;
   return {
     id: candidate.id,
     kind: 'candidate',

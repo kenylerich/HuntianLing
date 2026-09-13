@@ -36,7 +36,7 @@ export function buildVisualization(
     .filter((issue) => issue.nodeId !== null)
     .map((issue) => ({ nodeId: issue.nodeId as string, code: issue.code, message: issue.message }));
   const byStep = new Map(template.steps.map((step) => [step.id, step]));
-  const graphNodes = map.nodes.map((node, index) => toVisNode(node.id, node.title, node.kind, node.kind === 'stage' ? 'stage' : node.role || 'unassigned', node.x, node.y, node.stepId, inspectorFor(node.stepId, byStep, node.title)));
+  const graphNodes = map.nodes.map((node) => toVisNode(node.id, node.title, node.kind, node.kind === 'stage' ? 'stage' : node.role || 'unassigned', node.x, node.y, node.stepId, inspectorFor(node.stepId, byStep, node.title)));
   return {
     templateId: template.id,
     templateVersion: template.version,

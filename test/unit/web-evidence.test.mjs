@@ -149,7 +149,7 @@ test('developer records local git, CI, and evaluator evidence; customer progress
     { headers: { cookie } },
   );
   const progressItem = developerBoard.payload.progress.items.find((item) => item.id === story.id);
-  assert.equal(progressItem.progress, 'delivered');
+  assert.equal(progressItem.progress, 'in_development');
   assert.ok(progressItem.agentFeedback.length > 0);
   assert.equal(progressItem.agentFeedback[0].agentId, 'evaluator');
   assert.ok(progressItem.agentFeedback[0].runId);
@@ -162,5 +162,5 @@ test('developer records local git, CI, and evaluator evidence; customer progress
     { headers: { cookie: customerCookie } },
   );
   const afterItem = after.payload.requirements.find((item) => item.id === story.id);
-  assert.equal(afterItem.progress, 'delivered');
+  assert.equal(afterItem.progress, 'in_development');
 });

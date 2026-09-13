@@ -276,7 +276,7 @@ test('unsupported lease types are rejected', () => {
 });
 
 test('developer can recommend dispatch; customers cannot dispatch or decide agent feedback', async (t) => {
-  const { root, board, project, dispatch, item } = setup();
+  const { board, project, dispatch, item } = setup();
   const requirements = createRequirementManagementService(board);
   const hash = createPbkdf2PasswordHash('correct-password', { iterations: 1_000, salt: new Uint8Array(16).fill(4) });
   const web = createWebService(

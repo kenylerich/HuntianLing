@@ -1,5 +1,4 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import type { AddressInfo } from 'node:net';
 
 import type { RequirementManagementService, RequirementChildType } from '../agile/requirements.js';
 import { createAgentRuntime, type AgentRuntime } from '../agents/runtime.js';
@@ -30,7 +29,6 @@ import { DatabaseError } from '../database/types.js';
 import { AgentTaskError, isSpecialistAgentId, type AgentId } from '../agents/types.js';
 import { requireAgentId } from '../agents/definitions.js';
 import {
-  coerceEvidenceExecutionKind,
   resolveEvidenceExecutionKind,
   resolveEvidenceProducer,
 } from '../board/executed-evidence.js';
@@ -59,7 +57,6 @@ import {
   DELIVERY_EVIDENCE_STATUSES,
   DELIVERY_RISK_ACCEPTANCE_STATUSES,
   DELIVERY_RISK_AREAS,
-  DEFAULT_SECURITY_CLASSIFICATION,
   GOVERNANCE_IMPACT_FLAGS,
   SECURITY_RISK_LEVELS,
   GOVERNANCE_OBLIGATION_STATUSES,
@@ -187,6 +184,7 @@ import {
 } from './auth.js';
 import { audienceFromShellPath, resolveWebAuthAudience, shellPathForAudience } from './audience.js';
 import { createCustomerBoard } from './customer-board.js';
+import { isCustomerApiRequest } from './customer-access.js';
 import { createDeveloperBoard } from './developer-board.js';
 import { createEnvironmentService } from '../environment/service.js';
 import { createSkillService } from '../skills/service.js';
@@ -1638,6 +1636,10 @@ async function handleRequest(
       return;
     }
 
+    if (auth.principal?.audience === 'customer' && !isCustomerApiRequest(method, url.pathname)) {
+      throw new AuthHttpError(403, 'API is not available to customers');
+    }
+
     if (isMutating(method) && !canWrite(config, auth.principal, req)) {
       sendJson(res, 403, { error: 'write token required' });
       return;
@@ -2259,6 +2261,7 @@ async function handleApiV1(
 
   const developerBoard = /^\/api\/v1\/projects\/([^/]+)\/developer-board$/.exec(url.pathname);
   if (developerBoard !== null && method === 'GET') {
+    denyCustomer(auth, 'developer board is not available to customers');
     const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(developerBoard));
     sendJson(res, 200, createDeveloperBoard(
       deps.board,
@@ -2541,7 +2544,7 @@ async function handleApiV1(
     const ciApiBaseUrl = optionalString(body, 'apiBaseUrl');
     sendJson(res, 200, requireCi(deps).run({
       workItemId: item.id,
-      workspaceRoot: optionalString(body, 'workspaceRoot') ?? process.cwd(),
+      ...(optionalString(body, 'workspaceRoot') !== undefined ? { workspaceRoot: requireString(body, 'workspaceRoot') } : {}),
       ...(production !== undefined ? { production } : {}),
       ...(role !== undefined ? { role } : {}),
       actor: auth.principal?.username ?? 'developer',
@@ -2981,6 +2984,11 @@ async function handleApiV1(
   if (intakeMessages !== null && method === 'POST') {
     const body = await readJsonObject(req);
     const session = authorizeIntakeSession(deps, auth, idFromMatch<IntakeSessionId>(intakeMessages));
+    if (auth.principal?.audience === 'customer') {
+      body.role = 'user';
+      body.kind = 'chat';
+      body.author = auth.principal.username;
+    }
     const message = deps.board.addIntakeMessage(session.id, makeIntakeMessageCreateInput(body));
     const bundle = message.role === 'user' && message.kind === 'chat'
       ? deps.board.clarifyIntakeSession(session.id)
@@ -5294,12 +5302,7 @@ function optionalDeliveryEvidenceChecks(
     const acceptanceCriterionIds = optionalIdArray<AcceptanceCriterionId>(item, 'acceptanceCriterionIds');
     const links = optionalDeliveryEvidenceLinks(item, 'links') ?? [];
     const producer = resolveEvidenceProducer(item.producer);
-    const executionKind = coerceEvidenceExecutionKind({
-      executionKind: resolveEvidenceExecutionKind(item.executionKind, producer),
-      producer,
-      links,
-      evidenceIds,
-    });
+    const executionKind = resolveEvidenceExecutionKind(item.executionKind, producer);
     const designRevision = optionalString(item, 'designRevision');
     return {
       id: requireString(item, 'id'),
@@ -7391,7 +7394,7 @@ async function handleGovernanceApi(
   }
   if (projectPacks !== null && method === 'POST') {
     denyCustomer(auth, 'governance packs are not available to customers');
-    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectPacks));
+    authorizeProject(deps, auth, idFromMatch<ProjectId>(projectPacks));
     const body = await readJsonObject(req);
     const description = optionalString(body, 'description');
     sendJson(res, 201, requireGovernance(deps).registerCustomPack({

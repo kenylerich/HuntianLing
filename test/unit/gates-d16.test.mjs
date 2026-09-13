@@ -134,7 +134,7 @@ test('demonstration, self-check, manual, and executed evidence stay distinct at 
   const evidence = board.getDeliveryEvidenceSummary(story.id);
   assert.ok(evidence.checks.some((check) => check.producer === 'generator' && check.executionKind === 'self_check'));
   assert.ok(evidence.checks.some((check) => check.producer === 'evaluator' && check.executionKind === 'demonstration'));
-  assert.ok(evidence.checks.some((check) => check.producer === 'ci' && check.executionKind === 'executed' && check.status === 'failing'));
+  assert.ok(evidence.checks.some((check) => check.producer === 'ci' && check.executionKind === 'demonstration' && check.status === 'failing'));
   assert.equal(hasExecutedDeliveryEvidence(evidence, story), false);
 });
 
@@ -249,7 +249,7 @@ test('existing simulated evidence is excluded until revalidated', () => {
   assert.throws(() => board.transitionWorkItem(story.id, 'delivered'), /executed evidence|blocking delivery evidence/);
 });
 
-test('verified CI or Git evidence with provenance can still complete delivery and customer progress', () => {
+test('a status-only runner cannot authorize delivery or customer progress', () => {
   const { root, board, story } = emptyProject();
   const ci = createCiService({ board });
   ci.run({
@@ -259,9 +259,9 @@ test('verified CI or Git evidence with provenance can still complete delivery an
     runner: () => ({ status: 'pass', output: 'ok' }),
   });
   const evidence = board.getDeliveryEvidenceSummary(story.id);
-  assert.equal(hasExecutedDeliveryEvidence(evidence, story), true);
-  assert.equal(board.transitionWorkItem(story.id, 'delivered').status, 'delivered');
-  assert.equal(customerProgressForWorkItemRecord(board.getWorkItem(story.id), evidence), 'delivered');
+  assert.equal(hasExecutedDeliveryEvidence(evidence, story), false);
+  assert.throws(() => board.transitionWorkItem(story.id, 'delivered'), /executed evidence/);
+  assert.equal(customerProgressForWorkItemRecord(board.getWorkItem(story.id), evidence), 'in_development');
 });
 
 test('the transition API blocks delivered; the customer view is not the only gate', async (t) => {

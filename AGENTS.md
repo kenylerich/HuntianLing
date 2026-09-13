@@ -93,9 +93,9 @@ These rules apply to any Cordis plugin code, tests, or docs added to this reposi
 
 ## Quality gates
 
-This repository adopts the dsh quality-gate discipline. The exact command surface is TODO until `package.json` exists; once present, every change must pass the relevant gate before push.
+This repository adopts the dsh quality-gate discipline. Every change must pass its relevant gates before push. Lint uses ESLint; hygiene checks built package exports, declared imports, and NodeNext source resolution. Build before hygiene. Coverage rebuilds sources and rejects missing source reports; passing a subset does not waive the per-file threshold.
 
-| Surface | dsh command (TODO) | When to run |
+| Surface | Command | When to run |
 | --- | --- | --- |
 | Type safety | `pnpm run typecheck` | every commit |
 | Lint | `pnpm run lint` | every commit |
@@ -147,7 +147,7 @@ The HuntianLing `.github/workflows/` originally shipped as a verbatim copy of th
 - `ci.yml` — pull-request gate: `pnpm install` + `typecheck` + `build` + `test`.
 - `e2e.yml` — push-to-master + manual dispatch: real-API smoke test against `DEEPSEEK_API_KEY`.
 
-The probe series also established that the package scripts (`test`, `test:e2e`, `lint`, `hygiene`) and the HuntianLing workflow tree must be filled in before those workflows report green. Each script currently exits 1 with a `HUNTIANLING_PROBE:` prefix; replace each one with a real runner as the corresponding capability lands.
+Package scripts provide real unit/HTTP tests, ESLint, package hygiene, duplication detection, and per-file coverage. The PR workflow runs these checks with a disposable PostgreSQL service. Source coverage and duplication findings remain failures until repaired; do not suppress them or use a successful command subset as release acceptance.
 
 ## Issue assets
 

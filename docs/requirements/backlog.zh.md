@@ -1,6 +1,6 @@
 ---
 doc_status: active
-doc_version: 2026-09-13.2
+doc_version: 2026-09-13.5
 created: 2026-09-10
 last_reviewed: 2026-09-13
 review_after: 2026-10-13
@@ -14,7 +14,7 @@ review_after: 2026-10-13
 
 | 状态 | 版本 | 创建日期 | 最近复审 | 下次复审 |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-13.2` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
+| `active` | `2026-09-13.5` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## 摘要
 
@@ -23,6 +23,8 @@ HuntianLing 是 dsh 插件：界面是标准开发看板，后端准备标准 vi
 本文档收集已经讨论过的 HuntianLing 产品需求。它是未来 WorkItems 的规划来源；实现时可以把任何条目拆分为 Epics、Features、Requirements/Stories、Tasks、Bugs、Research 和 Milestones，并在内部看板继续跟踪。
 
 提交 `614dcd6` 的客户验收为 **revision-required**。[2026-09-13 评审](reviews/2026-09-13-customer-acceptance.zh.md) 记录了错误交付、执行缺口和客户 API 数据暴露。实现条目说明现有组件，不代表已验收能力。D16 和 D18-D21 仍未满足完整验收标准。
+
+修复跟踪使用关联评审的 Issue [#91](https://github.com/kenylerich/HuntianLing/issues/91)-[#96](https://github.com/kenylerich/HuntianLing/issues/96)。本地修复限制客户 API、阻止消息角色伪装、撤销工作流实验室会话、拒绝伪造或过期执行证据，并提供需显式启用的本地 CI。评审记录验证结果及限制。真实 dsh 交付、来源审批、OAuth、完整 CI 审计与隔离、质量门禁、独立修复评审及合并仍未完成；这些 Issue 必须保持开放。
 
 ## 目录
 
@@ -139,10 +141,10 @@ Story 交付运行必须能够承受上下文压缩、Agent 中断和执行环�
 
 实现状态：
 
-- Evaluator 运行会把每条验收标准的已执行检查写到所属 WorkItem。Generator 自检存为 `self_check`，不能把客户进度标为已交付。
+- 确定性 Evaluator 运行会逐条保存演示检查。Generator 检查在实际执行前保持 skipped，不能把客户进度标为已交付。
 - 证据记录产生者和设计版本。更改分析、设计或验收会把先前通过的已执行检查标为过期并阻塞。
-- 客户可见的已交付要求当前版本上存在通过的 Evaluator、CI 或本地 Git 已执行检查。备注、未执行链接和缺失证据都不算。项目 Definition of Done 不能关闭这条已执行证据门。
-- Demonstration、self-check 和 manual 结果与 executed evidence 保持区分。`independent: true`、`environmentReady: true` 和 producer 标签不能证明已执行成功。确定性 Evaluator 输出存为 `demonstration`，不能完成 `delivered` 或客户已交付。声称 `executed` 但没有 CI 或 Git 出处的模拟记录会被降为 `demonstration`，直至重新验证。带出处的真实 CI 和 Git 证据仍可通过状态转换 API 完成交付。
+- 客户可见的已交付要求至少一项必需 CI 或 Evaluator 检查通过，并有对应当前 WorkItem、设计及候选源码指纹的 Host 执行凭证。所有必需 CI/Evaluator 检查都必须核验；必需检查失败会阻止交付。仅有本地 Git 引用不能授权交付。项目 Definition of Done 不能关闭此要求。
+- 执行凭证独立于可编辑摘要持久化。JSON 标签、`ci:`/`git:` 前缀和 changed-file 链接不能创建凭证。检查字段篡改、跨 WorkItem 复用、源码变化或产物缺失都会使核验失效，SQLite 重载后也同样拒绝。指纹排除 `.git`、`node_modules` 及 `.huntianling/candidates` 之外的内部数据；它不证明依赖完整性，也不防御特权文件系统修改。
 
 ### REQ-HARNESS-004: Harness 评价与持续改进
 
@@ -186,7 +188,7 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 实现状态：
 
-- `huntianling.harness` 会记录一次演示：用已交付的 Node/pnpm profile 准备全新工作区，再把一个 Story 跑过失败评价、修复、中断、恢复和 Evaluator 证据。客户可见的已交付由该证据更新。
+- `huntianling.harness` 记录准备、标记评价、修复、中断和恢复的确定性工作流演示。生成产物和无操作检查不构成客户验收；客户进度保持开发中。
 - 演示现在先为全新工作区写入按项目归属的环境准备结果，再通过这条记录驱动 Story Delivery，不再依赖调用方传入 ready 标志。
 - 演示步骤标为 `manual`、`external-agent` 或 `huntianling-runtime`。覆盖扫描和 live-model trial 步骤会被记录。lint 和 hygiene 保持 blocked。未绑定的真实模型是已标注缺口，不是通过的门禁。
 - 维护者专有的 OAuth 准备仍列为后续缺口，而不是通过的门禁。托管 SCM/CI 适配器已作为调用时可选集成存在。
@@ -209,9 +211,9 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 实现状态：
 
-- `huntianling.agents` 提供有版本的 Planner、Generator、Evaluator 任务定义。运行会记录 execution reference、任务/会话 id、工具调用、产物和方法 trace。
-- Story Delivery 现在会在项目环境真实准备完成后，通过 `huntianling-runtime` 调用三个 Agent。Generator 写入候选文件和候选版本，Evaluator 独立检查候选版本及验收标记，失败评价会把有界修复路由回 Generator。
-- Evaluator 输出可凭生成的 `ci:`/`git:` id 和 changed-file 链接保存为 executed，并未核实实际执行。验收评审复现了异常候选与伪造证据仍能交付，此门禁需要修正。
+- `huntianling.agents` 提供有版本的 Planner、Generator、Evaluator 任务定义。确定性运行记录本地任务/会话引用、产物和方法 trace，不虚构 dsh 会话或工具调用。
+- Story Delivery 在准备后调用本地确定性任务处理器。Generator 写入模板候选及版本，Evaluator 检查标记，标记评价失败后路由有界修复。既有 `huntianling-runtime` 执行者标签不能证明 dsh 模型或工具调用。
+- Evaluator 标记输出属于演示证据，不能授权交付。原生 CI 执行诊断命令，但缺少经过核验的后代进程隔离时不能生成验收凭证。凭证正向单元用例模拟可信 Host 产生者；真实 dsh Agent 执行仍然缺失。
 - 真实模型执行缺失。本地候选路径尚未满足所要求的客户交付闭环。
 
 关联需求：`REQ-AGENT-001`、`REQ-AGENT-002`、`REQ-FLOW-014`、`REQ-FLOW-020`、`REQ-HARNESS-001`、`REQ-HARNESS-003`。
@@ -257,10 +259,10 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 实现状态：
 
-- 切片把 Evaluator 的逐条标准证据写到所属 WorkItem。客户可见的已交付由带出处的已执行 CI、Git 或 runtime Evaluator 证据更新，而不是 Generator 自检、demonstration Evaluator 输出、调用方声明或手工备注。
+- 切片把逐条验收发现写到所属 WorkItem。客户可见的已交付要求核验过的执行凭证，Generator 自检、标记评价、调用方声明、单独 Git 链接或手工备注均不算。
 - Story Delivery 检查点保留候选版本、产物引用、任务/会话/工具引用、待处理副作用、证据引用和预算使用。若中断后、评价前候选代码变化，恢复会阻塞；若评价已经失败并要求修复，恢复仍可进入 repair。
-- Harness 自身开发验收现在使用生产环境 runner 准备全新项目，驱动 Planner/Generator/Evaluator 经历真实候选失败、修复和独立复评，并且只在 executed 证据通过后把客户进度标为已交付。
-- 测试覆盖 runtime 交付通过、缺少 Skill/环境阻塞、方法传感器拒绝、反复校验失败降档、失败评价修复、基于版本的恢复阻塞，以及 Web 触发的自身开发验收。
+- 自身开发演示准备全新工作区并执行确定性任务交接，尚未完成录入审批、真实 dsh 编码、独立 Agent 评价或客户验收。
+- 测试覆盖演示不能交付、Skill/环境阻塞、方法传感器、有界修复、基于版本的恢复，以及真实本地 CI 先拒绝错误行为再接受修复代码。这些测试不等于完整新项目验收。
 
 ## 当前基线
 
@@ -2280,8 +2282,8 @@ huntianling.ci
 
 - CI runs 可以作为 delivery evidence links 记录，也可以作为 WorkItem 上 required 或 optional CI checks 记录。
 - Project 和 Milestone delivery evidence rollups 会统计带 CI evidence 的 WorkItems，并暴露 pending、missing、failing 或 blocked required CI checks。
-- `huntianling.ci` 通过注入的 runner 运行本地 typecheck 和 test，并把 ci-run 链接以及已执行的 `ci` 检查写到 WorkItem。
-- 托管 GitHub Actions、Gitea Actions 和 GitLab CI 适配器可发现 workflows、触发已授权 pipelines、等待完成后把 JUnit、coverage、SARIF 和 Playwright artifacts 作为已执行 CI evidence 附加。令牌在调用时或从环境提供，不会被持久化。Jenkins 适配器仍在计划中。
+- `ci.localExecution: enabled` 为配置的工作区显式启用原生 `pnpm run <script>` 诊断，默认禁用。`timeoutMs` 和 `outputLimit` 限制所属进程组和输出。其他工作区路径及 shell 表达式被拒绝。原生诊断检测命令之间的源码变化，但不能保证脱离进程组的后代已结束，因此不能生成验收凭证。重新运行会作废此前 Host 凭证，失败时也一样。
+- 托管 GitHub Actions、Gitea Actions 和 GitLab CI 适配器收集工作流结果以及 JUnit、coverage、SARIF、Playwright 产物。这些引用缺少绑定候选的 Host 凭证，不能授权交付。完整命令日志留存、dsh 沙箱集成、真实托管验证及 Jenkins 仍未完成；本地执行器用于可信脚本，不是操作系统沙箱。
 
 ### REQ-EVIDENCE-001: Evidence-Based Delivery Gates
 
@@ -2310,7 +2312,7 @@ huntianling.checks
 - Evidence workspace 会从同一个 Evidence board payload 渲染 project-level gate summary、evidence gap matrix、blocker queue、governance risk queue 和 status lanes，使团队可以在打开单个 WorkItem 前看到 delivery gaps。
 - GitHub Issue projection 在 card 进入 Done 前要求 `huntianling-delivery-gate` certificate。非法 completed closes 会被重新打开，并回到之前的开放泳道；如果之前泳道缺失或已经是终态，则回到 In review。
 - 定时和手动触发的 recovery sweep 会扫描 completed closed GitHub Issue projections，并重新打开缺少该 certificate 的 card，同时让已通过门禁的 Done cards 保持关闭。
-- 客户可见的已交付要求通过的 Evaluator、CI 或本地 Git 已执行检查。Generator 自检、备注，以及设计版本变化后的过期证据都不能完成交付。
+- 客户可见的已交付要求有凭证的 CI 或 Evaluator 检查通过，所有必需 CI/Evaluator 检查均须核验。Generator 自检、单独 Git 链接、备注、伪造摘要及设计或候选过期的证据，不能完成交付或进入证据就绪汇总。
 - `GET/PATCH /api/v1/projects/:id/delivery-policy` 配置 Definition of Ready 和 Definition of Done 检查。缺少已执行证据仍阻止 `delivered`。`GET /api/v1/work-items/:id/delivery-gates` 会点名缺失项。
 
 ## 外部 Issue Tracker 集成

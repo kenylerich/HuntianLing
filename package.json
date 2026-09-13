@@ -41,8 +41,10 @@
     "self-harness:loop": "node .agents/skills/huntianling-self-harness/repair-loop.mjs",
     "test:e2e": "node scripts/plugin-e2e.mjs",
     "test:e2e:customer": "node scripts/customer-e2e.mjs",
-    "lint": "echo \"HUNTIANLING_PROBE: no lint yet; see AGENTS.md Quality gates\" && exit 1",
-    "hygiene": "echo \"HUNTIANLING_PROBE: no hygiene yet; see AGENTS.md Quality gates\" && exit 1"
+    "lint": "eslint src scripts test eslint.config.mjs --max-warnings 0",
+    "hygiene": "node scripts/hygiene.mjs",
+    "duplication": "jscpd src --threshold 0 --reporters console,json --output output/verification/duplication",
+    "test:coverage": "node scripts/coverage.mjs"
   },
   "dependencies": {
     "@deepseek-ai/cordis": "workspace:^",
@@ -50,8 +52,15 @@
     "pg": "^8.23.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.2.0",
     "@types/pg": "^8.23.1",
-    "typescript": "^5.6.0"
+    "c8": "^12.0.0",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "jscpd": "^5.2.0",
+    "publint": "^0.3.24",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.70.0"
   }
 }

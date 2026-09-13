@@ -146,7 +146,7 @@ test('a project can discover GitHub Actions, Gitea Actions, or GitLab CI workflo
   assert.equal(gitlab[0].id, '.gitlab-ci.yml');
 });
 
-test('an authorized hosted pipeline trigger records an executed CI run on the WorkItem', () => {
+test('an authorized hosted pipeline result without candidate-bound receipts cannot authorize delivery', () => {
   const { calls, transport } = githubTransport();
   const { ci, story } = setup(transport, {});
   const summary = ci.run({
@@ -163,7 +163,7 @@ test('an authorized hosted pipeline trigger records an executed CI run on the Wo
   });
   const run = summary.ciRuns.find((link) => link.kind === 'ci-run');
   assert.equal(run.url, 'https://github.com/acme/app/actions/runs/42');
-  assert.equal(hasExecutedDeliveryEvidence(summary, story), true);
+  assert.equal(hasExecutedDeliveryEvidence(summary, story), false);
   assert.ok(calls.some((call) => call.method === 'POST' && call.url.endsWith('/dispatches')));
   assert.equal(JSON.stringify(summary).includes('ghp_secret'), false);
 });
@@ -233,7 +233,7 @@ test('local command-runner CI still works without GitHub', () => {
     workspaceRoot: '/tmp',
     commands: [{ id: 'test', command: 'pnpm run test', required: true }],
   });
-  assert.equal(summary.ciRuns[0].id, 'ci:test');
+  assert.match(summary.ciRuns[0].id, /^ci:[0-9a-f-]+:test$/);
 });
 
 test('unknown provider or missing hosted workflow metadata fails loud', () => {

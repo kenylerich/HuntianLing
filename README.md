@@ -1,8 +1,8 @@
 ---
 doc_status: active
-doc_version: 2026-09-12.1
+doc_version: 2026-09-13.1
 created: 2026-09-10
-last_reviewed: 2026-09-12
+last_reviewed: 2026-09-13
 review_after: 2026-12-10
 ---
 
@@ -349,7 +349,7 @@ pnpm run typecheck
 pnpm run build
 ```
 
-`pnpm run typecheck` is the local gate for the source plane. The full gate list (lint, duplication, hygiene, coverage, e2e, doc-sync) is in [AGENTS.md](AGENTS.md#quality-gates) and is TODO until the harness-side scripts are ported.
+`pnpm run lint` uses ESLint. After building, `pnpm run hygiene` checks package exports, dependencies, and NodeNext resolution. `pnpm run duplication` reports repeated source blocks; `pnpm run test:coverage` rebuilds and enforces 100% per source file, rejecting missing reports. These checks are executable, not necessarily passing; [the acceptance review](docs/requirements/reviews/2026-09-13-customer-acceptance.md) tracks current blockers. Update both document languages before `pnpm run doc-sync:write`, then run `pnpm run doc-sync`. [AGENTS.md](AGENTS.md#quality-gates) owns the gate policy.
 
 ## License
 

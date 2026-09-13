@@ -88,6 +88,10 @@ import { PRIORITIZATION_METHODS, type PrioritizationMethodDefinition } from './p
 import { resolveWorkspaceRoot } from './workspace.js';
 
 export interface BoardService {
+  /** Host producers record observed checks; this method is not exposed through HTTP or Agent tools. */
+  recordExecutionEvidence(workItemId: WorkItemId, checks: readonly import('./types.js').DeliveryEvidenceCheck[], root: string, revision: string): void;
+  /** Invalidate a WorkItem's earlier execution batch before a trusted Host rerun. */
+  beginExecutionEvidence(workItemId: WorkItemId): void;
   listProjects(filter?: { readonly includeArchived?: boolean }): readonly Project[];
   createProject(input: { name: string; description?: string }): Project;
   updateProject(projectId: ProjectId, input: {
@@ -221,6 +225,8 @@ export function createBoardService(
     store.registerGate(gate);
   }
   return {
+    recordExecutionEvidence: (id, checks, root, revision) => store.recordExecutionEvidence(id, checks, root, revision),
+    beginExecutionEvidence: (id) => store.beginExecutionEvidence(id),
     listProjects: (filter) => store.listProjects(filter),
     listAuditEvents: (filter) => store.listAuditEvents(filter),
     recordAuditEvent: (input) => store.recordAuditEvent(input),

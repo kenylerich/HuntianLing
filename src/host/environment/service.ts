@@ -449,8 +449,8 @@ function runProfileCommand(input: {
   readonly tools: ToolRegistry;
 }): EnvironmentCommandExecution {
   const startedAt = Date.now();
-  let status: CheckResult = 'blocked';
-  let output = '';
+  let status: CheckResult;
+  let output: string;
   let exitCode: number | null = null;
   let runnerArtifacts: readonly string[] = [];
 

@@ -7,6 +7,15 @@ import type { CheckResult } from '../environment/types.js';
 export interface CiCommandResult {
   readonly status: CheckResult;
   readonly output: string;
+  readonly exitCode?: number | null;
+  readonly timedOut?: boolean;
+  readonly signal?: string | null;
+}
+
+export interface CiConfig {
+  readonly localExecution?: 'enabled' | 'disabled';
+  readonly timeoutMs?: number;
+  readonly outputLimit?: number;
 }
 
 export type CiCommandRunner = (command: string) => CiCommandResult;
@@ -52,7 +61,7 @@ export interface HostedCiWorkflow {
 
 export interface CiRunInput {
   readonly workItemId: string;
-  readonly workspaceRoot: string;
+  readonly workspaceRoot?: string;
   readonly commands?: readonly CiCommandSpec[];
   readonly runner?: CiCommandRunner;
   readonly production?: boolean;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Context } from '@deepseek-ai/cordis';
@@ -15,6 +16,7 @@ const ctx = new Context();
 const results = [];
 const fiber = ctx.plugin(huntianling, {
   workspaceRoot: root,
+  ci: { localExecution: 'enabled' },
   web: {
     host: '127.0.0.1', port: 0, autoStart: false,
     auth: { enabled: true, users: [
@@ -86,12 +88,25 @@ try {
     assert.equal((await ok('/api/v1/projects', customer)).projects[0].id, project.id);
   });
   await check('customer-cannot-read-developer-records', ['REQ-WEB-007'], async () => {
-    const response = await request(`${projectPath}/developer-board`, customer);
-    assert.equal(response.status, 403,
-      `Customer got ${response.status}; returned fields: ${Object.keys(response.data).join(', ')}`);
+    for (const path of [`${projectPath}/developer-board`, `${projectPath}/main-board`,
+      `${projectPath}/business-crud`, `${projectPath}/team/members`,
+      `/api/work-items?projectId=${project.id}`, `/api/requirements/${project.id}/tree`]) {
+      const response = await request(path, customer);
+      assert.equal(response.status, 403, `Customer got ${response.status} from ${path}`);
+    }
   });
   const session = await ok(`${projectPath}/intake/sessions`, customer, 'POST', { title: 'Cancel order' });
   const sessionPath = `/api/v1/intake/sessions/${session.id}`;
+  await check('customer-cannot-impersonate-reviewer', ['REQ-AUTH-001', 'REQ-MKT-001'], async () => {
+    const message = await ok(`${sessionPath}/messages`, customer, 'POST', {
+      role: 'assistant', kind: 'analysis', author: 'reviewer', body: 'Untrusted claimed review',
+    });
+    assert.equal(message.role, 'user');
+    assert.equal(message.kind, 'chat');
+    assert.equal(message.author, 'customer-a');
+    assert.equal((await request(`${sessionPath}/approve`, customer, 'POST', {})).status, 403);
+    assert.equal((await request(sessionPath, customer, 'PATCH', { status: 'approved' })).status, 403);
+  });
   await check('intake-chat-and-plain-attachments', ['REQ-INTAKE-001', 'REQ-INTAKE-002'], async () => {
     const body = 'As an order customer I need to cancel an unshipped order and release its stock.';
     await ok(`${sessionPath}/messages`, customer, 'POST', { role: 'user', body });
@@ -173,14 +188,23 @@ try {
     await ok('/api/auth/logout', customer, 'POST', {});
     assert.equal((await request('/api/v1/projects', customer)).status, 401);
   });
-  await check('production-local-ci-executes-commands', ['REQ-CI-001'], async () => {
+  await check('production-local-ci-diagnostics-and-containment-gate', ['REQ-CI-001', 'REQ-EVIDENCE-001'], async () => {
     writeFileSync(join(root, 'package.json'), JSON.stringify({ scripts: {
-      typecheck: 'node -e "require(\'node:fs\').writeFileSync(\'typecheck-ran\',\'yes\')"',
-      test: 'node -e "require(\'node:fs\').writeFileSync(\'test-ran\',\'yes\')"',
+      typecheck: 'node --check candidate.mjs',
+      test: 'node acceptance.mjs',
     } }));
+    writeFileSync(join(root, 'candidate.mjs'), 'export const result = "broken";\n');
+    writeFileSync(join(root, 'acceptance.mjs'), 'import assert from "node:assert/strict"; import {result} from "./candidate.mjs"; assert.equal(result, "working");\n');
+    const prepared = spawnSync('pnpm', ['install', '--offline', '--ignore-scripts'], { cwd: root, encoding: 'utf8' });
+    assert.equal(prepared.status, 0, prepared.stderr);
+    const failed = await ok(`${itemPath}/ci/run`, developer, 'POST', {});
+    assert.ok(failed.checks.some(check => check.status === 'failing'));
+    assert.ok((await request(`${itemPath}/status`, developer, 'POST', { to: 'delivered' })).status >= 400);
+    writeFileSync(join(root, 'candidate.mjs'), 'export const result = "working";\n');
     const evidence = await ok(`${itemPath}/ci/run`, developer, 'POST', {});
-    assert.ok(existsSync(join(root, 'typecheck-ran')) && existsSync(join(root, 'test-ran')),
-      `Local commands did not run: ${evidence.checks.map(check => `${check.title}: ${check.status} (${check.reason})`).join('; ')}`);
+    assert.ok(evidence.checks.every(check => check.status === 'passing' && check.executionKind === 'manual'));
+    assert.ok(evidence.checks.every(check => check.reason.includes('process containment is unverified')));
+    assert.ok((await request(`${itemPath}/status`, developer, 'POST', { to: 'delivered' })).status >= 400);
   });
 } finally {
   try { await fiber.dispose(); }
@@ -191,7 +215,7 @@ console.log(JSON.stringify({
   suite: 'customer-http-acceptance',
   result: results.some(result => result.result === 'fail') ? 'fail' : 'pass',
   results,
-  notVerified: ['live dsh agents', 'OAuth exchanges', 'hosted SCM/CI', 'PostgreSQL',
+  notVerified: ['live dsh agents', 'native CI acceptance authority and descendant containment', 'OAuth exchanges', 'hosted SCM/CI', 'PostgreSQL',
     'browser interactions (separate Playwright review)', 'all backlog acceptance criteria'],
 }, null, 2));
 process.exitCode = results.some(result => result.result === 'fail') ? 1 : 0;

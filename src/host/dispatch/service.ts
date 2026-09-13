@@ -75,8 +75,9 @@ export function createDispatchService(deps: {
       return recommendItem(item);
     },
     run(projectId, actor) {
-      deps.board.listProjects().find((project) => project.id === projectId)
-        ?? fail(`project not found: ${projectId}`);
+      if (!deps.board.listProjects().some((project) => project.id === projectId)) {
+        fail(`project not found: ${projectId}`);
+      }
       const assigned: WorkItem[] = [];
       const queue = deps.board.getStoryPriorityQueue(projectId).items
         .map((row) => deps.board.getWorkItem(row.workItemId))

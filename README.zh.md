@@ -1,8 +1,8 @@
 ---
 doc_status: active
-doc_version: 2026-09-12.1
+doc_version: 2026-09-13.1
 created: 2026-09-10
-last_reviewed: 2026-09-12
+last_reviewed: 2026-09-13
 review_after: 2026-12-10
 ---
 
@@ -351,7 +351,7 @@ pnpm run build
 pnpm run doc-sync
 ```
 
-`pnpm run typecheck` 是源代码平面的本地门禁。文档改动必须保持 `pnpm run doc-sync` 通过；当同时更新中英文文档后，运行 `pnpm run doc-sync:write` 重新记录配对。完整门禁列表在 [AGENTS.md](AGENTS.md#quality-gates) 中维护。
+`pnpm run lint` 使用 ESLint。构建后，`pnpm run hygiene` 检查包导出、依赖和 NodeNext 解析。`pnpm run duplication` 报告重复源码块；`pnpm run test:coverage` 重新构建，强制逐文件 100% 覆盖并拒绝缺失报告。这些检查已经可执行，但不代表全部通过；[验收评审](docs/requirements/reviews/2026-09-13-customer-acceptance.zh.md) 跟踪当前阻塞。同步更新两种语言后运行 `pnpm run doc-sync:write`，再运行 `pnpm run doc-sync`。[AGENTS.md](AGENTS.md#quality-gates) 负责门禁规则。
 
 ## License
 

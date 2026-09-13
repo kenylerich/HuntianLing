@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [{ "text": "所有的阻塞，请继续分析原因，然后立issue进行创建任务并且解决合入master", "source": "user" }],
+  "goal": "Investigate, track, repair, verify, and merge customer acceptance blockers without claiming unexecuted delivery.",
+  "confirmed": true,
+  "constraints": ["Keep incomplete Issues open", "Do not alter customer data or weaken security policies", "Label external execution and external credential gaps"]
+}

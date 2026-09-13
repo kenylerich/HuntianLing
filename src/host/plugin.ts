@@ -43,6 +43,7 @@ import type { HarnessConfig } from './harness/types.js';
 import type { IntakeConfig } from './intake/types.js';
 import type { ScmConfig } from './scm/types.js';
 import type { WebConfig } from './web/types.js';
+import type { CiConfig } from './ci/types.js';
 
 export interface HuntianLingConfig {
   readonly workspaceRoot?: string;
@@ -55,6 +56,7 @@ export interface HuntianLingConfig {
   readonly environment?: EnvironmentConfig;
   readonly dispatch?: DispatchConfig;
   readonly intake?: IntakeConfig;
+  readonly ci?: CiConfig;
 }
 
 const HuntianLingRoot: Plugin<HuntianLingConfig> = {
@@ -77,7 +79,7 @@ const HuntianLingRoot: Plugin<HuntianLingConfig> = {
     ctx.plugin(agentsPlugin);
     ctx.plugin(authorityPlugin, config.authority ?? {});
     ctx.plugin(scmPlugin, config.scm ?? {});
-    ctx.plugin(ciPlugin);
+    ctx.plugin(ciPlugin, config.ci ?? {});
     ctx.plugin(deliveryPlugin, config.delivery ?? {});
     ctx.plugin(harnessPlugin, config.harness ?? {});
     ctx.plugin(collabPlugin);

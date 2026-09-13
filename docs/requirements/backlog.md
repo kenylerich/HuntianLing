@@ -1,6 +1,6 @@
 ---
 doc_status: active
-doc_version: 2026-09-13.2
+doc_version: 2026-09-13.5
 created: 2026-09-10
 last_reviewed: 2026-09-13
 review_after: 2026-10-13
@@ -14,7 +14,7 @@ Document lifecycle:
 
 | Status | Version | Created | Last reviewed | Review after |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-13.2` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
+| `active` | `2026-09-13.5` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## Summary
 
@@ -23,6 +23,8 @@ HuntianLing is a dsh plugin whose interface is a standard development board and 
 This document collects the product requirements discussed for HuntianLing. It is the planning source for future WorkItems; implementation may split any item into Epics, Features, Requirements/Stories, Tasks, Bugs, Research, and Milestones on the internal board.
 
 Customer acceptance on commit `614dcd6` is **revision-required**. The [2026-09-13 review](reviews/2026-09-13-customer-acceptance.md) records false delivery, execution gaps, and customer API exposure. Implementation entries describe components, not accepted capability. D16 and D18-D21 remain incomplete against their full criteria.
+
+Repair tracking uses Issues [#91](https://github.com/kenylerich/HuntianLing/issues/91)-[#96](https://github.com/kenylerich/HuntianLing/issues/96), linked to the review. Local repairs restrict customer APIs, prevent message-role impersonation, revoke Workflow Lab sessions, reject forged/stale execution evidence, and provide opt-in local CI. The review records verification and limitations. Real dsh delivery, source approvals, OAuth, complete CI audit/isolation, quality gates, independent repair review, and merge remain incomplete; these Issues must stay open.
 
 ## Table of Contents
 
@@ -139,10 +141,10 @@ Related requirements: `REQ-REQ-001`, `REQ-FLOW-002`, `REQ-FLOW-019`, `REQ-FLOW-0
 
 Implementation state:
 
-- Evaluator runs persist one executed check per acceptance criterion on the owning WorkItem. Generator self-check is stored as `self_check` and cannot mark customer progress delivered.
+- Deterministic Evaluator runs persist demonstration checks per acceptance criterion. Generator checks are skipped until executed and cannot mark customer progress delivered.
 - Evidence records producer and design revision. Changing analysis, design, or acceptance blocks previously passing executed checks as stale.
-- Customer-visible delivered requires a passing executed evaluator, CI, or local Git check on the current revision. Notes, unexecuted links, and missing evidence do not. Project Definition of Done cannot turn that executed-evidence gate off.
-- Demonstration, self-check, and manual results stay distinct from executed evidence. `independent: true`, `environmentReady: true`, and a producer label cannot establish executed success. Deterministic evaluator output is stored as `demonstration` and cannot complete `delivered` or customer delivery. Simulated records that claimed `executed` without CI or Git provenance are coerced to `demonstration` until revalidated. Verified CI and Git evidence with provenance still complete delivery through the transition API.
+- Customer-visible delivered requires a passing required CI or Evaluator check backed by a Host receipt for the current WorkItem, design, and candidate source fingerprint. Every required CI/Evaluator check must be verified; required failures block delivery. Local Git references alone cannot authorize delivery. Project Definition of Done cannot disable this requirement.
+- Receipts persist separately from editable summaries. JSON labels, `ci:`/`git:` prefixes, and changed-file links cannot create receipts. Altered check fields, replay to another WorkItem, source changes, and missing artifacts invalidate verification, including after SQLite reload. The fingerprint excludes `.git`, `node_modules`, and internal data outside `.huntianling/candidates`; this is not dependency integrity or protection against privileged filesystem modification.
 
 ### REQ-HARNESS-004: Harness Evaluation and Continuous Improvement
 
@@ -186,7 +188,7 @@ Related requirements: `REQ-HARNESS-001`, `REQ-HARNESS-002`, `REQ-HARNESS-003`, `
 
 Implementation state:
 
-- `huntianling.harness` records a demonstration that prepares a fresh workspace with the shipped Node/pnpm profile, then runs one Story through failed evaluation, repair, interrupt, resume, and Evaluator evidence. Customer-visible delivered updates from that evidence.
+- `huntianling.harness` records a deterministic workflow demonstration through preparation, marker evaluation, repair, interrupt, and resume. Its generated artifacts and no-op checks do not establish customer acceptance; customer progress remains in development.
 - The demonstration now prepares the fresh workspace with a project-scoped environment result and drives Story Delivery through that recorded readiness instead of a caller-provided ready flag.
 - Demonstration steps are labeled `manual`, `external-agent`, or `huntianling-runtime`. Coverage scan and live-model trial steps are recorded. Lint and hygiene stay blocked. An unbound live model is a labeled gap, not a passing gate.
 - Maintainer-only OAuth setup remains listed as a follow-up gap, not a passing gate. Hosted SCM/CI adapters already exist as optional call-time integrations.
@@ -209,9 +211,9 @@ Acceptance criteria:
 
 Implementation state:
 
-- `huntianling.agents` ships versioned Planner, Generator, and Evaluator task definitions. Runs record execution references, task/session ids, tool calls, artifacts, and method traces.
-- Story Delivery now invokes the three agents through `huntianling-runtime` when the project environment is actually prepared. Generator writes a candidate file with a candidate revision, Evaluator independently checks the candidate revision and acceptance markers, and failed evaluation routes a bounded repair back to Generator.
-- Evaluator output can be persisted as executed using generated `ci:`/`git:` ids and changed-file links without validating actual execution. The acceptance review reproduces delivery of a throwing candidate and forged evidence; this gate needs correction.
+- `huntianling.agents` ships versioned Planner, Generator, and Evaluator task definitions. Deterministic runs record local task/session references, artifacts, and method traces; they do not invent dsh sessions or tool calls.
+- Story Delivery invokes local deterministic task handlers after preparation. Generator writes a template candidate and revision, Evaluator inspects markers, and failed marker evaluation routes bounded repair. The legacy `huntianling-runtime` executor label does not prove a dsh model/tool invocation.
+- Evaluator marker output is demonstration evidence and cannot authorize delivery. Native CI executes diagnostic commands but cannot mint acceptance receipts without verified descendant containment. Positive receipt unit cases mock a trusted Host producer; genuine dsh Agent execution remains missing.
 - Live model execution is missing. The local candidate path does not satisfy the required customer delivery loop.
 
 Related requirements: `REQ-AGENT-001`, `REQ-AGENT-002`, `REQ-FLOW-014`, `REQ-FLOW-020`, `REQ-HARNESS-001`, `REQ-HARNESS-003`.
@@ -257,10 +259,10 @@ Related requirements: `REQ-MKT-001`, `REQ-SKILL-005`, `REQ-SKILL-006`, `REQ-HARN
 
 Implementation state:
 
-- A slice records Evaluator criterion-level evidence on the owning WorkItem. Customer-visible delivered updates from executed CI, Git, or runtime Evaluator evidence with provenance, not from Generator self-check, demonstration Evaluator output, caller declarations, or edited notes.
+- A slice records criterion-level findings on the owning WorkItem. Customer-visible delivered requires verified execution receipts, not Generator self-check, marker evaluation, caller declarations, Git links alone, or edited notes.
 - Story Delivery checkpoints retain candidate revision, artifact refs, task/session/tool refs, pending effects, evidence refs, and budget usage. Resume blocks when candidate code changed after a checkpoint and before evaluation; failed evaluation can still resume into repair.
-- Harness self-development acceptance now prepares a fresh project with the production environment runner, drives Planner/Generator/Evaluator through a real candidate failure, repairs it, re-evaluates independently, and marks customer progress delivered only after executed evidence passes.
-- Tests cover passing runtime delivery, missing Skill/environment blocking, method sensor rejection, repeated validation downgrade, failed evaluation repair, revision-bound resume blocking, and Web-triggered self-development acceptance.
+- The self-development demonstration prepares a fresh workspace and exercises deterministic task handoffs. It does not complete intake approval, real dsh coding, independent Agent evaluation, or customer acceptance.
+- Tests cover demonstration non-delivery, Skill/environment blocking, method sensors, bounded repair, revision-bound resume, and real local CI rejecting broken behavior before accepting repaired code. These tests are not full fresh-project acceptance.
 
 ## Current Baseline
 
@@ -2291,8 +2293,8 @@ Implementation state:
 
 - CI runs can be recorded as delivery evidence links and as required or optional CI checks on a WorkItem.
 - Project and Milestone delivery evidence rollups count WorkItems with CI evidence and expose pending, missing, failing, or blocked required CI checks.
-- `huntianling.ci` runs local typecheck and test commands through an injected runner and records ci-run links plus executed `ci` checks on the WorkItem.
-- Hosted GitHub Actions, Gitea Actions, and GitLab CI adapters discover workflows, trigger authorized pipelines, wait for completion, and attach JUnit, coverage, SARIF, and Playwright artifacts as executed CI evidence. Tokens are supplied at call time or from the environment and are never persisted. Jenkins adapters remain planned.
+- `ci.localExecution: enabled` opts the configured workspace into native `pnpm run <script>` diagnostics; the default is disabled. `timeoutMs` and `outputLimit` bound the owned process group and captured output. Other workspace paths and shell expressions are rejected. Native diagnostics detect source drift between commands but cannot guarantee detached-descendant completion and therefore cannot mint acceptance receipts. Reruns invalidate previous Host receipts, including on failure.
+- Hosted GitHub Actions, Gitea Actions, and GitLab CI adapters collect workflow results and JUnit, coverage, SARIF, and Playwright artifacts. These references lack candidate-bound Host receipts and cannot authorize delivery. Complete retained command logs, dsh sandbox integration, live hosted verification, and Jenkins remain incomplete; the local runner is for trusted scripts, not an OS sandbox.
 
 ### REQ-EVIDENCE-001: Evidence-Based Delivery Gates
 
@@ -2321,7 +2323,7 @@ Implementation state:
 - The Evidence workspace renders a project-level gate summary, evidence gap matrix, blocker queue, governance risk queue, and status lanes from the same Evidence board payload so teams can see delivery gaps before opening individual WorkItems.
 - The GitHub Issue projection requires a `huntianling-delivery-gate` certificate before a card can reach Done. Illegal completed closes are reopened and returned to the previous open lane, or to In review when the previous lane is missing or terminal.
 - A scheduled and manually dispatched recovery sweep scans completed closed GitHub Issue projections and reopens any card that lacks the certificate, while leaving gated Done cards closed.
-- Customer-visible delivered requires a passing executed evaluator, CI, or local Git check. Generator self-check, notes, and stale evidence after a design revision cannot complete delivery.
+- Customer-visible delivered requires a receipt-backed passing CI or Evaluator check; required CI/Evaluator checks must all verify. Generator self-check, Git links alone, notes, forged summaries, and stale design or candidate evidence cannot complete delivery or enter the evidence-ready rollup.
 - `GET/PATCH /api/v1/projects/:id/delivery-policy` configures Definition of Ready and Definition of Done checks. Missing executed evidence still blocks `delivered`. `GET /api/v1/work-items/:id/delivery-gates` names the missing pieces.
 
 ## External Issue Tracker Integration

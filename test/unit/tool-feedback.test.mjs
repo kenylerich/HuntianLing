@@ -155,7 +155,7 @@ test('a completed agent run returns structured feedback fields', () => {
 });
 
 test('customers cannot inspect agent task context', async (t) => {
-  const { root, board, project, item, agents } = setup();
+  const { board, project, item, agents } = setup();
   const requirements = createRequirementManagementService(board);
   const hash = createPbkdf2PasswordHash('correct-password', { iterations: 1_000, salt: new Uint8Array(16).fill(7) });
   const web = createWebService(

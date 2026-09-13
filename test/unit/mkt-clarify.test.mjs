@@ -74,7 +74,7 @@ test('a product question from Agent Channel appears in the customer MKT dialog',
 });
 
 test('customers can list open questions and answer them on their own project', async (t) => {
-  const { root, board, project, session } = setup();
+  const { board, project, session } = setup();
   const requirements = createRequirementManagementService(board);
   const hash = createPbkdf2PasswordHash('correct-password', { iterations: 1_000, salt: new Uint8Array(16).fill(2) });
   const web = createWebService(

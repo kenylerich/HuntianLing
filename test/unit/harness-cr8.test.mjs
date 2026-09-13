@@ -245,7 +245,7 @@ test('self-development demonstration steps are labeled manual, external-agent, o
   assert.equal(demo.steps.find((step) => step.name === 'live-model-trials').executor, 'manual');
   assert.equal(demo.steps.find((step) => step.name === 'live-model-trials').result, 'unbound');
   assert.ok(demo.steps.some((step) => step.name === 'skill-coverage'));
-  assert.equal(demo.customerProgress, 'delivered');
+  assert.equal(demo.customerProgress, 'in_development');
   assert.equal(demo.gates.lint, 'blocked');
 });
 

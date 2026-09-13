@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { attachMockExecutionReceipt } from '../helpers/execution-receipt.mjs';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -345,6 +346,7 @@ test('milestone delivery slices track cross-milestone parent delivery', () => {
       designRevision: '',
     }],
   });
+  attachMockExecutionReceipt(store, story.id);
   assert.equal(store.transitionWorkItem(story.id, 'delivered').status, 'delivered');
 });
 
@@ -871,6 +873,7 @@ test('delivery evidence summaries persist, roll up, and gate delivered status wh
       approver: 'Compliance',
     })),
   });
+  attachMockExecutionReceipt(reloaded, story.id);
   assert.equal(reloaded.transitionWorkItem(story.id, 'delivered').status, 'delivered');
 });
 
@@ -1198,6 +1201,7 @@ function attachExecutedEvidence(store, itemId) {
       designRevision: '',
     }],
   });
+  attachMockExecutionReceipt(store, itemId);
 }
 
 test('transitionCard is the only status write path and allows inbox to triaged', () => {

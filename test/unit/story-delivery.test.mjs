@@ -241,7 +241,7 @@ test('driving one ready Story records three agents and Evaluator evidence', () =
   );
 });
 
-test('a prepared Story delivery records method trace, runtime task refs, artifacts, and executed evaluator evidence', () => {
+test('a prepared deterministic Story records local artifacts without claiming dsh execution or delivery evidence', () => {
   const root = workspace();
   const { board, story, agents, delivery } = preparedDelivery(root);
   const run = delivery.start({ workItemId: story.id, drive: true });
@@ -250,17 +250,17 @@ test('a prepared Story delivery records method trace, runtime task refs, artifac
   assert.equal(run.checkpoint.artifactRefs.length, 1);
   assert.equal(existsSync(join(root, run.checkpoint.artifactRefs[0])), true);
   assert.equal(run.checkpoint.taskReferences.length, 3);
-  assert.equal(run.checkpoint.taskReferences.every((ref) => ref.sessionId.startsWith('dsh-session:')), true);
-  assert.ok(run.checkpoint.taskReferences.some((ref) => ref.toolCallIds.includes('implementation.write')));
+  assert.equal(run.checkpoint.taskReferences.every((ref) => ref.sessionId.startsWith('local-session:')), true);
+  assert.ok(run.checkpoint.taskReferences.every((ref) => ref.toolCallIds.length === 0));
   const plannerRun = agents.getRun(run.agentRunIds[0]);
   assert.equal(plannerRun.methodTrace.methodId, 'user-story');
   assert.equal(plannerRun.methodTrace.sensors.every((sensor) => sensor.status === 'pass'), true);
   const evidence = board.getDeliveryEvidenceSummary(story.id);
-  assert.equal(evidence.checks.some((check) => check.producer === 'evaluator' && check.executionKind === 'executed'), true);
-  assert.equal(hasExecutedDeliveryEvidence(evidence, board.getWorkItem(story.id)), true);
+  assert.equal(evidence.checks.some((check) => check.producer === 'evaluator' && check.executionKind === 'executed'), false);
+  assert.equal(hasExecutedDeliveryEvidence(evidence, board.getWorkItem(story.id)), false);
 });
 
-test('a real failed candidate evaluation routes one bounded repair and re-evaluates the repaired artifact', () => {
+test('a deterministic candidate evaluation exercises bounded repair without authorizing delivery', () => {
   const root = workspace();
   const { board, story, agents, delivery } = preparedDelivery(root);
   const started = delivery.start({ workItemId: story.id });
@@ -278,7 +278,7 @@ test('a real failed candidate evaluation routes one bounded repair and re-evalua
   assert.equal(agents.listRuns().filter((run) => run.agentId === 'generator').length, 2);
   assert.equal(agents.listRuns().filter((run) => run.agentId === 'evaluator').length, 2);
   assert.equal(completed.checkpoint.decisions.evaluate.decision, 'pass');
-  assert.equal(hasExecutedDeliveryEvidence(board.getDeliveryEvidenceSummary(story.id), board.getWorkItem(story.id)), true);
+  assert.equal(hasExecutedDeliveryEvidence(board.getDeliveryEvidenceSummary(story.id), board.getWorkItem(story.id)), false);
 });
 
 test('resume blocks when candidate code changed after the checkpoint and before evaluation', () => {

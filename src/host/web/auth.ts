@@ -11,14 +11,12 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { DatabaseService } from '../database/types.js';
 import {
   resolveWebAuthAudience,
-  shellPathForAudience,
   type WebAuthAudience,
 } from './audience.js';
 import type { ProjectId } from '../board/types.js';
 import {
   assertPasswordHashFormat,
   createPasswordHash,
-  createPbkdf2PasswordHash,
   resolvePasswordHashConfig,
   verifyPasswordHash,
   type PasswordAlgorithm,

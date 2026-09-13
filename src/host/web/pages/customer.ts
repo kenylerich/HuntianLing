@@ -10,6 +10,11 @@ const PROGRESS_LABELS: Record<string, string> = {
   delivered: '已交付',
 };
 
+const CUSTOMER_REVIEW_LABELS = {
+  waitingDeveloper: '等待开发者审核',
+  waitingCustomer: '待客户在对话里补充或确认',
+} as const;
+
 export function renderCustomerPage(): string {
   return `<!doctype html>
 <html lang="zh-CN">
@@ -76,6 +81,7 @@ export function renderCustomerPage(): string {
   </main>
   <script>
     const progressLabels = ${JSON.stringify(PROGRESS_LABELS)};
+    const reviewLabels = ${JSON.stringify(CUSTOMER_REVIEW_LABELS)};
     const state = { projects: [], projectId: '', sessionId: '', board: null };
 
     function $(id) { return document.getElementById(id); }
@@ -187,14 +193,16 @@ export function renderCustomerPage(): string {
         title.textContent = item.title;
         const progress = document.createElement('p');
         progress.className = 'muted';
-        progress.textContent = '进度 ' + (progressLabels[item.progress] || item.progress);
+        progress.textContent = '进度 ' + (item.kind === 'candidate' && item.progress === 'submitted'
+          ? reviewLabels.waitingDeveloper
+          : (progressLabels[item.progress] || item.progress));
         const quotes = document.createElement('p');
         quotes.textContent = (item.quotes || []).join('\\n');
         row.append(title, progress, quotes);
         if (item.progress === 'waiting_on_customer') {
           const wait = document.createElement('p');
           wait.className = 'muted';
-          wait.textContent = '待客户在对话里补充或确认';
+          wait.textContent = reviewLabels.waitingCustomer;
           row.append(wait);
         }
         requirements.append(row);

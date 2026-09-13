@@ -199,7 +199,7 @@ test('built-in capabilities and the default template are versioned and cannot be
 });
 
 test('customers cannot manage workflow runs or approvals', async (t) => {
-  const { root, board, project, workflow } = setup();
+  const { board, project, workflow } = setup();
   const item = story(board, project.id, true);
   workflow.plan(item.id, 'dev');
   const requirements = createRequirementManagementService(board);
