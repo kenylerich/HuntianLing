@@ -171,7 +171,7 @@ function attachDeliveryEvidence(
         acceptanceCriterionIds: [],
         links: [],
         producer: 'tool',
-        executionKind: 'executed',
+        executionKind: 'demonstration',
         designRevision: revision,
       },
     ], 'tool'),

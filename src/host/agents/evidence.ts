@@ -69,7 +69,7 @@ export function persistEvaluatorEvidence(
       acceptanceCriterionIds: [],
       links: [],
       producer: 'evaluator',
-      executionKind: 'executed',
+      executionKind: 'demonstration',
       designRevision: revision,
     };
   });
@@ -85,7 +85,7 @@ export function persistEvaluatorEvidence(
       acceptanceCriterionIds: [],
       links: [],
       producer: 'evaluator',
-      executionKind: 'executed',
+      executionKind: 'demonstration',
       designRevision: revision,
     });
   }

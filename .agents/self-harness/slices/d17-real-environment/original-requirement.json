@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续完成d17的任务",
+      "source": "user"
+    },
+    {
+      "text": "D17 | Real standard environment preparation | Actual preparation and required checks establish readiness for this repository and a second project",
+      "source": "docs/requirements/backlog.md#implementation-order"
+    },
+    {
+      "text": "Resolve the actual dsh host execution interfaces and wire configurable preparation/check commands through production plugin composition. Prepare both this repository and a second fresh project from one versioned profile without test-only runners.",
+      "source": "docs/requirements/backlog.md#d17-real-environment-preparation"
+    },
+    {
+      "text": "Derive readiness from project-scoped command results and required capability probes. Missing commands, failed checks, and absent executors remain visible blockers; canStartImplementation cannot replace results with synthetic passes.",
+      "source": "docs/requirements/backlog.md#d17-real-environment-preparation"
+    }
+  ],
+  "goal": "Real environment preparation uses configured production command execution and recorded project readiness instead of synthetic ready flags.",
+  "actors": [
+    "Developer",
+    "Environment service",
+    "Generator"
+  ],
+  "scenarios": [
+    "A project prepares a workspace through the versioned profile and records real command results.",
+    "A second project can reuse the same profile without test-only runners.",
+    "A failed required check blocks Generator even when a caller submits environmentReady true.",
+    "A repaired workspace becomes ready only after a later real prepare passes."
+  ],
+  "constraints": [
+    "Do not claim remote fleet expansion.",
+    "Do not report lint or hygiene as passing while unavailable or probe-blocked.",
+    "Do not persist secrets from the command environment."
+  ],
+  "nonGoals": [
+    "D18 real Agent implementation and repair",
+    "D20 distributed recovery",
+    "remote environment fleet expansion"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

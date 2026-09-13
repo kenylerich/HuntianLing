@@ -3,7 +3,8 @@
  *
  * Work items are stored as a flat list with parent links. Role claim mutates
  * claimedRoleId / claimedBy / claimedAt. Persistence uses `huntianling.database`
- * (SQLite). Existing `<root>/.huntianling/board.json` is imported once.
+ * (SQLite by default, PostgreSQL when configured). Existing
+ * `<root>/.huntianling/board.json` is imported once.
  */
 
 import { readFileSync } from 'node:fs';
@@ -53,7 +54,10 @@ import {
   DELIVERY_EVIDENCE_STATUSES,
   DELIVERY_RISK_ACCEPTANCE_STATUSES,
   DELIVERY_RISK_AREAS,
+  DEFAULT_SECURITY_CLASSIFICATION,
+  GOVERNANCE_IMPACT_FLAGS,
   GOVERNANCE_OBLIGATION_STATUSES,
+  SECURITY_RISK_LEVELS,
   INTAKE_CANDIDATE_STATUSES,
   INTAKE_CANDIDATE_TYPES,
   INTAKE_MESSAGE_KINDS,
@@ -76,6 +80,9 @@ import {
   WORKFLOW_WAIT_ITEM_TYPES,
   WORK_ITEM_STATUSES,
   type AcceptanceCoverageSummary,
+  type GovernanceImpactFlag,
+  type SecurityClassification,
+  type SecurityRiskLevel,
   type AcceptanceCriterion,
   type AcceptanceCriterionId,
   type AuditEvent,
@@ -183,6 +190,7 @@ import {
   type WorkflowWaitItem,
 } from './types.js';
 import {
+  coerceEvidenceExecutionKind,
   resolveEvidenceExecutionKind,
   resolveEvidenceProducer,
   staleExecutedChecks,
@@ -755,6 +763,9 @@ function normalizeStoredCard(card: StoredCard): Card {
     rankingInputs: normalizeRankingInputs(card.rankingInputs),
     rankingOverride: normalizeRankingOverride(card.rankingOverride),
     requiredSkillPackIds: normalizeSkillPackIds(card.requiredSkillPackIds),
+    governanceFlags: normalizeGovernanceFlags(card.governanceFlags),
+    securityClassification: normalizeSecurityClassification(card.securityClassification),
+    productionFacing: card.productionFacing === true,
     archivedAt: card.archivedAt ?? null,
   };
 }
@@ -778,6 +789,36 @@ function normalizeSkillPackIds(ids: readonly string[] | undefined): string[] {
     if (!isTechnologyPackId(id)) throw new Error(`unknown skill pack: ${id}`);
   }
   return list;
+}
+
+function normalizeGovernanceFlags(values: readonly string[] | undefined): GovernanceImpactFlag[] {
+  const flags: GovernanceImpactFlag[] = [];
+  for (const flag of values ?? []) {
+    if (!(GOVERNANCE_IMPACT_FLAGS as readonly string[]).includes(flag)) {
+      throw new Error(`unknown governance impact flag: ${flag}`);
+    }
+    flags.push(flag as GovernanceImpactFlag);
+  }
+  return flags;
+}
+
+function normalizeSecurityClassification(value: SecurityClassification | undefined): SecurityClassification {
+  if (value === undefined) return DEFAULT_SECURITY_CLASSIFICATION;
+  return {
+    securityImpact: requireRiskLevel(value.securityImpact, 'securityImpact'),
+    dataSensitivity: requireRiskLevel(value.dataSensitivity, 'dataSensitivity'),
+    permissionImpact: requireRiskLevel(value.permissionImpact, 'permissionImpact'),
+    exposedApiSurface: requireRiskLevel(value.exposedApiSurface, 'exposedApiSurface'),
+    dependencyRisk: requireRiskLevel(value.dependencyRisk, 'dependencyRisk'),
+    deploymentRisk: requireRiskLevel(value.deploymentRisk, 'deploymentRisk'),
+  };
+}
+
+function requireRiskLevel(value: string, label: string): SecurityRiskLevel {
+  if (!(SECURITY_RISK_LEVELS as readonly string[]).includes(value)) {
+    throw new Error(`unknown ${label} risk level: ${value}`);
+  }
+  return value as SecurityRiskLevel;
 }
 
 function normalizeEnabledAgentIds(ids: readonly string[] | undefined, strict: boolean): string[] {
@@ -916,7 +957,12 @@ function normalizeStoredDeliveryEvidenceCheck(check: DeliveryEvidenceCheck): Del
     acceptanceCriterionIds: check.acceptanceCriterionIds ?? [],
     links: check.links ?? [],
     producer,
-    executionKind: resolveEvidenceExecutionKind(check.executionKind, producer),
+    executionKind: coerceEvidenceExecutionKind({
+      executionKind: resolveEvidenceExecutionKind(check.executionKind, producer),
+      producer,
+      links: check.links ?? [],
+      evidenceIds: check.evidenceIds ?? [],
+    }),
     designRevision: check.designRevision ?? '',
   };
 }
@@ -2777,6 +2823,9 @@ export class BoardStore {
       rankingInputs: normalizeRankingInputs(input.rankingInputs),
       rankingOverride: null,
       requiredSkillPackIds: normalizeSkillPackIds(input.requiredSkillPackIds),
+      governanceFlags: normalizeGovernanceFlags(input.governanceFlags),
+      securityClassification: normalizeSecurityClassification(input.securityClassification),
+      productionFacing: input.productionFacing === true,
       archivedAt: null,
     };
     const hierarchyError = validateWorkItemHierarchy(
@@ -2871,6 +2920,11 @@ export class BoardStore {
       ...(input.rankingInputs !== undefined ? { rankingInputs: normalizeRankingInputs(input.rankingInputs) } : {}),
       ...(input.rankingOverride !== undefined ? { rankingOverride: normalizeRankingOverride(input.rankingOverride) } : {}),
       ...(input.requiredSkillPackIds !== undefined ? { requiredSkillPackIds: normalizeSkillPackIds(input.requiredSkillPackIds) } : {}),
+      ...(input.governanceFlags !== undefined ? { governanceFlags: normalizeGovernanceFlags(input.governanceFlags) } : {}),
+      ...(input.securityClassification !== undefined
+        ? { securityClassification: normalizeSecurityClassification(input.securityClassification) }
+        : {}),
+      ...(input.productionFacing !== undefined ? { productionFacing: input.productionFacing } : {}),
     };
     const hierarchyError = validateWorkItemHierarchy(
       next,
@@ -3688,7 +3742,13 @@ export class BoardStore {
         throw new Error(`invalid delivery evidence check status: ${check.status}`);
       }
       const producer = resolveEvidenceProducer(check.producer);
-      const executionKind = resolveEvidenceExecutionKind(check.executionKind, producer);
+      const links = this.copyDeliveryEvidenceLinks(check.links, item);
+      const executionKind = coerceEvidenceExecutionKind({
+        executionKind: resolveEvidenceExecutionKind(check.executionKind, producer),
+        producer,
+        links,
+        evidenceIds: check.evidenceIds,
+      });
       if (!DELIVERY_EVIDENCE_PRODUCERS.includes(producer)) {
         throw new Error(`invalid delivery evidence check producer: ${producer}`);
       }
@@ -3712,7 +3772,7 @@ export class BoardStore {
         reason: check.reason,
         evidenceIds: [...check.evidenceIds],
         acceptanceCriterionIds: [...check.acceptanceCriterionIds],
-        links: this.copyDeliveryEvidenceLinks(check.links, item),
+        links,
         producer,
         executionKind,
         designRevision: check.designRevision ?? '',
@@ -3777,6 +3837,8 @@ export class BoardStore {
         status: riskAcceptance.status,
         approver: riskAcceptance.approver,
         reason: riskAcceptance.reason,
+        scope: riskAcceptance.scope ?? '',
+        compensatingControls: [...(riskAcceptance.compensatingControls ?? [])],
         expiresAt: riskAcceptance.expiresAt,
         links: this.copyDeliveryEvidenceLinks(riskAcceptance.links),
       };

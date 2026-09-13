@@ -127,6 +127,7 @@ export interface StartRunInput {
   readonly runId?: string;
   readonly projectId?: string;
   readonly workItemId?: string;
+  readonly workspaceRoot?: string;
   readonly collaborationTaskId?: string;
   readonly collab?: CollabService;
   readonly skillIds?: readonly SkillId[];

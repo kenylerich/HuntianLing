@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-HARNESS-003",
+    "REQ-HARNESS-006",
+    "REQ-HARNESS-008",
+    "REQ-WEB-007"
+  ],
+  "outcome": "Simulated or unexecuted results cannot complete delivery or show customer delivery",
+  "acceptance": [
+    "an empty application with failing checks cannot produce accepted delivery",
+    "an unconfigured executor cannot produce accepted delivery",
+    "a simulated evaluator cannot produce accepted delivery",
+    "demonstration, self-check, manual, and executed evidence stay distinct at the producing service",
+    "independent: true, environmentReady: true, or a producer label cannot establish executed success",
+    "existing simulated evidence is excluded until revalidated",
+    "verified CI or Git evidence with provenance can still complete delivery and customer progress",
+    "the transition API blocks delivered; the customer view is not the only gate"
+  ],
+  "inScope": [
+    "truthful executed-evidence classification",
+    "production start, evaluate, and transition APIs",
+    "customer progress derived from executed evidence"
+  ],
+  "outOfScope": [
+    "real Agent execution",
+    "real standard environment preparation"
+  ],
+  "assumptions": [
+    "hosted and local CI adapters already record command or pipeline results",
+    "local Git link records HEAD as executed code evidence"
+  ],
+  "openQuestions": []
+}

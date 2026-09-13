@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D15",
+      "source": "user"
+    },
+    {
+      "text": "External cards mirror WorkItems with provenance and conflict handling; they do not own the lifecycle",
+      "source": "docs/requirements/backlog.md"
+    },
+    {
+      "text": "Supports adapters for GitHub Issues, Gitea Issues, and GitLab Issues where configured.",
+      "source": "docs/requirements/backlog.md#REQ-ISSUE-001"
+    },
+    {
+      "text": "Maps external issues to internal WorkItems through stored external references.",
+      "source": "docs/requirements/backlog.md#REQ-ISSUE-001"
+    },
+    {
+      "text": "Preserves internal parent-child hierarchy, milestones, acceptance coverage, agent feedback, and evidence even when an external tracker lacks those concepts.",
+      "source": "docs/requirements/backlog.md#REQ-ISSUE-001"
+    },
+    {
+      "text": "Supports import, export, and sync conflict reporting.",
+      "source": "docs/requirements/backlog.md#REQ-ISSUE-001"
+    },
+    {
+      "text": "Clearly marks externally synchronized fields and internally owned fields.",
+      "source": "docs/requirements/backlog.md#REQ-ISSUE-001"
+    },
+    {
+      "text": "Allows projects to run with no issue tracker integration.",
+      "source": "docs/requirements/backlog.md#REQ-ISSUE-001"
+    },
+    {
+      "text": "Completed closes from an external tracker are recovery events unless the linked internal delivery evidence and gate result have been published into the external card projection.",
+      "source": "docs/requirements/backlog.md#REQ-ISSUE-001"
+    }
+  ],
+  "goal": "External cards mirror WorkItems with provenance and conflict handling; they do not own the lifecycle",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "adapters for GitHub Issues, Gitea Issues, and GitLab Issues are available where configured",
+    "external issues map to internal WorkItems through stored external references",
+    "internal parent-child hierarchy, milestones, acceptance coverage, agent feedback, and evidence stay owned even when the tracker lacks those concepts",
+    "import, export, and sync conflict reporting are available",
+    "externally synchronized fields and internally owned fields are marked",
+    "projects run with no issue tracker integration",
+    "an external completed close is a recovery event unless internal delivery evidence and the gate result have been published onto the external card",
+    "customers cannot bind trackers or export WorkItems"
+  ],
+  "constraints": [
+    "do not replace the internal board",
+    "external cards do not own the WorkItem lifecycle"
+  ],
+  "nonGoals": [
+    "replacing the internal board",
+    "making GitHub Issues the source of truth",
+    "OAuth or regional login changes"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

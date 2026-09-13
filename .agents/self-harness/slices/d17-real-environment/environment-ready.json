@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "role": "environment",
+  "ready": true,
+  "commands": {
+    "typecheck": "pass",
+    "test": "pass",
+    "doc-sync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  },
+  "evidence": [
+    {
+      "command": "pnpm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm run doc-sync",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm run test",
+      "result": "pass",
+      "note": "rerun with host permission after sandbox listen EPERM"
+    },
+    {
+      "command": "EnvironmentService.prepare current repository",
+      "result": "pass",
+      "note": "default profile 1.0.0 produced project-scoped ready true; typecheck/test/doc-sync pass; lint/hygiene blocked"
+    },
+    {
+      "command": "EnvironmentService.prepare second fresh project",
+      "result": "pass",
+      "note": "default profile 1.0.0 produced project-scoped ready true with local command execution and artifacts"
+    }
+  ],
+  "blockedGates": [
+    {
+      "command": "pnpm run lint",
+      "reason": "package script is still a HUNTIANLING_PROBE gate"
+    },
+    {
+      "command": "pnpm run hygiene",
+      "reason": "package script is still a HUNTIANLING_PROBE gate"
+    }
+  ]
+}

@@ -8,15 +8,16 @@ import type { BoardService } from '../board/plugin.js';
 import type { DatabaseService } from '../database/types.js';
 import type { SkillService } from '../skills/service.js';
 import { createEnvironmentService, type EnvironmentService } from './service.js';
+import type { EnvironmentConfig } from './types.js';
 
 export type { EnvironmentService };
 
-const EnvironmentPlugin: Plugin = {
+const EnvironmentPlugin: Plugin<EnvironmentConfig> = {
   name: 'huntianling:environment',
   inject: ['huntianling.skills'],
   provide: 'huntianling.environment',
 
-  apply(ctx: Context): void {
+  apply(ctx: Context, config: EnvironmentConfig = {}): void {
     const skills = ctx.get('huntianling.skills') as SkillService | undefined;
     if (!skills) throw new Error('huntianling.skills is required');
     const board = ctx.get('huntianling.board') as BoardService | undefined;
@@ -27,6 +28,7 @@ const EnvironmentPlugin: Plugin = {
         skills,
         ...(board !== undefined ? { board } : {}),
         ...(database !== undefined ? { database } : {}),
+        config,
       }),
     );
   },

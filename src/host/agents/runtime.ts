@@ -8,6 +8,8 @@ import type { BoardService } from '../board/plugin.js';
 import type { SkillService } from '../skills/service.js';
 import type { SkillId } from '../skills/types.js';
 import type { DispatchService } from '../dispatch/service.js';
+import type { GovernanceService } from '../governance/service.js';
+import type { ProjectId, WorkItemId } from '../board/types.js';
 import type { EnvironmentService } from '../environment/service.js';
 import { inspectTaskContext } from '../tools/feedback.js';
 import { createToolRegistry, type ToolRegistry } from '../tools/registry.js';
@@ -57,6 +59,7 @@ export function createAgentRuntime(deps: {
   readonly board?: BoardService;
   readonly environment?: EnvironmentService;
   readonly dispatch?: DispatchService;
+  readonly governance?: GovernanceService;
 }): AgentRuntime {
   const tools = deps.tools ?? createToolRegistry();
   const baseline = deps.baseline ?? DEFAULT_METHOD_BASELINE;
@@ -122,7 +125,11 @@ export function createAgentRuntime(deps: {
     },
     startRun(input) {
       let definition = runtime.resolveBinding(input.agentId);
-      const projectId = input.projectId ?? '';
+      let projectId = input.projectId ?? '';
+      if (projectId === '' && input.workItemId !== undefined && input.workItemId !== '' && deps.board !== undefined) {
+        const item = deps.board.getWorkItem(input.workItemId as WorkItemId);
+        if (item !== undefined) projectId = item.projectId;
+      }
       if (projectId !== '' && deps.board !== undefined) {
         const project = deps.board.listProjects({ includeArchived: true }).find((item) => item.id === projectId);
         if (project !== undefined) {
@@ -154,7 +161,8 @@ export function createAgentRuntime(deps: {
           }
         }
       }
-      if (definition.id === 'generator' && input.environmentReady !== true) {
+      const environmentReady = resolveEnvironmentReady(deps.environment, input.workspaceRoot, projectId, input.environmentReady);
+      if (definition.id === 'generator' && environmentReady !== true) {
         throw new AgentTaskError('ENVIRONMENT', 'Generator requires a ready environment');
       }
       if (input.stateRecognition !== undefined && input.stateRecognition.allowed !== true) {
@@ -248,7 +256,7 @@ export function createAgentRuntime(deps: {
           ...(deps.environment !== undefined ? { environment: deps.environment } : {}),
           ...(deps.dispatch !== undefined ? { dispatch: deps.dispatch } : {}),
           ...(method !== null ? { method } : {}),
-          ...(input.environmentReady !== undefined ? { environmentReady: input.environmentReady } : {}),
+          environmentReady,
           input: input.input,
         }, input.workItemId);
         if (!context.ready) {
@@ -275,7 +283,7 @@ export function createAgentRuntime(deps: {
           error: null,
           workItemId: input.workItemId ?? null,
           projectId,
-          environmentReady: input.environmentReady === true,
+          environmentReady,
           context,
           channelMessages,
           stateRecognition: input.stateRecognition ?? null,
@@ -290,6 +298,7 @@ export function createAgentRuntime(deps: {
         writeRunConclusion(input, definition.id, runId, output);
         failures.delete(`${definition.id}:${projectId}`);
         runs.set(runId, run);
+        recordRunProvenance(deps.governance, run);
         return run;
       } catch (error) {
         if (error instanceof AgentTaskError && error.code === 'VALIDATION') {
@@ -321,7 +330,7 @@ export function createAgentRuntime(deps: {
           error: message,
           workItemId: input.workItemId ?? null,
           projectId,
-          environmentReady: input.environmentReady === true,
+          environmentReady,
           context,
           channelMessages,
           stateRecognition: input.stateRecognition ?? null,
@@ -373,6 +382,17 @@ export function createAgentRuntime(deps: {
   };
 
   return runtime;
+}
+
+function resolveEnvironmentReady(
+  environment: EnvironmentService | undefined,
+  workspaceRoot: string | undefined,
+  projectId: string,
+  declaredReady: boolean | undefined,
+): boolean {
+  if (environment === undefined) return declaredReady === true;
+  if (workspaceRoot === undefined && projectId === '') return false;
+  return environment.canStartImplementation(workspaceRoot, projectId === '' ? undefined : projectId);
 }
 
 function requireMethod(methodId: string): MethodDefinition {
@@ -689,6 +709,7 @@ function evaluate(input: unknown): unknown {
     criteria,
     decision,
     evidenceRefs: criteria.map((row) => row.evidence),
+    executionKind: 'demonstration',
     nextActions: decision === 'pass' ? ['complete'] : ['repair'],
   });
 }
@@ -761,4 +782,47 @@ function firstString(value: unknown): string | undefined {
 function slug(value: string): string {
   const cleaned = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return cleaned === '' ? 'slice' : cleaned;
+}
+
+function recordRunProvenance(governance: GovernanceService | undefined, run: AgentRun): void {
+  if (governance === undefined) return;
+  const input = lenientObject(run.input);
+  const output = lenientObject(run.output);
+  const quotes = Array.isArray(input.quotes) ? input.quotes : [];
+  const sourceInputs = quotes
+    .map((row) => lenientObject(row).text)
+    .filter((text): text is string => typeof text === 'string' && text.trim() !== '');
+  if (typeof input.goal === 'string' && input.goal.trim() !== '') sourceInputs.push(input.goal);
+  const assumptions = Array.isArray(output.assumptions)
+    ? output.assumptions.filter((row): row is string => typeof row === 'string')
+    : [];
+  const limitations = Array.isArray(output.limitations)
+    ? output.limitations.filter((row): row is string => typeof row === 'string')
+    : [];
+  const openQuestions = Array.isArray(output.openQuestions)
+    ? output.openQuestions.filter((row): row is string => typeof row === 'string')
+    : [];
+  const confidence = typeof output.confidence === 'string' ? output.confidence : null;
+  governance.recordAgentProvenance({
+    runId: run.id,
+    projectId: run.projectId as ProjectId,
+    workItemId: (run.workItemId ?? null) as WorkItemId | null,
+    sourceInputs,
+    promptTemplate: run.methodId ?? run.agentId,
+    modelIdentity: `${run.executor}:${run.agentId}`,
+    skillVersions: run.skillVersions,
+    toolCalls: (run.context?.toolPermissions ?? []).filter((row) => row.allowed).map((row) => row.toolId),
+    retrievedContext: [],
+    generatedOutput: JSON.stringify(run.output),
+    verificationEvidence: run.skillIds,
+    ...(confidence !== null ? { confidence } : {}),
+    assumptions,
+    limitations,
+    openQuestions,
+  });
+}
+
+function lenientObject(value: unknown): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
 }

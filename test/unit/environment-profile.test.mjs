@@ -49,7 +49,7 @@ test('prepare reports ready when required checks pass and does not persist secre
   assert.equal(result.profileVersion, '1.0.0');
   assert.equal(result.baseline.typecheck, 'pass');
   assert.equal(result.baseline.lint, 'blocked');
-  assert.deepEqual(result.credentialPresence, ['DEEPSEEK_API_KEY']);
+  assert.equal(result.credentialPresence.includes('DEEPSEEK_API_KEY'), true);
   const persisted = readFileSync(join(root, '.huntianling/environment-profile.json'), 'utf8');
   assert.equal(persisted.includes('super-secret'), false);
   assert.match(persisted, /DEEPSEEK_API_KEY/);

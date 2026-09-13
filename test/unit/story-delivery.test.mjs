@@ -201,7 +201,12 @@ test('driving one ready Story records three agents and Evaluator evidence', () =
   assert.equal(run.checkpoint.decisions.implement.role, 'generator');
   assert.equal(run.checkpoint.decisions.evaluate.decision, 'pass');
   const evidence = board.getDeliveryEvidenceSummary(story.id);
-  assert.equal(hasExecutedDeliveryEvidence(evidence, board.getWorkItem(story.id)), true);
+  assert.equal(evidence.checks.some((check) => check.producer === 'evaluator' && check.executionKind === 'demonstration'), true);
+  assert.equal(hasExecutedDeliveryEvidence(evidence, board.getWorkItem(story.id)), false);
+  assert.throws(
+    () => board.transitionWorkItem(story.id, 'delivered'),
+    /executed evidence|blocking delivery evidence/,
+  );
 });
 
 test('changing analysis after a checkpoint blocks resume', () => {

@@ -1,17 +1,18 @@
 /**
  * Driver-agnostic persistence and local file storage.
  *
- * Upper layers consume `huntianling.database`. SQLite is the local driver;
- * PostgreSQL remains a later deployment option and fails loud if selected.
+ * Upper layers consume `huntianling.database`. SQLite is the local default;
+ * PostgreSQL is selected from plugin config for team deployments.
  */
 
-export type DatabaseDriver = 'sqlite';
+export type DatabaseDriver = 'sqlite' | 'postgresql';
 export type ExtractedTextStatus = 'pending' | 'extracted' | 'unsupported' | 'failed';
 export type SqlValue = string | number | bigint | null;
 
 export type DatabaseErrorCode =
   | 'UNSUPPORTED_DRIVER'
   | 'INVALID_CONFIG'
+  | 'CONNECTION'
   | 'FILE_TOO_LARGE'
   | 'FILE_TYPE_NOT_ALLOWED'
   | 'FILE_NOT_FOUND'
@@ -29,17 +30,45 @@ export class DatabaseError extends Error {
 export interface DatabaseConfig {
   readonly driver?: string;
   readonly sqlitePath?: string;
+  readonly postgresUrl?: string;
   readonly storageRoot?: string;
   readonly maxUploadBytes?: number;
   readonly allowedMimeTypes?: readonly string[];
 }
 
-export interface ResolvedDatabaseConfig {
-  readonly driver: DatabaseDriver;
-  readonly sqlitePath: string;
+interface ResolvedDatabaseConfigBase {
   readonly storageRoot: string;
   readonly maxUploadBytes: number;
   readonly allowedMimeTypes: readonly string[];
+}
+
+export type ResolvedDatabaseConfig =
+  | (ResolvedDatabaseConfigBase & {
+      readonly driver: 'sqlite';
+      readonly sqlitePath: string;
+    })
+  | (ResolvedDatabaseConfigBase & {
+      readonly driver: 'postgresql';
+      readonly postgresUrl: string;
+    });
+
+export interface SqlEngine {
+  exec(sql: string): void;
+  run(sql: string, params?: readonly SqlValue[]): DatabaseExecuteResult;
+  get(sql: string, params?: readonly SqlValue[]): Record<string, SqlValue> | undefined;
+  all(sql: string, params?: readonly SqlValue[]): readonly Record<string, SqlValue>[];
+  transaction<T>(work: () => T): T;
+  close(): void;
+}
+
+export interface PostgresQueryResult {
+  readonly rows: readonly Record<string, unknown>[];
+  readonly rowCount: number;
+}
+
+export interface PostgresClient {
+  query(sql: string, params?: readonly unknown[]): PostgresQueryResult;
+  end(): void;
 }
 
 export interface FileStorageBackend {
@@ -175,6 +204,7 @@ export interface CreateDatabaseServiceInput {
   readonly workspaceRoot: string;
   readonly config?: DatabaseConfig;
   readonly storage?: FileStorageBackend;
+  readonly postgresClient?: PostgresClient;
 }
 
 const DEFAULT_ALLOWED_MIME_TYPES: readonly string[] = [
@@ -192,17 +222,13 @@ const DEFAULT_ALLOWED_MIME_TYPES: readonly string[] = [
 
 export function resolveDatabaseConfig(input: DatabaseConfig = {}): ResolvedDatabaseConfig {
   const driver = input.driver ?? 'sqlite';
-  if (driver !== 'sqlite') {
+  if (driver !== 'sqlite' && driver !== 'postgresql') {
     throw new DatabaseError(
       'UNSUPPORTED_DRIVER',
-      `database driver ${driver} is not available; use sqlite`,
+      `database driver ${driver} is not available; use sqlite or postgresql`,
     );
   }
-  const sqlitePath = input.sqlitePath ?? '.huntianling/huntianling.sqlite';
   const storageRoot = input.storageRoot ?? '.huntianling/files';
-  if (sqlitePath.trim() === '') {
-    throw new DatabaseError('INVALID_CONFIG', 'database sqlitePath cannot be blank');
-  }
   if (storageRoot.trim() === '') {
     throw new DatabaseError('INVALID_CONFIG', 'database storageRoot cannot be blank');
   }
@@ -217,6 +243,32 @@ export function resolveDatabaseConfig(input: DatabaseConfig = {}): ResolvedDatab
   if (allowedMimeTypes.some((type) => type.trim() === '')) {
     throw new DatabaseError('INVALID_CONFIG', 'database allowedMimeTypes cannot contain a blank type');
   }
+  if (driver === 'postgresql') {
+    const postgresUrl = input.postgresUrl ?? '';
+    if (postgresUrl.trim() === '') {
+      throw new DatabaseError(
+        'INVALID_CONFIG',
+        'database postgresUrl is required when driver is postgresql',
+      );
+    }
+    if (!/^postgres(ql)?:\/\//i.test(postgresUrl)) {
+      throw new DatabaseError(
+        'INVALID_CONFIG',
+        'database postgresUrl must be a postgres:// or postgresql:// URL',
+      );
+    }
+    return {
+      driver: 'postgresql',
+      postgresUrl,
+      storageRoot,
+      maxUploadBytes,
+      allowedMimeTypes,
+    };
+  }
+  const sqlitePath = input.sqlitePath ?? '.huntianling/huntianling.sqlite';
+  if (sqlitePath.trim() === '') {
+    throw new DatabaseError('INVALID_CONFIG', 'database sqlitePath cannot be blank');
+  }
   return {
     driver: 'sqlite',
     sqlitePath,
@@ -224,4 +276,16 @@ export function resolveDatabaseConfig(input: DatabaseConfig = {}): ResolvedDatab
     maxUploadBytes,
     allowedMimeTypes,
   };
+}
+
+export function asSqlRow(row: Record<string, unknown>): Record<string, SqlValue> {
+  const next: Record<string, SqlValue> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint') {
+      next[key] = value;
+      continue;
+    }
+    throw new DatabaseError('VALIDATION', `unsupported sql value for ${key}`);
+  }
+  return next;
 }

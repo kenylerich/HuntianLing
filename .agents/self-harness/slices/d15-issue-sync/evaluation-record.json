@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "adapters for GitHub Issues, Gitea Issues, and GitLab Issues are available where configured",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    },
+    {
+      "id": "external issues map to internal WorkItems through stored external references",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    },
+    {
+      "id": "internal parent-child hierarchy, milestones, acceptance coverage, agent feedback, and evidence stay owned even when the tracker lacks those concepts",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    },
+    {
+      "id": "import, export, and sync conflict reporting are available",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    },
+    {
+      "id": "externally synchronized fields and internally owned fields are marked",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    },
+    {
+      "id": "projects run with no issue tracker integration",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    },
+    {
+      "id": "an external completed close is a recovery event unless internal delivery evidence and the gate result have been published onto the external card",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    },
+    {
+      "id": "customers cannot bind trackers or export WorkItems",
+      "result": "pass",
+      "evidence": "test/unit/issue-sync-d15.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

@@ -29,6 +29,7 @@ export function renderDeveloperPage(): string {
     <h1>开发界面</h1>
     <div>
       <label>项目 <select id="project-select"></select></label>
+      <a href="/developer/governance">治理和信任</a>
       <span id="who" class="muted"></span>
       <button id="logout" type="button">退出</button>
     </div>
@@ -313,7 +314,7 @@ export function renderDeveloperPage(): string {
       startRun.onclick = async () => {
         await api('/api/v1/work-items/' + encodeURIComponent(item.id) + '/story-delivery/start', {
           method: 'POST',
-          body: JSON.stringify({ environmentReady: true, drive: true }),
+          body: JSON.stringify({ drive: true }),
         });
         await loadBoard();
       };
@@ -441,9 +442,17 @@ export function renderDeveloperPage(): string {
     async function prepareEnv() {
       const result = await api('/api/v1/environment/prepare', {
         method: 'POST',
-        body: JSON.stringify({}),
+        body: JSON.stringify({ projectId: state.projectId }),
       });
-      $('env-log').textContent = JSON.stringify({ ready: result.ready, blockers: result.blockers }, null, 2);
+      $('env-log').textContent = JSON.stringify({
+        run: result.prepareRunId,
+        projectId: result.projectId,
+        profileVersion: result.profileVersion,
+        ready: result.ready,
+        commands: result.commands,
+        blockers: result.blockers,
+        artifacts: result.artifacts,
+      }, null, 2);
     }
     async function compareDepth() {
       const result = await api('/api/v1/harness/comparisons', { method: 'POST', body: JSON.stringify({}) });

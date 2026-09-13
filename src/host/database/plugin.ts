@@ -2,7 +2,7 @@
  * Database capability — Service Definition.
  *
  * Provides `huntianling.database` so board, files, and later services persist
- * without importing a concrete driver.
+ * without importing SQLite or PostgreSQL.
  */
 
 import type { Context, Plugin } from '@deepseek-ai/cordis';

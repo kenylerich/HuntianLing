@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "Project view shows applicable obligations, control coverage, risk register, open exceptions, security readiness, reliability readiness, AI trust assessments, and evidence report status",
+      "result": "pass",
+      "evidence": "test/unit/governance-d14.test.mjs"
+    },
+    {
+      "id": "WorkItem detail shows required controls, mapped checks, missing evidence, residual risks, approval requirements, and trust provenance",
+      "result": "pass",
+      "evidence": "test/unit/governance-d14.test.mjs"
+    },
+    {
+      "id": "Milestone view rolls up compliance, security, reliability, and trust readiness for the planned delivery scope",
+      "result": "pass",
+      "evidence": "test/unit/governance-d14.test.mjs"
+    },
+    {
+      "id": "Users can request review, approve obligations, accept residual risk, and sign evidence reports when their role allows it",
+      "result": "pass",
+      "evidence": "test/unit/governance-d14.test.mjs"
+    },
+    {
+      "id": "customers cannot request review, approve obligations, accept residual risk, or sign evidence reports",
+      "result": "pass",
+      "evidence": "test/unit/governance-d14.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

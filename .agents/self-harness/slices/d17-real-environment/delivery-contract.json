@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-HARNESS-001",
+    "REQ-HARNESS-005",
+    "REQ-TOOL-001"
+  ],
+  "outcome": "Actual preparation and required checks establish readiness for this repository and a second project.",
+  "acceptance": [
+    "production environment preparation runs configured commands through a real local command executor when no test runner is supplied",
+    "the same versioned profile prepares two project workspaces and records profile version, workspace identity, command status, exit code, and log artifacts",
+    "missing executors, denied tools, missing commands, or failed required checks remain visible blockers",
+    "canStartImplementation reads the latest recorded prepare result and never manufactures passing checks",
+    "Generator is blocked when the latest project environment is not ready even if a caller passes environmentReady true",
+    "a repaired workspace becomes ready after a later prepare with passing required checks",
+    "optional lint and hygiene checks remain blocked when they are unavailable or probe-blocked",
+    "command output persisted for environment evidence is redacted for secret environment values"
+  ],
+  "inScope": [
+    "versioned Node/pnpm environment profile",
+    "project-scoped prepare results",
+    "local command execution adapter",
+    "Web/API prepare inputs for project-scoped readiness",
+    "self-harness D17 evidence"
+  ],
+  "outOfScope": [
+    "remote fleet expansion",
+    "D18 real code-generating Agent execution",
+    "hosted model fleet"
+  ],
+  "assumptions": [
+    "The current dsh host exposes local process execution to plugins through the Node host process for this first slice.",
+    "Tests may inject deterministic runners, but the production default must not be a test-only runner."
+  ],
+  "openQuestions": []
+}

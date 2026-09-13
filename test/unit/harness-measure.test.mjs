@@ -85,7 +85,7 @@ test('self-development demonstration records fail, repair, interrupt, resume, an
     selfHarnessSliceRefs: ['b10-story-delivery'],
   });
   assert.deepEqual(demo.reqIds, ['REQ-HARNESS-004', 'REQ-HARNESS-005']);
-  assert.equal(demo.customerProgress, 'delivered');
+  assert.notEqual(demo.customerProgress, 'delivered');
   assert.equal(demo.gates.lint, 'blocked');
   assert.equal(demo.gates.hygiene, 'blocked');
   assert.notEqual(demo.gates.lint, 'pass');

@@ -10,7 +10,7 @@ import {
   TOOL_TEST,
   TOOL_TYPECHECK,
 } from '../tools/registry.js';
-import type { EnvironmentProfile } from './types.js';
+import type { EnvironmentCommandSpec, EnvironmentConfig, EnvironmentProfile } from './types.js';
 
 export const HUNTIANLING_NODE_PNPM_PROFILE: EnvironmentProfile = {
   id: 'huntianling.node-pnpm',
@@ -62,3 +62,56 @@ export const HUNTIANLING_NODE_PNPM_PROFILE: EnvironmentProfile = {
   ],
   allowedCapabilities: ['typecheck', 'test', 'doc-sync', 'original-requirement-write'],
 };
+
+export function resolveEnvironmentProfile(config: EnvironmentConfig = {}): EnvironmentProfile {
+  const profileConfig = config.profile ?? {};
+  const commands = config.commands ?? profileConfig.commands ?? HUNTIANLING_NODE_PNPM_PROFILE.commands;
+  assertNonEmpty('environment profile id', profileConfig.id ?? HUNTIANLING_NODE_PNPM_PROFILE.id);
+  assertNonEmpty('environment profile version', profileConfig.version ?? HUNTIANLING_NODE_PNPM_PROFILE.version);
+  assertCommands(commands);
+  return {
+    id: profileConfig.id ?? HUNTIANLING_NODE_PNPM_PROFILE.id,
+    version: profileConfig.version ?? HUNTIANLING_NODE_PNPM_PROFILE.version,
+    runtime: {
+      node: profileConfig.runtime?.node ?? HUNTIANLING_NODE_PNPM_PROFILE.runtime.node,
+      packageManager: profileConfig.runtime?.packageManager ?? HUNTIANLING_NODE_PNPM_PROFILE.runtime.packageManager,
+    },
+    commands,
+    requiredSkillIds: unique([
+      ...(profileConfig.requiredSkillIds ?? HUNTIANLING_NODE_PNPM_PROFILE.requiredSkillIds),
+    ]),
+    requiredToolIds: unique([
+      ...(profileConfig.requiredToolIds ?? HUNTIANLING_NODE_PNPM_PROFILE.requiredToolIds),
+      ...commands.map((command) => command.toolId),
+    ]),
+    allowedCapabilities: unique([
+      ...(profileConfig.allowedCapabilities ?? HUNTIANLING_NODE_PNPM_PROFILE.allowedCapabilities),
+      ...commands.map((command) => command.id),
+    ]),
+  };
+}
+
+function assertCommands(commands: readonly EnvironmentCommandSpec[]): void {
+  if (commands.length === 0) {
+    throw new Error('environment profile commands are required');
+  }
+  const seen = new Set<string>();
+  for (const command of commands) {
+    assertNonEmpty('environment command id', command.id);
+    assertNonEmpty(`environment command ${command.id}`, command.command);
+    if (seen.has(command.id)) {
+      throw new Error(`duplicate environment command id: ${command.id}`);
+    }
+    seen.add(command.id);
+  }
+}
+
+function assertNonEmpty(label: string, value: string): void {
+  if (value.trim() === '') {
+    throw new Error(`${label} is required`);
+  }
+}
+
+function unique<T>(values: readonly T[]): readonly T[] {
+  return [...new Set(values)];
+}

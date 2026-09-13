@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-DATA-001"
+  ],
+  "outcome": "huntianling.database can use PostgreSQL; SQLite remains the local default",
+  "acceptance": [
+    "local deployments keep SQLite when no driver is configured",
+    "team deployments select PostgreSQL through huntianling.database config",
+    "upper layers keep using one database service and do not import a concrete driver",
+    "schema migrations and version tracking work on PostgreSQL",
+    "board reads and writes persist through PostgreSQL as the source of truth",
+    "large file bytes stay outside the database",
+    "missing PostgreSQL connection settings fail loud at load"
+  ],
+  "inScope": [
+    "PostgreSQL driver for huntianling.database",
+    "SQLite as the local default",
+    "shared schema migrations and version tracking",
+    "fail-loud PostgreSQL configuration"
+  ],
+  "outOfScope": [
+    "governance packs",
+    "removing the fused board cockpit",
+    "replacing SQLite for local deployments"
+  ],
+  "assumptions": [
+    "SQLite persistence and file storage already exist",
+    "governance packs stay in the next D rows"
+  ],
+  "openQuestions": []
+}

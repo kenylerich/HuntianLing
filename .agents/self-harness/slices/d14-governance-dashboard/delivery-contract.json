@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-WEB-005"
+  ],
+  "outcome": "One authenticated dashboard shows obligations, residual risk, and signed evidence",
+  "acceptance": [
+    "Project view shows applicable obligations, control coverage, risk register, open exceptions, security readiness, reliability readiness, AI trust assessments, and evidence report status",
+    "WorkItem detail shows required controls, mapped checks, missing evidence, residual risks, approval requirements, and trust provenance",
+    "Milestone view rolls up compliance, security, reliability, and trust readiness for the planned delivery scope",
+    "Users can request review, approve obligations, accept residual risk, and sign evidence reports when their role allows it",
+    "customers cannot request review, approve obligations, accept residual risk, or sign evidence reports"
+  ],
+  "inScope": [
+    "authenticated project, milestone, and WorkItem governance dashboard",
+    "review request, obligation approval, residual-risk acceptance, and evidence-report signing actions",
+    "role-gated mutations"
+  ],
+  "outOfScope": [
+    "GitHub Issue ownership",
+    "replacing the fused board cockpit"
+  ],
+  "assumptions": [
+    "D12 obligation lifecycle and D13 security, reliability, and trust records already persist",
+    "customers remain forbidden from governance mutations"
+  ],
+  "openQuestions": []
+}

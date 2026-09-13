@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "an empty application with failing checks cannot produce accepted delivery",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "an unconfigured executor cannot produce accepted delivery",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "a simulated evaluator cannot produce accepted delivery",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "demonstration, self-check, manual, and executed evidence stay distinct at the producing service",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "independent: true, environmentReady: true, or a producer label cannot establish executed success",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "existing simulated evidence is excluded until revalidated",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "verified CI or Git evidence with provenance can still complete delivery and customer progress",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    },
+    {
+      "id": "the transition API blocks delivered; the customer view is not the only gate",
+      "result": "pass",
+      "evidence": "test/unit/gates-d16.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "local deployments keep SQLite when no driver is configured",
+      "result": "pass",
+      "evidence": "test/unit/database-d11.test.mjs"
+    },
+    {
+      "id": "team deployments select PostgreSQL through huntianling.database config",
+      "result": "pass",
+      "evidence": "test/unit/database-d11.test.mjs"
+    },
+    {
+      "id": "upper layers keep using one database service and do not import a concrete driver",
+      "result": "pass",
+      "evidence": "test/unit/database-sqlite.test.mjs"
+    },
+    {
+      "id": "schema migrations and version tracking work on PostgreSQL",
+      "result": "pass",
+      "evidence": "test/unit/database-d11.test.mjs"
+    },
+    {
+      "id": "board reads and writes persist through PostgreSQL as the source of truth",
+      "result": "pass",
+      "evidence": "test/unit/database-d11.test.mjs"
+    },
+    {
+      "id": "large file bytes stay outside the database",
+      "result": "pass",
+      "evidence": "test/unit/database-d11.test.mjs"
+    },
+    {
+      "id": "missing PostgreSQL connection settings fail loud at load",
+      "result": "pass",
+      "evidence": "test/unit/database-d11.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

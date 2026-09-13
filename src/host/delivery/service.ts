@@ -8,6 +8,7 @@ import type { AgentRuntime } from '../agents/runtime.js';
 import { workItemDesignRevision } from '../board/executed-evidence.js';
 import type { BoardService } from '../board/plugin.js';
 import type { WorkItem, WorkItemId } from '../board/types.js';
+import type { EnvironmentService } from '../environment/service.js';
 import { validateDefinitionOfReady } from '../board/work-item.js';
 import { loadDeliveryRuns, saveDeliveryRuns } from './store.js';
 import {
@@ -50,6 +51,7 @@ export function createDeliveryService(deps: {
   readonly board: BoardService;
   readonly agents: AgentRuntime;
   readonly workspaceRoot: string;
+  readonly environment?: EnvironmentService;
   readonly config?: DeliveryConfig;
 }): DeliveryService {
   const config = resolveDeliveryConfig(deps.config ?? {});
@@ -71,12 +73,15 @@ export function createDeliveryService(deps: {
       const revision = workItemDesignRevision(item);
       const runId = randomUUID();
       const checkpoint = emptyCheckpoint(item, actor, revision);
+      const environmentReady = deps.environment === undefined
+        ? input.environmentReady === true
+        : deps.environment.canStartImplementation(deps.workspaceRoot, item.projectId);
       const started: StoryDeliveryRun = {
         id: runId,
         projectId: item.projectId,
         workItemId: item.id,
         status: 'running',
-        environmentReady: input.environmentReady === true,
+        environmentReady,
         agentRunIds: [],
         checkpoint,
         events: [],
@@ -313,7 +318,7 @@ export function createDeliveryService(deps: {
     }
 
     try {
-      const { output, agentRunId } = runAgentStep(deps.agents, run, item, step);
+      const { output, agentRunId } = runAgentStep(deps.agents, run, item, step, deps.workspaceRoot);
       const decisions = { ...run.checkpoint.decisions, [step]: output };
       const agentRunIds = [...run.agentRunIds, agentRunId];
       if (step === 'evaluate' && isRevisionRequired(output)) {
@@ -425,6 +430,7 @@ function runAgentStep(
   run: StoryDeliveryRun,
   item: WorkItem,
   step: StoryDeliveryStep,
+  workspaceRoot: string,
 ): { readonly output: unknown; readonly agentRunId: string } {
   if (step === 'plan') {
     const planned = agents.startRun({
@@ -443,6 +449,7 @@ function runAgentStep(
       executor: 'manual',
       projectId: item.projectId,
       workItemId: item.id,
+      workspaceRoot,
       environmentReady: run.environmentReady,
       input: {
         outcome: typeof planned.outcome === 'string' ? planned.outcome : item.title,

@@ -241,12 +241,13 @@ export function createHarnessService(deps: {
       const freshRoot = join(deps.workspaceRoot, '.huntianling', 'demo-fresh');
       mkdirSync(freshRoot, { recursive: true });
       writeFileSync(join(freshRoot, 'package.json'), `${JSON.stringify({ name: 'demo-fresh' }, null, 2)}\n`);
+      const project = board.createProject({ name: 'HuntianLing demo' });
       const prepared = deps.environment.prepare({
         workspaceRoot: freshRoot,
         host: { node: process.version, packageManager: 'pnpm' },
         runner: demoRunner,
+        projectId: project.id,
       });
-      const project = board.createProject({ name: 'HuntianLing demo' });
       const milestone = board.createMilestone({ projectId: project.id, title: 'Phase B' });
       const story = board.createWorkItem({
         projectId: project.id,
@@ -263,12 +264,12 @@ export function createHarnessService(deps: {
       const first = createDeliveryService({
         board,
         agents,
-        workspaceRoot: deps.workspaceRoot,
+        workspaceRoot: freshRoot,
+        environment: deps.environment,
         config: { maxRetries: 1, maxSteps: 12 },
       });
       const started = first.start({
         workItemId: story.id,
-        environmentReady: true,
         actor: input.owner ?? 'developer',
       });
       first.advance(started.id);
@@ -277,14 +278,19 @@ export function createHarnessService(deps: {
       const second = createDeliveryService({
         board,
         agents,
-        workspaceRoot: deps.workspaceRoot,
+        workspaceRoot: freshRoot,
+        environment: deps.environment,
         config: { maxRetries: 1, maxSteps: 12 },
       });
       second.resume(interrupted.id);
       const completed = second.drive(interrupted.id);
       const evidence = board.getDeliveryEvidenceSummary(story.id);
       if (completed.status === 'completed') {
-        board.transitionWorkItem(story.id, 'delivered');
+        try {
+          board.transitionWorkItem(story.id, 'delivered');
+        } catch {
+          // Simulated evaluator evidence cannot complete delivery.
+        }
       }
       const delivered = board.getWorkItem(story.id as WorkItemId);
       const progress = customerProgressForWorkItem(

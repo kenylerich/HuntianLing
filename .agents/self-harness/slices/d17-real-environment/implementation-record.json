@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/environment/types.ts",
+    "src/host/environment/profile.ts",
+    "src/host/environment/service.ts",
+    "src/host/environment/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/agents/types.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/delivery/service.ts",
+    "src/host/delivery/plugin.ts",
+    "src/host/tools/feedback.ts",
+    "src/host/web/server.ts",
+    "src/host/web/pages/developer.ts",
+    "src/host/harness/service.ts",
+    "test/unit/environment-d17.test.mjs",
+    "test/unit/environment-profile.test.mjs",
+    "test/unit/gates-d16.test.mjs",
+    "test/unit/contract.test.mjs",
+    "README.md",
+    "README.zh.md",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "build": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

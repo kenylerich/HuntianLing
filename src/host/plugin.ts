@@ -31,11 +31,14 @@ import collabPlugin from './collab/plugin.js';
 import databasePlugin from './database/plugin.js';
 import workflowPlugin from './workflow/plugin.js';
 import dispatchPlugin from './dispatch/plugin.js';
+import governancePlugin from './governance/plugin.js';
+import issueSyncPlugin from './issue-sync/plugin.js';
 import webPlugin from './web/plugin.js';
 import type { DispatchConfig } from './dispatch/types.js';
 import type { AuthorityConfig } from './authority/types.js';
 import type { DatabaseConfig } from './database/types.js';
 import type { DeliveryConfig } from './delivery/types.js';
+import type { EnvironmentConfig } from './environment/types.js';
 import type { HarnessConfig } from './harness/types.js';
 import type { IntakeConfig } from './intake/types.js';
 import type { ScmConfig } from './scm/types.js';
@@ -49,6 +52,7 @@ export interface HuntianLingConfig {
   readonly authority?: AuthorityConfig;
   readonly scm?: ScmConfig;
   readonly database?: DatabaseConfig;
+  readonly environment?: EnvironmentConfig;
   readonly dispatch?: DispatchConfig;
   readonly intake?: IntakeConfig;
 }
@@ -67,7 +71,9 @@ const HuntianLingRoot: Plugin<HuntianLingConfig> = {
     ctx.plugin(boardPlugin, config.intake ?? {});
     ctx.plugin(agilePlugin);
     ctx.plugin(skillsPlugin);
-    ctx.plugin(environmentPlugin);
+    ctx.plugin(environmentPlugin, config.environment ?? {});
+    ctx.plugin(governancePlugin);
+    ctx.plugin(issueSyncPlugin);
     ctx.plugin(agentsPlugin);
     ctx.plugin(authorityPlugin, config.authority ?? {});
     ctx.plugin(scmPlugin, config.scm ?? {});

@@ -276,8 +276,9 @@ test('evaluator persists criterion checks and generator self-check cannot delive
     },
   });
   const passed = board.getDeliveryEvidenceSummary(story.id);
-  assert.equal(hasExecutedDeliveryEvidence(passed, story), true);
-  assert.equal(board.transitionWorkItem(story.id, 'delivered').status, 'delivered');
+  assert.equal(passed.checks.some((check) => check.producer === 'evaluator' && check.executionKind === 'demonstration'), true);
+  assert.equal(hasExecutedDeliveryEvidence(passed, story), false);
+  assert.throws(() => board.transitionWorkItem(story.id, 'delivered'), /executed evidence|blocking delivery evidence/);
 });
 
 test('interrupted handoff can be resumed', () => {

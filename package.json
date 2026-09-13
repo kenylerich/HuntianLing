@@ -45,10 +45,12 @@
   },
   "dependencies": {
     "@deepseek-ai/cordis": "workspace:^",
-    "bcryptjs": "^3.0.3"
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
+    "@types/pg": "^8.23.1",
     "typescript": "^5.6.0"
   }
 }

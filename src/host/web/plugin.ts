@@ -21,6 +21,8 @@ import type { ScmService } from '../scm/service.js';
 import type { WorkflowService } from '../workflow/service.js';
 import type { DispatchService } from '../dispatch/service.js';
 import type { SkillService } from '../skills/service.js';
+import type { GovernanceService } from '../governance/service.js';
+import type { IssueSyncService } from '../issue-sync/service.js';
 import { createWebService, resolveWebConfig } from './server.js';
 import type { WebConfig } from './types.js';
 
@@ -48,6 +50,8 @@ const WebPlugin: Plugin<WebConfig> = {
     const workflow = ctx.get('huntianling.workflow') as WorkflowService | undefined;
     const dispatch = ctx.get('huntianling.dispatch') as DispatchService | undefined;
     const skills = ctx.get('huntianling.skills') as SkillService | undefined;
+    const governance = ctx.get('huntianling.governance') as GovernanceService | undefined;
+    const issueSync = ctx.get('huntianling.issueSync') as IssueSyncService | undefined;
     const service = createWebService({
       board,
       requirements,
@@ -63,6 +67,8 @@ const WebPlugin: Plugin<WebConfig> = {
       ...(workflow !== undefined ? { workflow } : {}),
       ...(dispatch !== undefined ? { dispatch } : {}),
       ...(skills !== undefined ? { skills } : {}),
+      ...(governance !== undefined ? { governance } : {}),
+      ...(issueSync !== undefined ? { issueSync } : {}),
     }, config);
     ctx.provide('huntianling.web', service);
     ctx.effect(() => () => service.stop(), 'huntianling.web.stop');

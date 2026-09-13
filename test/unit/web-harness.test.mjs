@@ -98,6 +98,6 @@ test('developer can compare skill depth and run the self-development demonstrati
     body: JSON.stringify({}),
   });
   assert.equal(demo.response.status, 201);
-  assert.equal(demo.payload.customerProgress, 'delivered');
+  assert.notEqual(demo.payload.customerProgress, 'delivered');
   assert.equal(demo.payload.gates.lint, 'blocked');
 });

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D14",
+      "source": "user"
+    },
+    {
+      "text": "One authenticated dashboard shows obligations, residual risk, and signed evidence",
+      "source": "docs/requirements/backlog.md"
+    },
+    {
+      "text": "Project view shows applicable obligations, control coverage, risk register, open exceptions, security readiness, reliability readiness, AI trust assessments, and evidence report status.",
+      "source": "docs/requirements/backlog.md#REQ-WEB-005"
+    },
+    {
+      "text": "WorkItem detail shows required controls, mapped checks, missing evidence, residual risks, approval requirements, and trust provenance.",
+      "source": "docs/requirements/backlog.md#REQ-WEB-005"
+    },
+    {
+      "text": "Milestone view rolls up compliance, security, reliability, and trust readiness for the planned delivery scope.",
+      "source": "docs/requirements/backlog.md#REQ-WEB-005"
+    },
+    {
+      "text": "Users can request review, approve obligations, accept residual risk, and sign evidence reports when their role allows it.",
+      "source": "docs/requirements/backlog.md#REQ-WEB-005"
+    },
+    {
+      "text": "Project-level governance dashboards, review requests, approval actions, residual-risk acceptance actions, and signed evidence reports remain planned.",
+      "source": "docs/requirements/backlog.md#REQ-WEB-005"
+    }
+  ],
+  "goal": "One authenticated dashboard shows obligations, residual risk, and signed evidence",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "Project view shows applicable obligations, control coverage, risk register, open exceptions, security readiness, reliability readiness, AI trust assessments, and evidence report status",
+    "WorkItem detail shows required controls, mapped checks, missing evidence, residual risks, approval requirements, and trust provenance",
+    "Milestone view rolls up compliance, security, reliability, and trust readiness for the planned delivery scope",
+    "Users can request review, approve obligations, accept residual risk, and sign evidence reports when their role allows it",
+    "customers cannot request review, approve obligations, accept residual risk, or sign evidence reports"
+  ],
+  "constraints": [
+    "GitHub Issue ownership is out of scope",
+    "keep the fused board cockpit"
+  ],
+  "nonGoals": [
+    "GitHub Issue ownership",
+    "replacing the fused board cockpit",
+    "OAuth or regional login changes"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

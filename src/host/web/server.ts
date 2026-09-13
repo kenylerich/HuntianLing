@@ -13,10 +13,24 @@ import type { DispatchService } from '../dispatch/service.js';
 import { DispatchError } from '../dispatch/types.js';
 import type { SkillService } from '../skills/service.js';
 import { SkillWriteError } from '../skills/types.js';
+import { createGovernanceService, type GovernanceService } from '../governance/service.js';
+import {
+  EVIDENCE_REPORT_SCOPES,
+  GovernanceError,
+  OBLIGATION_KINDS,
+  SECURITY_EVIDENCE_KINDS,
+  type CreateObligationInput,
+  type CustomControlPackInput,
+  type EvidenceReportScope,
+  type SecurityEvidenceKind,
+} from '../governance/types.js';
+import { createIssueSyncService, isIssueProvider, type IssueSyncService } from '../issue-sync/service.js';
+import { IssueSyncError } from '../issue-sync/types.js';
 import { DatabaseError } from '../database/types.js';
 import { AgentTaskError, isSpecialistAgentId, type AgentId } from '../agents/types.js';
 import { requireAgentId } from '../agents/definitions.js';
 import {
+  coerceEvidenceExecutionKind,
   resolveEvidenceExecutionKind,
   resolveEvidenceProducer,
 } from '../board/executed-evidence.js';
@@ -45,6 +59,9 @@ import {
   DELIVERY_EVIDENCE_STATUSES,
   DELIVERY_RISK_ACCEPTANCE_STATUSES,
   DELIVERY_RISK_AREAS,
+  DEFAULT_SECURITY_CLASSIFICATION,
+  GOVERNANCE_IMPACT_FLAGS,
+  SECURITY_RISK_LEVELS,
   GOVERNANCE_OBLIGATION_STATUSES,
   INTAKE_CANDIDATE_STATUSES,
   INTAKE_CANDIDATE_TYPES,
@@ -81,6 +98,9 @@ import {
   type DeliveryRiskAcceptance,
   type DeliveryRiskAcceptanceStatus,
   type DeliveryRiskArea,
+  type GovernanceImpactFlag,
+  type SecurityClassification,
+  type SecurityRiskLevel,
   type GovernanceObligationStatus,
   type GovernanceObligationSummary,
   type IntakeCandidateId,
@@ -176,6 +196,7 @@ import { renderAudienceDeniedPage, renderAudienceShellPage } from './pages/audie
 import { renderAdminPage } from './pages/admin.js';
 import { renderCustomerPage } from './pages/customer.js';
 import { renderDeveloperPage } from './pages/developer.js';
+import { renderGovernancePage } from './pages/governance.js';
 import { renderWorkflowLabPage } from './pages/workflow-lab.js';
 import { renderLoginPage } from './pages/login.js';
 import type { ResolvedWebConfig, WebConfig, WebDisplaySurface, WebService, WebStatus } from './types.js';
@@ -195,6 +216,8 @@ export interface WebServiceDependencies {
   readonly workflow?: WorkflowService;
   readonly dispatch?: DispatchService;
   readonly skills?: SkillService;
+  readonly governance?: GovernanceService;
+  readonly issueSync?: IssueSyncService;
   readonly oauthExchange?: import('./oauth.js').OAuthExchange;
 }
 
@@ -1059,17 +1082,20 @@ const BUSINESS_CRUD_ENTITIES: readonly BusinessCrudEntityCoverage[] = [
         '/api/v1/projects/:id/main-board/evidence',
         '/api/v1/projects/:id/delivery-evidence',
         '/api/v1/work-items/:id/delivery-evidence',
+        '/api/v1/projects/:id/evidence-reports',
       ]),
       crudOperation('update', 'implemented', '更新链接、检查、义务、风险接受和 notes', [
         '/api/v1/work-items/:id/delivery-evidence',
       ]),
-      crudOperation('lifecycle', 'partial', '检查状态、风险接受状态和豁免可写，签署报告仍缺', [
-        '/api/v1/work-items/:id/delivery-evidence',
+      crudOperation('lifecycle', 'implemented', '证据报告可草稿、签署和导出', [
+        '/api/v1/projects/:id/evidence-reports',
+        '/api/v1/evidence-reports/:id/approve',
+        '/api/v1/evidence-reports/:id/sign',
       ]),
       crudOperation('delete', 'forbidden', '证据历史不硬删', []),
     ],
-    gaps: ['Evidence report CRUD', 'Approval/signature APIs', 'Evidence correction event'],
-    recommendedNextSlice: '补证据报告、签署和更正记录。',
+    gaps: ['PDF export adapter'],
+    recommendedNextSlice: '可选 GitHub Issue/Project 同步。',
   },
   {
     id: 'governance-risk',
@@ -1077,26 +1103,70 @@ const BUSINESS_CRUD_ENTITIES: readonly BusinessCrudEntityCoverage[] = [
     name: 'Governance/Risk',
     owner: '合规/安全/可靠性/可信负责人',
     record: '义务、控制、风险接受、安全、可靠性和可信结论',
-    implementationStatus: 'partial',
+    implementationStatus: 'complete',
     deletePolicy: '治理对象需要审批、退休和风险接受，不做无痕删除。',
     operations: [
-      crudOperation('create', 'partial', '可通过 evidence summary 写入治理摘要', [
-        '/api/v1/work-items/:id/delivery-evidence',
+      crudOperation('create', 'implemented', '创建项目义务和自定义 control packs', [
+        '/api/v1/projects/:id/compliance/obligations',
+        '/api/v1/projects/:id/governance/packs',
       ]),
-      crudOperation('read', 'implemented', '读取合规、安全、可靠性和可信详情', [
+      crudOperation('read', 'implemented', '读取治理看板、合规、安全、可靠性和可信详情', [
+        '/api/v1/projects/:id/governance/dashboard',
+        '/api/v1/milestones/:id/governance/dashboard',
+        '/api/v1/work-items/:id/governance/dashboard',
+        '/api/v1/projects/:id/compliance/obligations',
         '/api/v1/work-items/:id/compliance',
         '/api/v1/work-items/:id/security',
         '/api/v1/work-items/:id/reliability',
         '/api/v1/work-items/:id/trust',
+        '/api/v1/projects/:id/certification-readiness',
       ]),
-      crudOperation('update', 'partial', '摘要字段可更新，独立控制和审批 API 未实现', [
-        '/api/v1/work-items/:id/delivery-evidence',
+      crudOperation('update', 'implemented', '选择 framework packs 并映射 controls', [
+        '/api/v1/projects/:id/governance/packs/:packId/select',
+        '/api/v1/governance/controls/map',
       ]),
-      crudOperation('lifecycle', 'planned', '义务审批、控制退休、风险接受签署仍缺', []),
+      crudOperation('lifecycle', 'implemented', '义务评审/审批、残余风险接受和证据报告签署', [
+        '/api/v1/compliance/obligations/:id/request-review',
+        '/api/v1/compliance/obligations/:id/approve',
+        '/api/v1/work-items/:id/security/risk-acceptance',
+        '/api/v1/evidence-reports/:id/sign',
+      ]),
       crudOperation('delete', 'forbidden', '治理和风险历史不硬删', []),
     ],
-    gaps: ['Obligation CRUD', 'Control pack CRUD', 'Risk acceptance approval APIs'],
-    recommendedNextSlice: '补治理对象独立 API 和审批事件。',
+    gaps: [],
+    recommendedNextSlice: '可选 GitHub Issue/Project 同步。',
+  },
+  {
+    id: 'issue-sync',
+    areaId: 'evidence',
+    name: 'Issue Sync',
+    owner: '开发者/管理员',
+    record: '外部 Issue 镜像、出处引用、冲突和关闭恢复',
+    implementationStatus: 'complete',
+    deletePolicy: '外部引用只解除映射，不删除内部 WorkItem。',
+    operations: [
+      crudOperation('create', 'implemented', '绑定 tracker 并从外部 Issue 导入', [
+        '/api/v1/projects/:id/issue-trackers',
+        '/api/v1/projects/:id/issue-sync/import',
+      ]),
+      crudOperation('read', 'implemented', '读取适配器目录、映射、字段所有权和冲突', [
+        '/api/v1/issue-sync/catalog',
+        '/api/v1/projects/:id/issue-trackers',
+        '/api/v1/projects/:id/issue-sync/conflicts',
+        '/api/v1/work-items/:id/issue-sync',
+      ]),
+      crudOperation('update', 'implemented', '把 WorkItem 导出到外部卡片并同步', [
+        '/api/v1/work-items/:id/issue-sync/export',
+        '/api/v1/projects/:id/issue-sync/sync',
+      ]),
+      crudOperation('lifecycle', 'implemented', '发布交付门禁并处理外部关闭恢复', [
+        '/api/v1/work-items/:id/issue-sync/publish-gate',
+        '/api/v1/work-items/:id/issue-sync/ingest-close',
+      ]),
+      crudOperation('delete', 'forbidden', '内部 WorkItem 生命周期不由外部 tracker 删除', []),
+    ],
+    gaps: [],
+    recommendedNextSlice: '真实三个 Agent 的交付门禁真实性。',
   },
   {
     id: 'audit-event',
@@ -1374,6 +1444,8 @@ export function createWebService(
   const config = resolveWebConfig(input);
   const collab = deps.collab ?? createCollabService({ board: deps.board });
   const skills = deps.skills ?? createSkillService();
+  const governance = deps.governance ?? createGovernanceService({ board: deps.board });
+  const issueSync = deps.issueSync ?? createIssueSyncService({ board: deps.board });
   const environment = deps.environment ?? createEnvironmentService({
     skills,
     board: deps.board,
@@ -1385,6 +1457,7 @@ export function createWebService(
     skills,
     board: deps.board,
     environment,
+    governance,
     ...(deps.dispatch !== undefined ? { dispatch: deps.dispatch } : {}),
   });
   const authManager = new WebAuthManager(
@@ -1417,6 +1490,8 @@ export function createWebService(
       ci,
       agents,
       skills,
+      governance,
+      issueSync,
       ...(deps.delivery !== undefined ? { delivery: deps.delivery } : {}),
     };
     const nextServer = createServer((req, res) => {
@@ -1626,6 +1701,16 @@ async function handleRequest(
     }
     if (error instanceof SkillWriteError) {
       const statusCode = error.code === 'GATED' || error.code === 'ENABLE' ? 403 : error.code === 'MISSING_SKILL' ? 404 : 400;
+      sendJson(res, statusCode, { error: error.message, code: error.code });
+      return;
+    }
+    if (error instanceof GovernanceError) {
+      const statusCode = error.code === 'NOT_FOUND' ? 404 : error.code === 'NOT_READY' ? 409 : error.code === 'CONFLICT' ? 409 : 400;
+      sendJson(res, statusCode, { error: error.message, code: error.code });
+      return;
+    }
+    if (error instanceof IssueSyncError) {
+      const statusCode = error.code === 'NOT_FOUND' ? 404 : error.code === 'NOT_READY' ? 409 : error.code === 'CONFLICT' ? 409 : 400;
       sendJson(res, statusCode, { error: error.message, code: error.code });
       return;
     }
@@ -2134,6 +2219,8 @@ async function handleApiV1(
 
   if (await handleDispatchApi(deps, auth, method, url, req, res)) return;
   if (await handleSkillToolApi(deps, auth, method, url, req, res)) return;
+  if (await handleGovernanceApi(deps, auth, method, url, req, res)) return;
+  if (await handleIssueSyncApi(deps, auth, method, url, req, res)) return;
 
   if (
     (
@@ -2191,7 +2278,14 @@ async function handleApiV1(
     denyCustomer(auth, 'environment prepare is not available to customers');
     const body = await readJsonObject(req);
     const workspaceRoot = optionalString(body, 'workspaceRoot') ?? process.cwd();
-    sendJson(res, 200, requireEnvironment(deps).prepare({ workspaceRoot }));
+    const projectId = optionalString(body, 'projectId');
+    const profileVersion = optionalString(body, 'profileVersion');
+    const project = projectId !== undefined ? authorizeProject(deps, auth, projectId as ProjectId) : null;
+    sendJson(res, 200, requireEnvironment(deps).prepare({
+      workspaceRoot,
+      ...(project !== null ? { projectId: project.id } : {}),
+      ...(profileVersion !== undefined ? { overrides: { profileVersion } } : {}),
+    }));
     return;
   }
   if (url.pathname === '/api/v1/environment/fleets' && method === 'GET') {
@@ -2204,12 +2298,17 @@ async function handleApiV1(
     const body = await readJsonObject(req);
     const sourceRoot = optionalString(body, 'sourceRoot') ?? optionalString(body, 'workspaceRoot') ?? process.cwd();
     const targetRoot = requireString(body, 'targetRoot');
+    const projectId = optionalString(body, 'projectId');
+    const profileVersion = optionalString(body, 'profileVersion');
+    const project = projectId !== undefined ? authorizeProject(deps, auth, projectId as ProjectId) : null;
     const kind = optionalString(body, 'kind');
     const preserveUncommitted = optionalBoolean(body, 'preserveUncommitted');
     const acceptUncommittedLoss = optionalBoolean(body, 'acceptUncommittedLoss');
     sendJson(res, 200, requireEnvironment(deps).replace({
       sourceRoot,
       targetRoot,
+      ...(project !== null ? { projectId: project.id } : {}),
+      ...(profileVersion !== undefined ? { overrides: { profileVersion } } : {}),
       ...(kind === 'local' || kind === 'remote' ? { kind } : {}),
       ...(preserveUncommitted !== undefined ? { preserveUncommitted } : {}),
       ...(acceptUncommittedLoss !== undefined ? { acceptUncommittedLoss } : {}),
@@ -3908,9 +4007,30 @@ function createGovernanceDetail(
 ) {
   const item = requireWorkItem(deps, workItemId);
   const summary = deps.board.getDeliveryEvidenceSummary(item.id);
+  const registry = deps.governance?.workItemObligations(item.id) ?? [];
+  const obligations = [
+    ...registry.map((obligation) => ({
+      id: obligation.id,
+      title: obligation.title,
+      jurisdiction: obligation.jurisdiction,
+      source: obligation.source,
+      status: obligation.status,
+      owner: obligation.owner,
+      reviewer: obligation.reviewer,
+      effectiveDate: obligation.effectiveDate,
+      reviewDate: obligation.reviewDate,
+      controlIds: obligation.controlIds,
+      kind: obligation.kind,
+      applicabilityReason: obligation.applicabilityReason,
+      workItemIds: obligation.workItemIds,
+      links: summary.obligations.find((row) => row.id === obligation.id)?.links ?? [],
+    })),
+    ...summary.obligations.filter((row) => registry.every((obligation) => obligation.id !== row.id)),
+  ];
   return {
     workItem: createWorkItemCrumb(item),
-    obligations: summary.obligations,
+    obligations,
+    governanceFlags: item.governanceFlags,
     governanceChecks: summary.checks.filter((check) => check.area === 'governance'),
     securityChecks: summary.checks.filter((check) => check.area === 'security'),
     reliabilityChecks: summary.checks.filter((check) => check.area === 'reliability'),
@@ -3930,6 +4050,8 @@ function createRiskAreaDetail(
   return {
     workItem: createWorkItemCrumb(item),
     area,
+    classification: area === 'security' ? item.securityClassification : undefined,
+    productionFacing: item.productionFacing,
     checks: summary.checks.filter((check) => check.area === area),
     riskAcceptances: summary.riskAcceptances.filter((riskAcceptance) => riskAcceptance.area === area),
     evidenceLinks: summary.evidenceLinks.filter((link) =>
@@ -5168,11 +5290,16 @@ function optionalDeliveryEvidenceChecks(
   return value.map((item, index) => {
     if (!isRecord(item)) throw new Error(`${key}[${String(index)}] must be an object`);
     const reason = optionalString(item, 'reason');
-    const evidenceIds = optionalStringArray(item, 'evidenceIds');
+    const evidenceIds = optionalStringArray(item, 'evidenceIds') ?? [];
     const acceptanceCriterionIds = optionalIdArray<AcceptanceCriterionId>(item, 'acceptanceCriterionIds');
-    const links = optionalDeliveryEvidenceLinks(item, 'links');
+    const links = optionalDeliveryEvidenceLinks(item, 'links') ?? [];
     const producer = resolveEvidenceProducer(item.producer);
-    const executionKind = resolveEvidenceExecutionKind(item.executionKind, producer);
+    const executionKind = coerceEvidenceExecutionKind({
+      executionKind: resolveEvidenceExecutionKind(item.executionKind, producer),
+      producer,
+      links,
+      evidenceIds,
+    });
     const designRevision = optionalString(item, 'designRevision');
     return {
       id: requireString(item, 'id'),
@@ -5181,9 +5308,9 @@ function optionalDeliveryEvidenceChecks(
       status: requireDeliveryEvidenceStatus(item, 'status'),
       required: optionalBoolean(item, 'required') ?? true,
       reason: reason ?? '',
-      evidenceIds: evidenceIds ?? [],
+      evidenceIds,
       acceptanceCriterionIds: acceptanceCriterionIds ?? [],
-      links: links ?? [],
+      links,
       producer,
       executionKind,
       designRevision: designRevision ?? '',
@@ -5231,6 +5358,7 @@ function optionalRiskAcceptances(
     if (!isRecord(item)) throw new Error(`${key}[${String(index)}] must be an object`);
     const expiresAt = optionalNumberOrNull(item, 'expiresAt');
     const links = optionalDeliveryEvidenceLinks(item, 'links');
+    const compensatingControls = optionalStringArray(item, 'compensatingControls');
     return {
       id: requireString(item, 'id'),
       area: requireDeliveryRiskArea(item, 'area'),
@@ -5238,6 +5366,8 @@ function optionalRiskAcceptances(
       status: requireDeliveryRiskAcceptanceStatus(item, 'status'),
       approver: optionalString(item, 'approver') ?? '',
       reason: optionalString(item, 'reason') ?? '',
+      scope: optionalString(item, 'scope') ?? '',
+      compensatingControls: compensatingControls ?? [],
       expiresAt: expiresAt ?? null,
       links: links ?? [],
     };
@@ -5544,6 +5674,9 @@ function makeCreateInput(payload: Record<string, unknown>): WorkItemCreateInput 
     ? normalizeRankingInputs(payload.rankingInputs)
     : undefined;
   const requiredSkillPackIds = optionalStringArray(payload, 'requiredSkillPackIds');
+  const governanceFlags = optionalGovernanceFlags(payload);
+  const securityClassification = optionalSecurityClassification(payload);
+  const productionFacing = optionalBoolean(payload, 'productionFacing');
   return {
     projectId: requireId<ProjectId>(payload, 'projectId'),
     title: requireString(payload, 'title'),
@@ -5565,6 +5698,9 @@ function makeCreateInput(payload: Record<string, unknown>): WorkItemCreateInput 
     ...(methodId !== undefined ? { methodId } : {}),
     ...(rankingInputs !== undefined ? { rankingInputs } : {}),
     ...(requiredSkillPackIds !== undefined ? { requiredSkillPackIds } : {}),
+    ...(governanceFlags !== undefined ? { governanceFlags } : {}),
+    ...(securityClassification !== undefined ? { securityClassification } : {}),
+    ...(productionFacing !== undefined ? { productionFacing } : {}),
   };
 }
 
@@ -5593,6 +5729,9 @@ function makeUpdateInput(payload: Record<string, unknown>): WorkItemUpdateInput 
     ? normalizeRankingInputs(payload.rankingInputs)
     : undefined;
   const requiredSkillPackIds = optionalStringArray(payload, 'requiredSkillPackIds');
+  const governanceFlags = optionalGovernanceFlags(payload);
+  const securityClassification = optionalSecurityClassification(payload);
+  const productionFacing = optionalBoolean(payload, 'productionFacing');
   return {
     ...(title !== undefined ? { title } : {}),
     ...(body !== undefined ? { body } : {}),
@@ -5616,6 +5755,9 @@ function makeUpdateInput(payload: Record<string, unknown>): WorkItemUpdateInput 
     ...(methodId !== undefined ? { methodId } : {}),
     ...(rankingInputs !== undefined ? { rankingInputs } : {}),
     ...(requiredSkillPackIds !== undefined ? { requiredSkillPackIds } : {}),
+    ...(governanceFlags !== undefined ? { governanceFlags } : {}),
+    ...(securityClassification !== undefined ? { securityClassification } : {}),
+    ...(productionFacing !== undefined ? { productionFacing } : {}),
   };
 }
 
@@ -5973,6 +6115,41 @@ function optionalStringArray(
     throw new Error(`${key} must be an array of strings`);
   }
   return value;
+}
+
+function optionalSecurityClassification(payload: Record<string, unknown>): SecurityClassification | undefined {
+  const value = payload.securityClassification;
+  if (value === undefined) return undefined;
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error('securityClassification must be an object');
+  }
+  const record = value as Record<string, unknown>;
+  const level = (key: keyof SecurityClassification): SecurityRiskLevel => {
+    const raw = record[key];
+    if (typeof raw !== 'string' || !(SECURITY_RISK_LEVELS as readonly string[]).includes(raw)) {
+      throw new Error(`unknown ${key} risk level: ${String(raw)}`);
+    }
+    return raw as SecurityRiskLevel;
+  };
+  return {
+    securityImpact: level('securityImpact'),
+    dataSensitivity: level('dataSensitivity'),
+    permissionImpact: level('permissionImpact'),
+    exposedApiSurface: level('exposedApiSurface'),
+    dependencyRisk: level('dependencyRisk'),
+    deploymentRisk: level('deploymentRisk'),
+  };
+}
+
+function optionalGovernanceFlags(payload: Record<string, unknown>): readonly GovernanceImpactFlag[] | undefined {
+  const values = optionalStringArray(payload, 'governanceFlags');
+  if (values === undefined) return undefined;
+  for (const flag of values) {
+    if (!(GOVERNANCE_IMPACT_FLAGS as readonly string[]).includes(flag)) {
+      throw new Error(`unknown governance impact flag: ${flag}`);
+    }
+  }
+  return values as readonly GovernanceImpactFlag[];
 }
 
 function optionalIdArray<T extends string>(
@@ -7023,6 +7200,616 @@ async function handleSkillToolApi(
   return false;
 }
 
+function requireGovernance(deps: WebServiceDependencies): GovernanceService {
+  if (deps.governance === undefined) {
+    throw new GovernanceError('NOT_FOUND', 'huntianling.governance is required');
+  }
+  return deps.governance;
+}
+
+function requireIssueSync(deps: WebServiceDependencies): IssueSyncService {
+  if (deps.issueSync === undefined) {
+    throw new IssueSyncError('NOT_FOUND', 'huntianling.issueSync is required');
+  }
+  return deps.issueSync;
+}
+
+async function handleIssueSyncApi(
+  deps: WebServiceDependencies,
+  auth: RequestAuth,
+  method: string,
+  url: URL,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<boolean> {
+  if (url.pathname === '/api/v1/issue-sync/catalog' && method === 'GET') {
+    sendJson(res, 200, {
+      providers: requireIssueSync(deps).listProviders(),
+      fieldOwnership: requireIssueSync(deps).fieldOwnership(),
+    });
+    return true;
+  }
+  const trackers = /^\/api\/v1\/projects\/([^/]+)\/issue-trackers$/.exec(url.pathname);
+  if (trackers !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(trackers));
+    sendJson(res, 200, { trackers: requireIssueSync(deps).listTrackers(project.id) });
+    return true;
+  }
+  if (trackers !== null && method === 'POST') {
+    denyCustomer(auth, 'issue trackers are not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(trackers));
+    const body = await readJsonObject(req);
+    const provider = requireString(body, 'provider');
+    if (!isIssueProvider(provider)) {
+      throw new IssueSyncError('VALIDATION', `unknown issue provider: ${provider}`);
+    }
+    const apiBaseUrl = optionalString(body, 'apiBaseUrl');
+    sendJson(res, 201, requireIssueSync(deps).bindTracker({
+      projectId: project.id,
+      provider,
+      owner: requireString(body, 'owner'),
+      repo: requireString(body, 'repo'),
+      ...(apiBaseUrl !== undefined ? { apiBaseUrl } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const importIssue = /^\/api\/v1\/projects\/([^/]+)\/issue-sync\/import$/.exec(url.pathname);
+  if (importIssue !== null && method === 'POST') {
+    denyCustomer(auth, 'issue sync is not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(importIssue));
+    const body = await readJsonObject(req);
+    const workItemId = optionalId<WorkItemId>(body, 'workItemId');
+    const number = optionalNumber(body, 'number');
+    const token = optionalString(body, 'token');
+    const snapshot = optionalIssueSnapshot(body);
+    sendJson(res, 201, requireIssueSync(deps).importIssue({
+      projectId: project.id,
+      ...(workItemId !== undefined ? { workItemId } : {}),
+      ...(number !== undefined ? { number } : {}),
+      ...(token !== undefined ? { token } : {}),
+      ...(snapshot !== undefined ? { snapshot } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const syncProject = /^\/api\/v1\/projects\/([^/]+)\/issue-sync\/sync$/.exec(url.pathname);
+  if (syncProject !== null && method === 'POST') {
+    denyCustomer(auth, 'issue sync is not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(syncProject));
+    const body = await readJsonObject(req);
+    const token = optionalString(body, 'token');
+    sendJson(res, 200, token === undefined
+      ? requireIssueSync(deps).sync(project.id)
+      : requireIssueSync(deps).sync(project.id, token));
+    return true;
+  }
+  const conflicts = /^\/api\/v1\/projects\/([^/]+)\/issue-sync\/conflicts$/.exec(url.pathname);
+  if (conflicts !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(conflicts));
+    sendJson(res, 200, { conflicts: requireIssueSync(deps).conflicts(project.id) });
+    return true;
+  }
+  const workItemRef = /^\/api\/v1\/work-items\/([^/]+)\/issue-sync$/.exec(url.pathname);
+  if (workItemRef !== null && method === 'GET') {
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(workItemRef));
+    sendJson(res, 200, {
+      reference: requireIssueSync(deps).getReference(item.id) ?? null,
+      fieldOwnership: requireIssueSync(deps).fieldOwnership(),
+    });
+    return true;
+  }
+  const exportItem = /^\/api\/v1\/work-items\/([^/]+)\/issue-sync\/export$/.exec(url.pathname);
+  if (exportItem !== null && method === 'POST') {
+    denyCustomer(auth, 'issue sync is not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(exportItem));
+    const body = await readJsonObject(req);
+    const token = optionalString(body, 'token');
+    sendJson(res, 200, requireIssueSync(deps).exportWorkItem({
+      workItemId: item.id,
+      ...(token !== undefined ? { token } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const publishGate = /^\/api\/v1\/work-items\/([^/]+)\/issue-sync\/publish-gate$/.exec(url.pathname);
+  if (publishGate !== null && method === 'POST') {
+    denyCustomer(auth, 'issue sync is not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(publishGate));
+    const body = await readJsonObject(req);
+    const token = optionalString(body, 'token');
+    sendJson(res, 200, token === undefined
+      ? requireIssueSync(deps).publishGate(item.id, auth.principal?.username ?? 'developer')
+      : requireIssueSync(deps).publishGate(item.id, auth.principal?.username ?? 'developer', token));
+    return true;
+  }
+  const ingestClose = /^\/api\/v1\/work-items\/([^/]+)\/issue-sync\/ingest-close$/.exec(url.pathname);
+  if (ingestClose !== null && method === 'POST') {
+    denyCustomer(auth, 'issue sync is not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(ingestClose));
+    const body = await readJsonObject(req);
+    const token = optionalString(body, 'token');
+    sendJson(res, 200, token === undefined
+      ? requireIssueSync(deps).ingestClose(item.id, auth.principal?.username ?? 'developer')
+      : requireIssueSync(deps).ingestClose(item.id, auth.principal?.username ?? 'developer', token));
+    return true;
+  }
+  return false;
+}
+
+function optionalIssueSnapshot(body: Record<string, unknown>): import('../issue-sync/types.js').ExternalIssueSnapshot | undefined {
+  const raw = body.snapshot;
+  if (raw === undefined) return undefined;
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new IssueSyncError('VALIDATION', 'snapshot must be an object');
+  }
+  const snapshot = raw as Record<string, unknown>;
+  const state = requireString(snapshot, 'state');
+  if (state !== 'open' && state !== 'closed') {
+    throw new IssueSyncError('VALIDATION', 'snapshot state must be open or closed');
+  }
+  return {
+    number: requireIssueNumber(snapshot, 'number'),
+    externalId: requireString(snapshot, 'externalId'),
+    url: requireString(snapshot, 'url'),
+    title: requireString(snapshot, 'title'),
+    body: optionalString(snapshot, 'body') ?? '',
+    state,
+    updatedAt: optionalString(snapshot, 'updatedAt') ?? '',
+  };
+}
+
+function requireIssueNumber(payload: Record<string, unknown>, key: string): number {
+  const value = payload[key];
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    throw new IssueSyncError('VALIDATION', `${key} must be an integer`);
+  }
+  return value;
+}
+
+async function handleGovernanceApi(
+  deps: WebServiceDependencies,
+  auth: RequestAuth,
+  method: string,
+  url: URL,
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<boolean> {
+  if (url.pathname === '/api/v1/governance/packs' && method === 'GET') {
+    denyCustomer(auth, 'governance packs are not available to customers');
+    sendJson(res, 200, { packs: requireGovernance(deps).listPacks() });
+    return true;
+  }
+  const projectPacks = /^\/api\/v1\/projects\/([^/]+)\/governance\/packs$/.exec(url.pathname);
+  if (projectPacks !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectPacks));
+    sendJson(res, 200, {
+      packs: requireGovernance(deps).listPacks(),
+      selected: requireGovernance(deps).selectedPacks(project.id),
+    });
+    return true;
+  }
+  if (projectPacks !== null && method === 'POST') {
+    denyCustomer(auth, 'governance packs are not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectPacks));
+    const body = await readJsonObject(req);
+    const description = optionalString(body, 'description');
+    sendJson(res, 201, requireGovernance(deps).registerCustomPack({
+      id: requireString(body, 'id'),
+      frameworkName: requireString(body, 'frameworkName'),
+      version: requireString(body, 'version'),
+      ...(description !== undefined ? { description } : {}),
+      controls: requireControlInputs(body),
+    }));
+    return true;
+  }
+  const selectPack = /^\/api\/v1\/projects\/([^/]+)\/governance\/packs\/([^/]+)\/select$/.exec(url.pathname);
+  if (selectPack !== null && method === 'POST') {
+    denyCustomer(auth, 'governance packs are not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(selectPack));
+    const body = await readJsonObject(req);
+    sendJson(res, 200, requireGovernance(deps).selectPack(
+      project.id,
+      idFromMatchAt(selectPack, 2),
+      requireString(body, 'version'),
+      auth.principal?.username ?? 'developer',
+    ));
+    return true;
+  }
+  const projectObligations = /^\/api\/v1\/projects\/([^/]+)\/compliance\/obligations$/.exec(url.pathname);
+  if (projectObligations !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectObligations));
+    sendJson(res, 200, { obligations: requireGovernance(deps).listObligations(project.id) });
+    return true;
+  }
+  if (projectObligations !== null && method === 'POST') {
+    denyCustomer(auth, 'compliance obligations are not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectObligations));
+    const body = await readJsonObject(req);
+    sendJson(res, 201, requireGovernance(deps).createObligation(makeObligationInput(project.id, body, auth)));
+    return true;
+  }
+  const obligationAction = /^\/api\/v1\/compliance\/obligations\/([^/]+)\/(submit|request-review|approve|activate|retire)$/.exec(url.pathname);
+  if (obligationAction !== null && method === 'POST') {
+    denyCustomer(auth, 'compliance obligations are not available to customers');
+    const id = idFromMatch(obligationAction);
+    const obligation = requireGovernance(deps).getObligation(id);
+    if (obligation === undefined) throw new GovernanceError('NOT_FOUND', `obligation not found: ${id}`);
+    authorizeProject(deps, auth, obligation.projectId);
+    const actor = auth.principal?.username ?? 'developer';
+    const action = obligationAction[2];
+    const next = action === 'submit' || action === 'request-review'
+      ? requireGovernance(deps).submitObligation(id, actor)
+      : action === 'approve'
+        ? requireGovernance(deps).approveObligation(id, actor)
+        : action === 'activate'
+          ? requireGovernance(deps).activateObligation(id, actor)
+          : requireGovernance(deps).retireObligation(id, actor);
+    sendJson(res, 200, next);
+    return true;
+  }
+  if (url.pathname === '/api/v1/governance/controls/map' && method === 'POST') {
+    denyCustomer(auth, 'governance packs are not available to customers');
+    const body = await readJsonObject(req);
+    const project = authorizeProject(deps, auth, requireId<ProjectId>(body, 'projectId'));
+    const checkIds = optionalStringArray(body, 'checkIds');
+    const codeEvidenceIds = optionalStringArray(body, 'codeEvidenceIds');
+    const ciReportIds = optionalStringArray(body, 'ciReportIds');
+    const approvalIds = optionalStringArray(body, 'approvalIds');
+    sendJson(res, 201, requireGovernance(deps).mapControl({
+      projectId: project.id,
+      packId: requireString(body, 'packId'),
+      packVersion: requireString(body, 'packVersion'),
+      controlId: requireString(body, 'controlId'),
+      workItemId: requireId<WorkItemId>(body, 'workItemId'),
+      ...(checkIds !== undefined ? { checkIds } : {}),
+      ...(codeEvidenceIds !== undefined ? { codeEvidenceIds } : {}),
+      ...(ciReportIds !== undefined ? { ciReportIds } : {}),
+      ...(approvalIds !== undefined ? { approvalIds } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const projectReadiness = /^\/api\/v1\/projects\/([^/]+)\/certification-readiness$/.exec(url.pathname);
+  if (projectReadiness !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectReadiness));
+    sendJson(res, 200, requireGovernance(deps).certificationReadiness({ projectId: project.id }));
+    return true;
+  }
+  const milestoneReadiness = /^\/api\/v1\/milestones\/([^/]+)\/certification-readiness$/.exec(url.pathname);
+  if (milestoneReadiness !== null && method === 'GET') {
+    const milestone = deps.board.getMilestone(idFromMatch<MilestoneId>(milestoneReadiness));
+    if (milestone === undefined) throw new GovernanceError('NOT_FOUND', 'milestone not found');
+    authorizeProject(deps, auth, milestone.projectId);
+    sendJson(res, 200, requireGovernance(deps).certificationReadiness({
+      projectId: milestone.projectId,
+      milestoneId: milestone.id,
+    }));
+    return true;
+  }
+  const workItemReadiness = /^\/api\/v1\/work-items\/([^/]+)\/certification-readiness$/.exec(url.pathname);
+  if (workItemReadiness !== null && method === 'GET') {
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(workItemReadiness));
+    sendJson(res, 200, requireGovernance(deps).certificationReadiness({
+      projectId: item.projectId,
+      workItemId: item.id,
+    }));
+    return true;
+  }
+  const projectDashboard = /^\/api\/v1\/projects\/([^/]+)\/governance\/dashboard$/.exec(url.pathname);
+  if (projectDashboard !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectDashboard));
+    sendJson(res, 200, requireGovernance(deps).dashboard({ projectId: project.id }));
+    return true;
+  }
+  const milestoneDashboard = /^\/api\/v1\/milestones\/([^/]+)\/governance\/dashboard$/.exec(url.pathname);
+  if (milestoneDashboard !== null && method === 'GET') {
+    const milestone = deps.board.getMilestone(idFromMatch<MilestoneId>(milestoneDashboard));
+    if (milestone === undefined) throw new GovernanceError('NOT_FOUND', 'milestone not found');
+    authorizeProject(deps, auth, milestone.projectId);
+    sendJson(res, 200, requireGovernance(deps).dashboard({
+      projectId: milestone.projectId,
+      milestoneId: milestone.id,
+    }));
+    return true;
+  }
+  const workItemDashboard = /^\/api\/v1\/work-items\/([^/]+)\/governance\/dashboard$/.exec(url.pathname);
+  if (workItemDashboard !== null && method === 'GET') {
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(workItemDashboard));
+    sendJson(res, 200, requireGovernance(deps).dashboard({
+      projectId: item.projectId,
+      workItemId: item.id,
+    }));
+    return true;
+  }
+  const projectGates = /^\/api\/v1\/projects\/([^/]+)\/governance\/gates$/.exec(url.pathname);
+  if (projectGates !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectGates));
+    sendJson(res, 200, requireGovernance(deps).gatePolicy(project.id));
+    return true;
+  }
+  if (projectGates !== null && method === 'PUT') {
+    denyCustomer(auth, 'governance gates are not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectGates));
+    const body = await readJsonObject(req);
+    sendJson(res, 200, requireGovernance(deps).configureGatePolicy(project.id, {
+      ...(typeof body.requireThreatModelForHighRisk === 'boolean' ? { requireThreatModelForHighRisk: body.requireThreatModelForHighRisk } : {}),
+      ...(typeof body.requireObservabilityForProduction === 'boolean' ? { requireObservabilityForProduction: body.requireObservabilityForProduction } : {}),
+      ...(typeof body.requireProvenanceForDelivery === 'boolean' ? { requireProvenanceForDelivery: body.requireProvenanceForDelivery } : {}),
+      ...(typeof body.requireAttestationForDelivery === 'boolean' ? { requireAttestationForDelivery: body.requireAttestationForDelivery } : {}),
+    }, auth.principal?.username ?? 'developer'));
+    return true;
+  }
+  const threatModel = /^\/api\/v1\/work-items\/([^/]+)\/security\/threat-model$/.exec(url.pathname);
+  if (threatModel !== null && method === 'POST') {
+    denyCustomer(auth, 'security gates are not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(threatModel));
+    const body = await readJsonObject(req);
+    const assets = optionalStringArray(body, 'assets');
+    const threats = optionalStringArray(body, 'threats');
+    const mitigations = optionalStringArray(body, 'mitigations');
+    const residualRisk = optionalString(body, 'residualRisk');
+    sendJson(res, 201, requireGovernance(deps).recordThreatModel({
+      workItemId: item.id,
+      summary: requireString(body, 'summary'),
+      ...(assets !== undefined ? { assets } : {}),
+      ...(threats !== undefined ? { threats } : {}),
+      ...(mitigations !== undefined ? { mitigations } : {}),
+      ...(residualRisk !== undefined ? { residualRisk } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const securityEvidence = /^\/api\/v1\/work-items\/([^/]+)\/security\/evidence$/.exec(url.pathname);
+  if (securityEvidence !== null && method === 'POST') {
+    denyCustomer(auth, 'security gates are not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(securityEvidence));
+    const body = await readJsonObject(req);
+    const kind = requireString(body, 'kind');
+    if (!(SECURITY_EVIDENCE_KINDS as readonly string[]).includes(kind)) {
+      throw new GovernanceError('VALIDATION', `unknown security evidence kind: ${kind}`);
+    }
+    const statusValue = requireString(body, 'status');
+    if (statusValue !== 'passing' && statusValue !== 'failing') {
+      throw new GovernanceError('VALIDATION', 'security evidence status must be passing or failing');
+    }
+    const source = optionalString(body, 'source');
+    const findings = optionalStringArray(body, 'findings');
+    sendJson(res, 201, requireGovernance(deps).ingestSecurityEvidence({
+      workItemId: item.id,
+      kind: kind as SecurityEvidenceKind,
+      title: requireString(body, 'title'),
+      status: statusValue,
+      ...(source !== undefined ? { source } : {}),
+      ...(findings !== undefined ? { findings } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const riskAcceptance = /^\/api\/v1\/work-items\/([^/]+)\/security\/risk-acceptance$/.exec(url.pathname);
+  if (riskAcceptance !== null && method === 'POST') {
+    denyCustomer(auth, 'security gates are not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(riskAcceptance));
+    const body = await readJsonObject(req);
+    const expiration = optionalNumberOrNull(body, 'expiration');
+    const compensatingControls = optionalStringArray(body, 'compensatingControls');
+    sendJson(res, 201, requireGovernance(deps).recordRiskAcceptance({
+      workItemId: item.id,
+      area: 'security',
+      title: requireString(body, 'title'),
+      approver: requireString(body, 'approver'),
+      reason: requireString(body, 'reason'),
+      scope: requireString(body, 'scope'),
+      ...(expiration !== undefined ? { expiration } : {}),
+      ...(compensatingControls !== undefined ? { compensatingControls } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const reliabilityWrite = /^\/api\/v1\/work-items\/([^/]+)\/reliability$/.exec(url.pathname);
+  if (reliabilityWrite !== null && method === 'POST') {
+    denyCustomer(auth, 'reliability gates are not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(reliabilityWrite));
+    const body = await readJsonObject(req);
+    const observabilityPlan = optionalString(body, 'observabilityPlan');
+    const rollbackPlan = optionalString(body, 'rollbackPlan');
+    sendJson(res, 201, requireGovernance(deps).recordSlo({
+      projectId: item.projectId,
+      workItemId: item.id,
+      name: requireString(body, 'name'),
+      availabilityTarget: requireString(body, 'availabilityTarget'),
+      latencyTarget: requireString(body, 'latencyTarget'),
+      errorBudget: requireString(body, 'errorBudget'),
+      capacityAssumptions: requireString(body, 'capacityAssumptions'),
+      backupRequirements: requireString(body, 'backupRequirements'),
+      restoreObjective: requireString(body, 'restoreObjective'),
+      dependencyAssumptions: requireString(body, 'dependencyAssumptions'),
+      ...(observabilityPlan !== undefined ? { observabilityPlan } : {}),
+      ...(rollbackPlan !== undefined ? { rollbackPlan } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const observability = /^\/api\/v1\/work-items\/([^/]+)\/reliability\/observability$/.exec(url.pathname);
+  if (observability !== null && method === 'POST') {
+    denyCustomer(auth, 'reliability gates are not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(observability));
+    const body = await readJsonObject(req);
+    sendJson(res, 200, requireGovernance(deps).recordObservabilityPlan(
+      item.id,
+      requireString(body, 'plan'),
+      auth.principal?.username ?? 'developer',
+    ));
+    return true;
+  }
+  const projectReliability = /^\/api\/v1\/projects\/([^/]+)\/reliability$/.exec(url.pathname);
+  if (projectReliability !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(projectReliability));
+    sendJson(res, 200, requireGovernance(deps).reliabilityReadiness(project.id));
+    return true;
+  }
+  const aiRisk = /^\/api\/v1\/work-items\/([^/]+)\/ai-risk-assessment$/.exec(url.pathname);
+  if (aiRisk !== null && method === 'POST') {
+    denyCustomer(auth, 'trust gates are not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(aiRisk));
+    const body = await readJsonObject(req);
+    sendJson(res, 201, requireGovernance(deps).recordAiRiskAssessment({
+      workItemId: item.id,
+      summary: requireString(body, 'summary'),
+      residualRisk: requireString(body, 'residualRisk'),
+      usesAi: optionalBoolean(body, 'usesAi') ?? true,
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const aiReview = /^\/api\/v1\/work-items\/([^/]+)\/ai-review$/.exec(url.pathname);
+  if (aiReview !== null && method === 'POST') {
+    denyCustomer(auth, 'trust gates are not available to customers');
+    const item = authorizeWorkItem(deps, auth, idFromMatch<WorkItemId>(aiReview));
+    const body = await readJsonObject(req);
+    sendJson(res, 200, requireGovernance(deps).recordHumanCorrection(
+      item.id,
+      requireString(body, 'notes'),
+      auth.principal?.username ?? 'developer',
+    ));
+    return true;
+  }
+  const runProvenance = /^\/api\/v1\/agent-runs\/([^/]+)\/provenance$/.exec(url.pathname);
+  if (runProvenance !== null && method === 'GET') {
+    denyCustomer(auth, 'trust gates are not available to customers');
+    const provenance = requireGovernance(deps).getRunProvenance(idFromMatch(runProvenance));
+    if (provenance === undefined) throw new GovernanceError('NOT_FOUND', 'provenance not found');
+    authorizeProject(deps, auth, provenance.projectId);
+    sendJson(res, 200, provenance);
+    return true;
+  }
+  const createReport = /^\/api\/v1\/projects\/([^/]+)\/evidence-reports$/.exec(url.pathname);
+  if (createReport !== null && method === 'GET') {
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(createReport));
+    sendJson(res, 200, { reports: requireGovernance(deps).listEvidenceReports(project.id) });
+    return true;
+  }
+  if (createReport !== null && method === 'POST') {
+    denyCustomer(auth, 'evidence reports are not available to customers');
+    const project = authorizeProject(deps, auth, idFromMatch<ProjectId>(createReport));
+    const body = await readJsonObject(req);
+    const scope = requireString(body, 'scope');
+    if (!(EVIDENCE_REPORT_SCOPES as readonly string[]).includes(scope)) {
+      throw new GovernanceError('VALIDATION', `unknown evidence report scope: ${scope}`);
+    }
+    const scopeId = optionalString(body, 'scopeId');
+    sendJson(res, 201, requireGovernance(deps).createEvidenceReport({
+      projectId: project.id,
+      scope: scope as EvidenceReportScope,
+      ...(scopeId !== undefined ? { scopeId } : {}),
+      actor: auth.principal?.username ?? 'developer',
+    }));
+    return true;
+  }
+  const getReport = /^\/api\/v1\/evidence-reports\/([^/]+)$/.exec(url.pathname);
+  if (getReport !== null && method === 'GET') {
+    const report = requireGovernance(deps).getEvidenceReport(idFromMatch(getReport));
+    if (report === undefined) throw new GovernanceError('NOT_FOUND', 'evidence report not found');
+    authorizeProject(deps, auth, report.projectId);
+    sendJson(res, 200, report);
+    return true;
+  }
+  const approveReport = /^\/api\/v1\/evidence-reports\/([^/]+)\/(approve|sign)$/.exec(url.pathname);
+  if (approveReport !== null && method === 'POST') {
+    denyCustomer(auth, 'evidence reports are not available to customers');
+    const report = requireGovernance(deps).getEvidenceReport(idFromMatch(approveReport));
+    if (report === undefined) throw new GovernanceError('NOT_FOUND', 'evidence report not found');
+    authorizeProject(deps, auth, report.projectId);
+    sendJson(res, 200, requireGovernance(deps).approveEvidenceReport(
+      report.id,
+      auth.principal?.username ?? 'developer',
+    ));
+    return true;
+  }
+  const exportReport = /^\/api\/v1\/evidence-reports\/([^/]+)\/export$/.exec(url.pathname);
+  if (exportReport !== null && method === 'GET') {
+    const report = requireGovernance(deps).getEvidenceReport(idFromMatch(exportReport));
+    if (report === undefined) throw new GovernanceError('NOT_FOUND', 'evidence report not found');
+    authorizeProject(deps, auth, report.projectId);
+    const format = url.searchParams.get('format') === 'markdown' ? 'markdown' : 'json';
+    sendJson(res, 200, {
+      format,
+      body: requireGovernance(deps).exportEvidenceReport(report.id, format),
+    });
+    return true;
+  }
+  return false;
+}
+
+function requireControlInputs(body: Record<string, unknown>): CustomControlPackInput['controls'] {
+  const controls = body.controls;
+  if (!Array.isArray(controls) || controls.length === 0) {
+    throw new GovernanceError('VALIDATION', 'controls must be a non-empty array');
+  }
+  return controls.map((row) => {
+    if (row === null || typeof row !== 'object') {
+      throw new GovernanceError('VALIDATION', 'control entries must be objects');
+    }
+    const item = row as Record<string, unknown>;
+    const applicability = optionalString(item, 'applicability');
+    const owner = optionalString(item, 'owner');
+    const requiredEvidence = optionalStringArray(item, 'requiredEvidence');
+    const checkRules = optionalStringArray(item, 'checkRules');
+    return {
+      controlId: requireString(item, 'controlId'),
+      summary: requireString(item, 'summary'),
+      ...(applicability !== undefined ? { applicability } : {}),
+      ...(owner !== undefined ? { owner } : {}),
+      ...(requiredEvidence !== undefined ? { requiredEvidence } : {}),
+      ...(checkRules !== undefined ? { checkRules } : {}),
+    };
+  });
+}
+
+function makeObligationInput(
+  projectId: ProjectId,
+  body: Record<string, unknown>,
+  auth: RequestAuth,
+): CreateObligationInput {
+  const kind = requireString(body, 'kind');
+  if (!(OBLIGATION_KINDS as readonly string[]).includes(kind)) {
+    throw new GovernanceError('VALIDATION', `unknown obligation kind: ${kind}`);
+  }
+  const effectiveDate = optionalNumberOrNull(body, 'effectiveDate');
+  const reviewDate = optionalNumberOrNull(body, 'reviewDate');
+  const controlIds = optionalStringArray(body, 'controlIds');
+  const workItemIds = optionalIdArray<WorkItemId>(body, 'workItemIds');
+  const acceptanceCriterionIds = optionalIdArray<AcceptanceCriterionId>(body, 'acceptanceCriterionIds');
+  const dataCategories = optionalStringArray(body, 'dataCategories');
+  const userRoles = optionalStringArray(body, 'userRoles');
+  const sourceDocumentIds = optionalStringArray(body, 'sourceDocumentIds');
+  const riskIds = optionalStringArray(body, 'riskIds');
+  const checkIds = optionalStringArray(body, 'checkIds');
+  const evidenceIds = optionalStringArray(body, 'evidenceIds');
+  return {
+    projectId,
+    title: requireString(body, 'title'),
+    kind: kind as (typeof OBLIGATION_KINDS)[number],
+    jurisdiction: requireString(body, 'jurisdiction'),
+    source: requireString(body, 'source'),
+    applicabilityReason: requireString(body, 'applicabilityReason'),
+    owner: requireString(body, 'owner'),
+    reviewer: requireString(body, 'reviewer'),
+    ...(effectiveDate !== undefined ? { effectiveDate } : {}),
+    ...(reviewDate !== undefined ? { reviewDate } : {}),
+    ...(controlIds !== undefined ? { controlIds } : {}),
+    ...(workItemIds !== undefined ? { workItemIds } : {}),
+    ...(acceptanceCriterionIds !== undefined ? { acceptanceCriterionIds } : {}),
+    ...(dataCategories !== undefined ? { dataCategories } : {}),
+    ...(userRoles !== undefined ? { userRoles } : {}),
+    ...(sourceDocumentIds !== undefined ? { sourceDocumentIds } : {}),
+    ...(riskIds !== undefined ? { riskIds } : {}),
+    ...(checkIds !== undefined ? { checkIds } : {}),
+    ...(evidenceIds !== undefined ? { evidenceIds } : {}),
+    actor: auth.principal?.username ?? 'developer',
+  };
+}
+
 async function handleWorkflowApi(
   deps: WebServiceDependencies,
   auth: RequestAuth,
@@ -7905,6 +8692,12 @@ function parseBoolean(value: string | undefined): boolean | undefined {
   throw new Error(`invalid boolean value: ${value}`);
 }
 
+function developerShellPage(pathname: string): string {
+  if (pathname === '/developer/workflow-lab') return renderWorkflowLabPage();
+  if (pathname === '/developer/governance') return renderGovernancePage();
+  return renderDeveloperPage();
+}
+
 function handleHtmlShell(
   config: ResolvedWebConfig,
   authManager: WebAuthManager,
@@ -7919,7 +8712,7 @@ function handleHtmlShell(
       return;
     }
     if (audienceFromShellPath(pathname) === 'developer') {
-      sendHtml(res, pathname === '/developer/workflow-lab' ? renderWorkflowLabPage() : renderDeveloperPage());
+      sendHtml(res, developerShellPage(pathname));
       return;
     }
     sendJson(res, 404, { error: 'not found' });
@@ -7963,11 +8756,7 @@ function handleHtmlShell(
       sendHtml(res, renderBoardPage());
       return;
     }
-    if (pathname === '/developer/workflow-lab') {
-      sendHtml(res, renderWorkflowLabPage());
-      return;
-    }
-    sendHtml(res, renderDeveloperPage());
+    sendHtml(res, developerShellPage(pathname));
     return;
   }
   if (wanted === 'customer') {
