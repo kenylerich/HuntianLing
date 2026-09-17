@@ -6,7 +6,7 @@
 export interface Context {
   plugin<T = unknown>(value: Plugin<T>, config?: T): unknown;
   provide(name: string, value: unknown): unknown;
-  get(name: string): unknown;
+  get(name: string, strict?: boolean): unknown;
   effect(execute: () => unknown, label?: string): unknown;
 }
 

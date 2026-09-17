@@ -13,7 +13,7 @@ const SkillsPlugin: Plugin = {
   provide: 'huntianling.skills',
 
   apply(ctx: Context): void {
-    const workspaceRoot = ctx.get('huntianling.workspaceRoot') as string | undefined;
+    const workspaceRoot = ctx.get('huntianling.workspaceRoot', false) as string | undefined;
     ctx.provide(
       'huntianling.skills',
       createSkillService(workspaceRoot !== undefined ? { workspaceRoot } : {}),

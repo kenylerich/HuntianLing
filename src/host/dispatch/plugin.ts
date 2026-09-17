@@ -22,7 +22,7 @@ const DispatchPlugin: Plugin<DispatchConfig> = {
   apply(ctx: Context, config: DispatchConfig = {}): void {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     if (!board) throw new Error('huntianling.board is required');
-    const configured = ctx.get('huntianling.workspaceRoot');
+    const configured = ctx.get('huntianling.workspaceRoot', false);
     const workspaceRoot = resolveWorkspaceRoot({
       ...(typeof configured === 'string' ? { explicit: configured } : {}),
       env: process.env,

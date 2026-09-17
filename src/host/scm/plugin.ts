@@ -21,7 +21,7 @@ const ScmPlugin: Plugin<ScmConfig> = {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     if (!board) throw new Error('huntianling.board is required');
     const authority = ctx.get('huntianling.authority') as AuthorityService | undefined;
-    const configured = ctx.get('huntianling.workspaceRoot');
+    const configured = ctx.get('huntianling.workspaceRoot', false);
     const workspaceRoot = resolveWorkspaceRoot({
       ...(typeof configured === 'string' ? { explicit: configured } : {}),
       env: process.env,

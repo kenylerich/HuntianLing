@@ -18,7 +18,7 @@ const DatabasePlugin: Plugin<DatabaseConfig> = {
   provide: 'huntianling.database',
 
   apply(ctx: Context, config: DatabaseConfig = {}): void {
-    const configured = ctx.get('huntianling.workspaceRoot');
+    const configured = ctx.get('huntianling.workspaceRoot', false);
     const workspaceRoot = resolveWorkspaceRoot({
       ...(typeof configured === 'string' ? { explicit: configured } : {}),
       env: process.env,

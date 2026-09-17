@@ -24,7 +24,7 @@ const DeliveryPlugin: Plugin<DeliveryConfig> = {
     const environment = ctx.get('huntianling.environment') as EnvironmentService | undefined;
     if (!board) throw new Error('huntianling.board is required');
     if (!agents) throw new Error('huntianling.agents is required');
-    const configured = ctx.get('huntianling.workspaceRoot');
+    const configured = ctx.get('huntianling.workspaceRoot', false);
     const workspaceRoot = resolveWorkspaceRoot({
       ...(typeof configured === 'string' ? { explicit: configured } : {}),
       env: process.env,

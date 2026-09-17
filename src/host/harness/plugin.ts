@@ -31,7 +31,7 @@ const HarnessPlugin: Plugin<HarnessConfig> = {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     const agents = ctx.get('huntianling.agents') as AgentRuntime | undefined;
     const environment = ctx.get('huntianling.environment') as EnvironmentService | undefined;
-    const configured = ctx.get('huntianling.workspaceRoot');
+    const configured = ctx.get('huntianling.workspaceRoot', false);
     const workspaceRoot = resolveWorkspaceRoot({
       ...(typeof configured === 'string' ? { explicit: configured } : {}),
       env: process.env,

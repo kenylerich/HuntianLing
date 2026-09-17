@@ -61,31 +61,36 @@ export interface HuntianLingConfig {
 
 const HuntianLingRoot: Plugin<HuntianLingConfig> = {
   name: 'huntianling:root',
+  provide: 'huntianling.workspaceRoot',
 
-  apply(ctx: Context, config: HuntianLingConfig = {}): void {
+  async apply(ctx: Context, config: HuntianLingConfig = {}): Promise<void> {
     if (config.workspaceRoot !== undefined) {
       ctx.provide('huntianling.workspaceRoot', config.workspaceRoot);
     }
 
     // Register sub-plugins. `ctx.plugin()` walks each entry and applies it
     // under this Plugin's lifetime; its disposer is bound to this Plugin.
-    ctx.plugin(databasePlugin, config.database ?? {});
-    ctx.plugin(boardPlugin, config.intake ?? {});
-    ctx.plugin(agilePlugin);
-    ctx.plugin(skillsPlugin);
-    ctx.plugin(environmentPlugin, config.environment ?? {});
-    ctx.plugin(governancePlugin);
-    ctx.plugin(issueSyncPlugin);
-    ctx.plugin(agentsPlugin);
-    ctx.plugin(authorityPlugin, config.authority ?? {});
-    ctx.plugin(scmPlugin, config.scm ?? {});
-    ctx.plugin(ciPlugin, config.ci ?? {});
-    ctx.plugin(deliveryPlugin, config.delivery ?? {});
-    ctx.plugin(harnessPlugin, config.harness ?? {});
-    ctx.plugin(collabPlugin);
-    ctx.plugin(dispatchPlugin, config.dispatch ?? {});
-    ctx.plugin(workflowPlugin);
-    ctx.plugin(webPlugin, config.web ?? {});
+    // Await each provider before mounting consumers. Real Cordis fibers do
+    // not make sibling services synchronously available merely because
+    // ctx.plugin() was called; an unawaited fan-out leaves injected consumers
+    // pending even though the aggregate root itself reports started.
+    await ctx.plugin(databasePlugin, config.database ?? {});
+    await ctx.plugin(boardPlugin, config.intake ?? {});
+    await ctx.plugin(agilePlugin);
+    await ctx.plugin(skillsPlugin);
+    await ctx.plugin(environmentPlugin, config.environment ?? {});
+    await ctx.plugin(governancePlugin);
+    await ctx.plugin(issueSyncPlugin);
+    await ctx.plugin(agentsPlugin);
+    await ctx.plugin(authorityPlugin, config.authority ?? {});
+    await ctx.plugin(scmPlugin, config.scm ?? {});
+    await ctx.plugin(ciPlugin, config.ci ?? {});
+    await ctx.plugin(deliveryPlugin, config.delivery ?? {});
+    await ctx.plugin(harnessPlugin, config.harness ?? {});
+    await ctx.plugin(collabPlugin);
+    await ctx.plugin(dispatchPlugin, config.dispatch ?? {});
+    await ctx.plugin(workflowPlugin);
+    await ctx.plugin(webPlugin, config.web ?? {});
   },
 };
 

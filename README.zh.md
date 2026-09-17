@@ -304,10 +304,12 @@ HTTP endpoints：
 HuntianLing 作为 host bundle 被 dsh 加载：
 
 ```sh
-dsh --profile huntianling
+dsh plugin --profile huntianling-qualification add /absolute/path/to/deepseek-harness-plugin
+dsh --profile huntianling-qualification --dump-config
+dsh --profile huntianling-qualification
 ```
 
-包根目录的 `cordis.yml` 是加载入口；它导入 `@kenylerich/dsh-huntianling/host`，该入口的 default export 是根 `Plugin`，见 `src/host/plugin.ts`。
+包 Manifest 通过 `dsh.bundle.patch` 声明 `cordis.patch.yml`。该 patch 插入一个稳定的 `huntianling` loader 行，引用 `@kenylerich/dsh-huntianling/host`；该入口的 default export 是根 `Plugin`，见 `src/host/plugin.ts`。默认 Bundle 行关闭独立的 HuntianLing HTTP server；启用时，Profile 层 patch 必须提供完整的行配置。旧 `cordis.yml` 只为仓库原先的独立 loader 测试保留兼容，不是 DSH Profile 配置层。
 
 ## Repository layout
 
@@ -318,7 +320,8 @@ README.zh.md         this file
 docs/                documentation map, requirements, reviews, and architecture notes
 package.json         npm manifest (@kenylerich/dsh-huntianling)
 tsconfig*.json       strict-mode TypeScript project refs
-cordis.yml           dsh host composition
+cordis.patch.yml     可安装的 DSH Bundle 配置层
+cordis.yml           旧独立 composition fixture
 src/
   index.ts           package entry; re-exports the root plugin
   host/

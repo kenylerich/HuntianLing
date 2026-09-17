@@ -12,6 +12,7 @@
   "files": [
     "lib",
     "cordis.yml",
+    "cordis.patch.yml",
     "README.md",
     "README.zh.md",
     "docs"
@@ -24,9 +25,15 @@
       "default": "./lib/index.js"
     },
     "./cordis.yml": "./cordis.yml",
+    "./cordis.patch.yml": "./cordis.patch.yml",
     "./host": {
       "types": "./lib/host/plugin.d.ts",
       "default": "./lib/host/plugin.js"
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   },
   "scripts": {

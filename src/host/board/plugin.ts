@@ -323,7 +323,7 @@ const BoardPlugin: Plugin<IntakeConfig> = {
   inject: ['huntianling.database'],
 
   apply(ctx: Context, config: IntakeConfig = {}): void {
-    const configured = ctx.get('huntianling.workspaceRoot');
+    const configured = ctx.get('huntianling.workspaceRoot', false);
     const root = resolveWorkspaceRoot({
       ...(typeof configured === 'string' ? { explicit: configured } : {}),
       env: process.env,

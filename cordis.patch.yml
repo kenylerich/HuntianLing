@@ -1,0 +1,15 @@
+# HuntianLing DSH bundle layer.
+#
+# This row is deliberately inert at first install: it registers the product
+# services but does not bind a second HTTP listener beside dsh-web-app. A
+# profile-level patch may replace this row's complete config to enable the
+# loopback Web surface with an explicit workspace, database, authentication,
+# host, and port.
+- insert:
+    - id: huntianling
+      name: '@kenylerich/dsh-huntianling/host'
+      config:
+        web:
+          enabled: false
+          autoStart: false
+          host: 127.0.0.1
