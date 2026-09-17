@@ -277,16 +277,22 @@ test('web service serves the browser surface and board APIs', async (t) => {
 
   board.updateDeliveryEvidenceSummary(story.id, {
     checks: [{
-      id: 'evaluator:story-delivery',
-      area: 'acceptance',
+      id: 'ci:story-delivery',
+      area: 'ci',
       title: 'story delivery evidence',
       status: 'passing',
       required: true,
-      reason: 'executed',
-      evidenceIds: ['run-1'],
+      reason: 'exit 0',
+      evidenceIds: ['ci:tests'],
       acceptanceCriterionIds: ['story-ac-1'],
-      links: [],
-      producer: 'evaluator',
+      links: [{
+        kind: 'ci-run',
+        id: 'ci:tests',
+        label: 'pnpm test',
+        url: null,
+        acceptanceCriterionIds: [],
+      }],
+      producer: 'ci',
       executionKind: 'executed',
       designRevision: '',
     }],

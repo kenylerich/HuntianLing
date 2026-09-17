@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/database/types.ts",
+    "src/host/database/persistence.ts",
+    "src/host/database/sqlite.ts",
+    "src/host/database/postgres.ts",
+    "src/host/database/postgres-worker.ts",
+    "src/host/database/service.ts",
+    "src/host/database/plugin.ts",
+    "src/host/board/store.ts",
+    "test/unit/database-d11.test.mjs",
+    "test/unit/database-sqlite.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md",
+    "package.json",
+    "pnpm-lock.yaml"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

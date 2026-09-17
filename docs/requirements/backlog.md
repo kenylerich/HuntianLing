@@ -1,9 +1,9 @@
 ---
 doc_status: active
-doc_version: 2026-09-12.19
+doc_version: 2026-09-13.2
 created: 2026-09-10
-last_reviewed: 2026-09-12
-review_after: 2026-10-12
+last_reviewed: 2026-09-13
+review_after: 2026-10-13
 ---
 
 # HuntianLing Requirements Backlog
@@ -14,13 +14,15 @@ Document lifecycle:
 
 | Status | Version | Created | Last reviewed | Review after |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-12.19` | 2026-09-10 | 2026-09-12 | 2026-10-12 |
+| `active` | `2026-09-13.2` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## Summary
 
 HuntianLing is a dsh plugin whose interface is a standard development board and whose backend prepares a standard vibe-coding environment. After login, customer, developer, and admin shells share WorkItem records. MKT collects original requirements; Planner, Generator, and Evaluator run behind the developer board. Skills declare capability boundary and depth so weak models still complete bounded slices with sensors. [Harness Engineering Product Direction](harness-engineering.md) explains the source articles, alignment assessment, and self-development method.
 
 This document collects the product requirements discussed for HuntianLing. It is the planning source for future WorkItems; implementation may split any item into Epics, Features, Requirements/Stories, Tasks, Bugs, Research, and Milestones on the internal board.
+
+Customer acceptance on commit `614dcd6` is **revision-required**. The [2026-09-13 review](reviews/2026-09-13-customer-acceptance.md) records false delivery, execution gaps, and customer API exposure. Implementation entries describe components, not accepted capability. D16 and D18-D21 remain incomplete against their full criteria.
 
 ## Table of Contents
 
@@ -72,7 +74,7 @@ These planned requirements complete the executable delivery loop described in [H
 
 ### REQ-HARNESS-001: Reproducible Project Environment
 
-Status: planned.
+Status: partial.
 
 The system must prepare and verify the environment an agent needs to implement a Project's requirements.
 
@@ -90,6 +92,8 @@ Acceptance criteria:
 Implementation state:
 
 - `huntianling.environment` ships profile `huntianling.node-pnpm` 1.0.0. Prepare reports ready or blocked, can initialize a second workspace, preserves existing files, records credential names without secrets, and treats probe lint/hygiene as blocked.
+- Production composition accepts `environment` profile config for commands, version overrides, command timeout/output limits, and local execution policy. When no test runner is supplied, preparation runs profile commands in the target workspace through the local host process and records project-scoped command status, exit code, redacted output, and artifacts under `.huntianling/environment-runs/<prepareRunId>/`.
+- Readiness now comes from the latest matching project/workspace prepare record. `canStartImplementation` no longer creates synthetic passing results, and Story Delivery plus Generator refuse implementation when required commands, tools, skills, dependencies, or the executor probe are blocked.
 - `POST /api/v1/environment/replace` prepares a replacement fleet slot from the same profile. Uncommitted work is copied by default; discarding it without `acceptUncommittedLoss` blocks. `GET /api/v1/environment/fleets` lists local and remote slots.
 
 Related requirements: `REQ-AGENT-002`, `REQ-AGENT-004`, `REQ-TOOL-001`, `REQ-SKILL-003`, `REQ-SCM-001`.
@@ -138,6 +142,7 @@ Implementation state:
 - Evaluator runs persist one executed check per acceptance criterion on the owning WorkItem. Generator self-check is stored as `self_check` and cannot mark customer progress delivered.
 - Evidence records producer and design revision. Changing analysis, design, or acceptance blocks previously passing executed checks as stale.
 - Customer-visible delivered requires a passing executed evaluator, CI, or local Git check on the current revision. Notes, unexecuted links, and missing evidence do not. Project Definition of Done cannot turn that executed-evidence gate off.
+- Demonstration, self-check, and manual results stay distinct from executed evidence. `independent: true`, `environmentReady: true`, and a producer label cannot establish executed success. Deterministic evaluator output is stored as `demonstration` and cannot complete `delivered` or customer delivery. Simulated records that claimed `executed` without CI or Git provenance are coerced to `demonstration` until revalidated. Verified CI and Git evidence with provenance still complete delivery through the transition API.
 
 ### REQ-HARNESS-004: Harness Evaluation and Continuous Improvement
 
@@ -182,12 +187,13 @@ Related requirements: `REQ-HARNESS-001`, `REQ-HARNESS-002`, `REQ-HARNESS-003`, `
 Implementation state:
 
 - `huntianling.harness` records a demonstration that prepares a fresh workspace with the shipped Node/pnpm profile, then runs one Story through failed evaluation, repair, interrupt, resume, and Evaluator evidence. Customer-visible delivered updates from that evidence.
+- The demonstration now prepares the fresh workspace with a project-scoped environment result and drives Story Delivery through that recorded readiness instead of a caller-provided ready flag.
 - Demonstration steps are labeled `manual`, `external-agent`, or `huntianling-runtime`. Coverage scan and live-model trial steps are recorded. Lint and hygiene stay blocked. An unbound live model is a labeled gap, not a passing gate.
 - Maintainer-only OAuth setup remains listed as a follow-up gap, not a passing gate. Hosted SCM/CI adapters already exist as optional call-time integrations.
 
 ### REQ-HARNESS-006: Built-In Three-Agent Development System
 
-Status: planned.
+Status: partial; D18 customer acceptance failed. Local candidate generation is deterministic and does not prove dsh Agent execution.
 
 The plugin must implement Planner, Generator, and Evaluator as three executable Agents in the standard development environment.
 
@@ -203,13 +209,16 @@ Acceptance criteria:
 
 Implementation state:
 
-- `huntianling.agents` ships versioned Planner, Generator, and Evaluator task definitions. Deterministic executors validate outputs, route typed handoffs including repair, refuse Generator self-acceptance, and resume interrupted runs. Live model execution remains planned.
+- `huntianling.agents` ships versioned Planner, Generator, and Evaluator task definitions. Runs record execution references, task/session ids, tool calls, artifacts, and method traces.
+- Story Delivery now invokes the three agents through `huntianling-runtime` when the project environment is actually prepared. Generator writes a candidate file with a candidate revision, Evaluator independently checks the candidate revision and acceptance markers, and failed evaluation routes a bounded repair back to Generator.
+- Evaluator output can be persisted as executed using generated `ci:`/`git:` ids and changed-file links without validating actual execution. The acceptance review reproduces delivery of a throwing candidate and forged evidence; this gate needs correction.
+- Live model execution is missing. The local candidate path does not satisfy the required customer delivery loop.
 
 Related requirements: `REQ-AGENT-001`, `REQ-AGENT-002`, `REQ-FLOW-014`, `REQ-FLOW-020`, `REQ-HARNESS-001`, `REQ-HARNESS-003`.
 
 ### REQ-HARNESS-007: Executable Engineering Method Baseline
 
-Status: planned.
+Status: partial; D19 Planner metadata and output sensors exist. Their use by actual dsh tasks remains unverified.
 
 The standard environment must ship a usable engineering method baseline that guides the three Agents and governs their outputs.
 
@@ -225,12 +234,14 @@ Acceptance criteria:
 Implementation state:
 
 - The default method baseline includes User Story only. Enabling that method adds a `userStory` artifact to Planner output; missing the method Skill blocks the Planner task.
+- Agent runs now record the selected method id/version, method Skill versions, chosen depth, executed Skill-depth steps, input sensors, output-field sensors, and method checks. Invalid Planner output is rejected and leaves a rejected run record with the failed sensor and next-depth guidance.
+- Story Delivery resolves the project default or WorkItem-selected method before the planning step, so the delivery chain is constrained by the same method and Skill records that the board displays. Additional Generator/Evaluator method packs remain future extensions.
 
 Related requirements: `REQ-METHOD-001`, `REQ-METHOD-002`, `REQ-SKILL-001`, `REQ-SKILL-002`, `REQ-FLOW-001`, `REQ-HARNESS-004`, `REQ-HARNESS-006`.
 
 ### REQ-HARNESS-008: Bounded-Slice Commercial Quality
 
-Status: partial.
+Status: partial; D18-D21 customer acceptance is revision-required. Passing component tests do not establish commercial delivery.
 
 Commercial-quality vibe coding is proven on one confirmed original-requirement slice, not on generating a whole product in one model call. Weak models use Skill depth and sensors rather than assumed model strength.
 
@@ -246,8 +257,10 @@ Related requirements: `REQ-MKT-001`, `REQ-SKILL-005`, `REQ-SKILL-006`, `REQ-HARN
 
 Implementation state:
 
-- A slice records Evaluator criterion-level evidence on the owning WorkItem. Customer-visible delivered updates from that executed evidence, not from Generator self-check or edited notes.
-- Tests cover a slice blocked by missing coding or MKT Skill coverage and a slice that lowers depth after repeated validation failure.
+- A slice records Evaluator criterion-level evidence on the owning WorkItem. Customer-visible delivered updates from executed CI, Git, or runtime Evaluator evidence with provenance, not from Generator self-check, demonstration Evaluator output, caller declarations, or edited notes.
+- Story Delivery checkpoints retain candidate revision, artifact refs, task/session/tool refs, pending effects, evidence refs, and budget usage. Resume blocks when candidate code changed after a checkpoint and before evaluation; failed evaluation can still resume into repair.
+- Harness self-development acceptance now prepares a fresh project with the production environment runner, drives Planner/Generator/Evaluator through a real candidate failure, repairs it, re-evaluates independently, and marks customer progress delivered only after executed evidence passes.
+- Tests cover passing runtime delivery, missing Skill/environment blocking, method sensor rejection, repeated validation downgrade, failed evaluation repair, revision-bound resume blocking, and Web-triggered self-development acceptance.
 
 ## Current Baseline
 
@@ -268,7 +281,7 @@ Implementation state:
 | REQ-AUTH-001 | Web login and session authentication | Implemented for configured PBKDF2 users, SQLite user directory, session cookies, API tokens, logout, and login audit |
 | REQ-AUDIT-001 | Audit log | Implemented foundation for Board Store write events, project or WorkItem v1 API reads, login auth events, and Admin browser visualization |
 | REQ-TRACE-001 | Acceptance criteria coverage from parent items to child items | Implemented for WorkItem descendants |
-| REQ-DATA-001 | Database service | SQLite implemented for local deployments; PostgreSQL remains planned |
+| REQ-DATA-001 | Database service | Implemented SQLite for local deployments and PostgreSQL through `huntianling.database` |
 | REQ-DATA-002 | Local file storage | Implemented for workspace filesystem uploads with database metadata |
 | REQ-AUTH-002 | Password credential security | Argon2id preferred with bcrypt/PBKDF2 fallbacks, rotation, and disable |
 | REQ-COLLAB-003 | Conversation-driven agent task management | First-slice and split/merge task types, transfer fields, runtime refusal, pending-approval gate, and developer-visible open tasks |
@@ -288,6 +301,12 @@ Implementation state:
 | REQ-SKILL-004 | Technology skill packs | Implemented installable versioned frontend, backend, database, and related packs with scan recommendations, WorkItem requirements, and task-scoped loading |
 | REQ-AUTH-003 | Regional login strategy | Implemented cn/global/auto modes, domain-based routing, manual region switch, and login-event region recording |
 | REQ-AUTH-004 | OAuth login providers | Implemented Google OIDC, GitHub OAuth, and WeChat QR start/callback/unlink with PKCE/state and identities stored outside board records |
+| REQ-GOV-001 | Compliance obligation registry | Implemented project-level obligation lifecycle, reviewer approval, WorkItem links, and impact flags |
+| REQ-GOV-002 | Certification control packs | Implemented NIST CSF 2.0, OWASP ASVS, NIST AI RMF, and ISO/IEC 42001 packs plus custom versioned packs and certification readiness |
+| REQ-SEC-001 | Security requirement gates | Implemented WorkItem classification, threat models, scan evidence ingestion, residual risk acceptance, and configured delivery blocking |
+| REQ-REL-001 | Reliability and resilience gates | Implemented SLO records, observability plans, production-facing gates, and Project/Milestone readiness |
+| REQ-TRUST-001 | AI trustworthiness and provenance | Implemented agent-run provenance, confidence/assumption capture, AI risk assessment, and configured provenance gates |
+| REQ-TRUST-002 | Evidence reports and attestations | Implemented draft-to-approved reports with immutable snapshots and JSON/Markdown export |
 
 ## Requirement and Board Management
 
@@ -593,9 +612,9 @@ Primary entities:
 
 Implementation state:
 
-- `huntianling.database` is the internal persistence service. Local deployments use SQLite through `node:sqlite`; PostgreSQL remains planned and fails loud if selected.
-- Schema migrations are recorded in `schema_migrations` with a monotonic version.
-- Opening a workspace imports `.huntianling/board.json` into SQLite tables when the database has no board document yet. Later reads and writes use SQLite as the source of truth.
+- `huntianling.database` is the internal persistence service. Local deployments default to SQLite through `node:sqlite`. Team deployments select PostgreSQL with `driver: postgresql` and `postgresUrl`; missing or invalid PostgreSQL settings fail loud at load.
+- Schema migrations are recorded in `schema_migrations` with a monotonic version on both SQLite and PostgreSQL.
+- Opening a workspace imports `.huntianling/board.json` into database tables when the database has no board document yet. Later reads and writes use the selected driver as the source of truth.
 - Current board collections persist as tables for projects, work items, milestones, team members, delivery slices, workflow summaries, delivery evidence, intake records, audit events, acceptance criteria, coverage, and links.
 - Large upload bytes are stored outside the database. File metadata, hashes, extracted-text status, and storage-path references are stored in `stored_files`.
 
@@ -2105,6 +2124,7 @@ Acceptance criteria:
 Implementation state:
 
 - A built-in tool registry allowlists original-requirement write, typecheck, test, doc-sync, git, CI, `browser.navigate`, `image.analyze`, `document.parse`, `database.migrate`, and `web-api.call` by role and task type, denies disallowed use, and records calls during environment prepare.
+- Environment prepare records command-level tool calls with required/optional delivery impact, while blocked executors and missing tools stay visible in prepare results.
 - Invoking a remaining-category tool writes `ToolCallEvidence`. When the call affects delivery, a `tool` producer check is stored on the WorkItem evidence summary. Hosted browser fleets fail loud. Web-api transport is call-time only and does not persist secrets.
 
 Tool categories:
@@ -2332,7 +2352,8 @@ Implementation state:
 - The GitHub lifecycle policy blocks `completed` workflow dispatches that lack a delivery gate certificate, and completed native Issue close events without that certificate reopen the Issue and restore the Project card to its previous open lane or In review.
 - The manual `recover_closed` workflow event reopens an already closed illegal Issue card and returns it to In review so unfinished tasks, evidence, and gate checks remain visible.
 - The `recover_illegal_closed` workflow event and scheduled lifecycle sweep batch-recover illegal completed closes so unfinished tasks cannot disappear from the board.
-- Full internal issue-sync adapters, stored external references, import/export flows, and conflict reporting remain planned.
+- `huntianling.issueSync` provides optional GitHub, Gitea, and GitLab Issues adapters. Stored external references map tracker cards onto WorkItems; title, body, and state may sync, while parent, milestone, acceptance, agent feedback, evidence, and status stay internally owned.
+- Import, export, and sync conflict reporting are available. Projects run with no tracker. An external completed close is a recovery reopen unless the delivery-gate certificate has been published onto the external card and internal gates allow delivery. External cards do not mark WorkItems delivered.
 
 ## Governance, Compliance, Security, Reliability, and Trust
 
@@ -2366,7 +2387,9 @@ Implementation state:
 - WorkItem delivery evidence summaries can store compliance obligation summaries with jurisdiction, source, owner, reviewer, effective date, review date, status, control ids, and evidence links.
 - WorkItem compliance reads expose obligations, governance checks, security checks, reliability checks, trust checks, risk acceptances, and current governance blockers.
 - Unapproved obligations block a configured WorkItem delivery transition to `delivered`.
-- Project-level obligation registries, approval workflows, framework pack selection, and obligation lifecycle APIs remain planned.
+- `huntianling.governance` stores project-level obligations with kind, applicability reason, owner, reviewer, dates, status, linked controls, WorkItems, acceptance criteria, data categories, user roles, source documents, risks, checks, and evidence.
+- Obligations start in `draft`, move to `pending_review` on submit, become `approved` only when the named reviewer approves, and can then be activated as enforcement policy or retired.
+- WorkItems can be flagged for regulated data, authentication, authorization, audit, retention, AI output, payment, security, privacy, or availability.
 
 ### REQ-GOV-002: Certification Control Packs
 
@@ -2385,6 +2408,12 @@ Suggested service:
 ```text
 huntianling.governance
 ```
+
+Implementation state:
+
+- Built-in versioned packs cover NIST CSF 2.0, OWASP ASVS, NIST AI RMF, and ISO/IEC 42001. Projects select a pack version, and custom packs can be added for internal baselines and customer audits.
+- Older pack versions remain in the catalog after a newer version is registered so historical mappings stay explainable.
+- Controls map to WorkItems with checks, code evidence, CI reports, manual approvals, and audit events. Certification readiness is available for a Project, Milestone, or WorkItem.
 
 ### REQ-SEC-001: Security Requirement Gates
 
@@ -2411,7 +2440,9 @@ Implementation state:
 
 - WorkItem security reads expose security checks and security risk acceptances from the delivery evidence summary.
 - Required security checks with `missing`, `failing`, or `blocked` status appear as board blockers and prevent configured delivery completion.
-- Threat model records, scan ingestion, security classification, compensating controls, and dedicated risk-acceptance write APIs remain planned.
+- WorkItems can be classified by security impact, data sensitivity, permission impact, exposed API surface, dependency risk, and deployment risk.
+- Configured high-risk WorkItems require a threat model. Security evidence can be ingested from tests, code review, dependency scans, secret scans, static analysis, dynamic tests, and manual reviews.
+- Residual risk acceptance records approver, reason, scope, expiration, and compensating controls, and can waive a failing security evidence gate.
 
 ### REQ-REL-001: Reliability and Resilience Gates
 
@@ -2438,7 +2469,8 @@ Implementation state:
 
 - WorkItem reliability reads expose reliability checks and reliability risk acceptances from the delivery evidence summary.
 - Required reliability checks roll up to Project, Milestone, WorkItem, and Evidence board views.
-- SLO records, load-test ingestion, observability plans, rollback evidence, backup checks, incident links, and dedicated reliability write APIs remain planned.
+- SLO records store availability, latency, error budget, capacity, backup, restore, and dependency assumptions. Configured production-facing WorkItems require an observability plan before delivery.
+- Reliability readiness rolls up to Project and Milestone views.
 
 ### REQ-TRUST-001: AI Trustworthiness and Provenance
 
@@ -2465,7 +2497,8 @@ Implementation state:
 
 - WorkItem trust reads expose trust checks, trust risk acceptances, evidence links, and provenance links from the delivery evidence summary.
 - Required trust checks and open risk acceptances roll up to cards, Evidence board lanes, Project evidence rollups, and delivery transition blockers.
-- Agent-run provenance records, prompt/model/tool-call capture, AI risk assessment writes, confidence/assumption capture, and human correction workflows remain planned.
+- Agent-run provenance records source inputs, model identity, skill versions, tool calls, generated output, and verification. AI-generated analysis can store confidence, assumptions, limitations, and open questions.
+- Missing provenance blocks automated delivery claims when configured. Human correction notes can be attached to provenance.
 
 ### REQ-TRUST-002: Evidence Reports and Attestations
 
@@ -2487,6 +2520,11 @@ GET  /api/v1/evidence-reports/:id
 POST /api/v1/evidence-reports/:id/approve
 GET  /api/v1/evidence-reports/:id/export
 ```
+
+Implementation state:
+
+- Evidence reports can be created for Project, Milestone, WorkItem, release, and certification scopes. They stay draft until a human owner approves them.
+- Approved snapshots store timestamp, actor, source data version, and an export hash. JSON and Markdown export are available; PDF export can be added through a document rendering adapter.
 
 ## Web and API Expansion
 
@@ -2615,7 +2653,10 @@ Implementation state:
 
 - WorkItem detail shows governance blocker counts in the delivery gate, Evidence, and Governance panels, including unapproved obligations and open risk acceptances that block delivery.
 - The Evidence workspace includes a governance risk queue that surfaces WorkItems with unapproved obligations, open risk acceptances, and governance blockers next to the delivery blocker queue.
-- Project-level governance dashboards, review requests, approval actions, residual-risk acceptance actions, and signed evidence reports remain planned.
+- The authenticated governance dashboard at `/developer/governance` and the fused-board Governance workspace show applicable obligations, control coverage, risk register, open exceptions, security readiness, reliability readiness, AI trust assessments, and evidence report status.
+- WorkItem detail on the governance dashboard shows required controls, mapped checks, missing evidence, residual risks, approval requirements, and trust provenance.
+- Milestone view rolls up compliance, security, reliability, and trust readiness for the planned delivery scope.
+- Developers can request review, approve obligations, accept residual risk, and sign evidence reports; customers receive 403.
 
 ## Audit and Compliance
 
@@ -2643,7 +2684,7 @@ Implementation state:
 - The v1 Web API exposes Project-scoped audit reads with actor, action, target, date range, and limit filters, plus WorkItem-scoped audit reads.
 - The browser Admin workspace includes an Audit Trail view with actor, action, target type, target id, date range, and limit filters, plus a project event timeline and action, object, and actor summaries.
 - WorkItem detail panels show scoped audit timelines using the WorkItem audit API.
-- Login, failed login, logout, and API-token creation persist as `auth_events` and are listed at `GET /api/v1/admin/auth-events`. Governance policy audit writes and report signing audit records remain planned.
+- Login, failed login, logout, and API-token creation persist as `auth_events` and are listed at `GET /api/v1/admin/auth-events`. Governance pack selection, obligation lifecycle, residual-risk acceptance, and evidence-report signing persist as board audit events.
 - The admin shell at `/admin` lists users, creates directory users, assigns audience, grants project membership with an audit event, shows login audit, access settings and last environment prepare, and reads project audit events. Developers receive 403.
 
 ## Implementation Order
@@ -2736,7 +2777,16 @@ Keep the existing D1–D15 sequence and current work. Their matching residuals m
 
 ### D16–D21 — defect correction acceptance
 
-All six slices are planned; a review finding is not an implementation or acceptance record. Their placement after D15 is the requested delivery order; the table's dependencies name technical prerequisites. Grok is the intended implementer. Before each slice, read the linked review, inspect current source and prior repair evidence, and record whether the finding remains reproducible. Independently verified fixes may satisfy a slice without duplicate implementation. Each completion record must link its REQ ids, reviewed design, actual change set, executed checks, reviewer decision, and remaining blockers. Missing live execution remains blocked, even when deterministic tests pass.
+D16-D21 are defect-correction slices. Their placement after D15 is the requested delivery order; the table's dependencies name technical prerequisites. A review finding is not an implementation or acceptance record. Before each slice, read the linked review, inspect current source and prior repair evidence, and record whether the finding remains reproducible. Independently verified fixes may satisfy a slice without duplicate implementation. Each completion record must link its REQ ids, reviewed design, actual change set, executed checks, reviewer decision, and remaining blockers. Missing live hosted execution remains a recorded gap, even when the local runtime loop passes.
+
+Implementation and acceptance state recorded on 2026-09-13:
+
+- D18: Candidate files and execution-labelled records exist, but Generator writes acceptance-marker templates and Evaluator matches text. A throwing candidate passes; generated task/session/tool ids do not prove dsh execution. Acceptance is revision-required.
+- D19: Method versions, Skill versions, depth records, and Planner output sensors exist. Actual Agent execution and behavior sensors remain required before acceptance.
+- D20: Checkpoints retain candidate hashes and reject drift before pending evaluation. Changing code after evaluation still permits delivery with stale evidence. Acceptance is revision-required.
+- D21: Fresh-project preparation runs, but the demonstration uses no-op checks, prefilled requirements, and marker templates. No customer implementation or self-development changeset is proven. Acceptance is revision-required.
+
+Repair obligations from the [customer acceptance review](reviews/2026-09-13-customer-acceptance.md): close D16 evidence forgery; complete D18-D21 against actual behavior; wire local CI (`REQ-CI-001`) and OAuth exchange (`REQ-AUTH-004`); enforce customer API projection (`REQ-WEB-007`, `REQ-AUTH-001`); connect confirmation and authenticated workspaces (`REQ-MKT-001`, `REQ-WEB-006`, `REQ-WEB-007`). This review authorizes no delivery or Issue closure. Run `pnpm run test:e2e:customer` alongside plugin smoke; failed checks remain release blockers.
 
 #### D16 — truthful gates
 

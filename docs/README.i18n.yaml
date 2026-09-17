@@ -2,5 +2,5 @@
 # Update both documents, then run: pnpm run doc-sync:write
 source: docs/README.md
 target: docs/README.zh.md
-source_sha256: f0d6c7460d53668f424834f787a45a513a5e187ce64fe69a429c0eee54d36ae2
-target_sha256: cfe6a2f6e0d6b781c1d3d0ce548e1c7742451acc82149d0b353cc6d9ae6f2190
+source_sha256: ba404398221c1107326a7efbebc97ab02b5719f036aec4b978029944c4a38452
+target_sha256: b1f6d4816fd21aa12dfe8589f644573e2a777093f3945f36d5b3f13218cec3dd

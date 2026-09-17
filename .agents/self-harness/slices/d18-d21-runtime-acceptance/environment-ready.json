@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "role": "environment",
+  "ready": true,
+  "commands": {
+    "typecheck": "pass",
+    "build": "pass",
+    "test": "pass",
+    "doc-sync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  },
+  "evidence": [
+    {
+      "command": "pnpm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm run build",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm run doc-sync",
+      "result": "pass"
+    },
+    {
+      "command": "pnpm run test",
+      "result": "pass",
+      "note": "rerun with host permission after sandbox listen EPERM; 466 passing and 1 skipped"
+    },
+    {
+      "command": "pnpm exec node --test test/unit/agents-runtime.test.mjs test/unit/story-delivery.test.mjs test/unit/harness-measure.test.mjs test/unit/harness-cr8.test.mjs test/unit/web-harness.test.mjs test/unit/gates-d16.test.mjs",
+      "result": "pass",
+      "note": "focused D18-D21 and D16 regression suite passed with host permission"
+    }
+  ],
+  "blockedGates": [
+    {
+      "command": "pnpm run lint",
+      "reason": "package script is still a HUNTIANLING_PROBE gate"
+    },
+    {
+      "command": "pnpm run hygiene",
+      "reason": "package script is still a HUNTIANLING_PROBE gate"
+    }
+  ]
+}

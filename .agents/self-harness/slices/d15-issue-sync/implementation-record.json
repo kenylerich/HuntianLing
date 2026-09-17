@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/issue-sync/types.ts",
+    "src/host/issue-sync/store.ts",
+    "src/host/issue-sync/hosted.ts",
+    "src/host/issue-sync/service.ts",
+    "src/host/issue-sync/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/server.ts",
+    "test/unit/issue-sync-d15.test.mjs",
+    "test/unit/contract.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md",
+    "README.md",
+    "README.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

@@ -2,12 +2,16 @@
  * Story delivery runs with durable checkpoints.
  */
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import type { AgentRuntime } from '../agents/runtime.js';
+import type { AgentRun } from '../agents/types.js';
 import { workItemDesignRevision } from '../board/executed-evidence.js';
 import type { BoardService } from '../board/plugin.js';
 import type { WorkItem, WorkItemId } from '../board/types.js';
+import type { EnvironmentService } from '../environment/service.js';
 import { validateDefinitionOfReady } from '../board/work-item.js';
 import { loadDeliveryRuns, saveDeliveryRuns } from './store.js';
 import {
@@ -21,6 +25,7 @@ import {
   type StoryDeliveryEvent,
   type StoryDeliveryRun,
   type StoryDeliveryStep,
+  type StoryDeliveryTaskReference,
 } from './types.js';
 
 const ACTIVE: readonly StoryDeliveryRun['status'][] = ['running', 'paused', 'interrupted'];
@@ -50,6 +55,7 @@ export function createDeliveryService(deps: {
   readonly board: BoardService;
   readonly agents: AgentRuntime;
   readonly workspaceRoot: string;
+  readonly environment?: EnvironmentService;
   readonly config?: DeliveryConfig;
 }): DeliveryService {
   const config = resolveDeliveryConfig(deps.config ?? {});
@@ -71,12 +77,15 @@ export function createDeliveryService(deps: {
       const revision = workItemDesignRevision(item);
       const runId = randomUUID();
       const checkpoint = emptyCheckpoint(item, actor, revision);
+      const environmentReady = deps.environment === undefined
+        ? input.environmentReady === true
+        : deps.environment.canStartImplementation(deps.workspaceRoot, item.projectId);
       const started: StoryDeliveryRun = {
         id: runId,
         projectId: item.projectId,
         workItemId: item.id,
         status: 'running',
-        environmentReady: input.environmentReady === true,
+        environmentReady,
         agentRunIds: [],
         checkpoint,
         events: [],
@@ -159,6 +168,21 @@ export function createDeliveryService(deps: {
           reason: 'design revision changed after checkpoint',
           blockers: ['stale after design revision'],
           nextAction: 'revalidate scope',
+        });
+        persist(blocked);
+        return blocked;
+      }
+      const candidateBlocker = run.checkpoint.pendingSteps[0] === 'implement'
+        ? null
+        : candidateReconciliationBlocker(run.checkpoint, deps.workspaceRoot);
+      if (candidateBlocker !== null) {
+        const blocked = withStatus(run, 'blocked', {
+          key: `stale-candidate:${runId}:${run.checkpoint.seq}`,
+          type: 'story_delivery.candidate_stale',
+          actor,
+          reason: candidateBlocker,
+          blockers: [candidateBlocker],
+          nextAction: 'revalidate candidate',
         });
         persist(blocked);
         return blocked;
@@ -313,9 +337,10 @@ export function createDeliveryService(deps: {
     }
 
     try {
-      const { output, agentRunId } = runAgentStep(deps.agents, run, item, step);
+      const { output, agentRunId, taskReference } = runAgentStep(deps.board, deps.agents, run, item, step, deps.workspaceRoot);
       const decisions = { ...run.checkpoint.decisions, [step]: output };
       const agentRunIds = [...run.agentRunIds, agentRunId];
+      const executionFields = executionCheckpointFields(run.checkpoint, step, output, taskReference);
       if (step === 'evaluate' && isRevisionRequired(output)) {
         if (run.checkpoint.budgetUsage.retries >= resolved.maxRetries) {
           const blocked = replaceRun({
@@ -324,6 +349,7 @@ export function createDeliveryService(deps: {
             agentRunIds,
             checkpoint: {
               ...run.checkpoint,
+              ...executionFields,
               seq: run.checkpoint.seq + 1,
               decisions,
               blockers: ['retry limit'],
@@ -332,6 +358,7 @@ export function createDeliveryService(deps: {
                 retries: run.checkpoint.budgetUsage.retries,
               },
               nextAction: 'human decision',
+              pendingEffects: ['human-decision.pending'],
               evidenceRefs: evidenceRefs(decisions),
             },
             updatedAt: Date.now(),
@@ -349,6 +376,7 @@ export function createDeliveryService(deps: {
           agentRunIds,
           checkpoint: {
             ...run.checkpoint,
+            ...executionFields,
             seq: run.checkpoint.seq + 1,
             completedSteps: run.checkpoint.completedSteps.filter((itemStep) => itemStep !== 'implement'),
             pendingSteps: ['implement', 'evaluate'],
@@ -359,6 +387,7 @@ export function createDeliveryService(deps: {
               retries: run.checkpoint.budgetUsage.retries + 1,
             },
             nextAction: 'implement',
+            pendingEffects: pendingEffectsFor(step, output),
             evidenceRefs: evidenceRefs(decisions),
           },
           updatedAt: Date.now(),
@@ -381,6 +410,7 @@ export function createDeliveryService(deps: {
         agentRunIds,
         checkpoint: {
           ...run.checkpoint,
+          ...executionFields,
           seq: run.checkpoint.seq + 1,
           completedSteps,
           pendingSteps,
@@ -391,6 +421,7 @@ export function createDeliveryService(deps: {
             retries: run.checkpoint.budgetUsage.retries,
           },
           nextAction: done ? 'complete' : pendingSteps[0] ?? 'complete',
+          pendingEffects: pendingEffectsFor(step, output),
           evidenceRefs: evidenceRefs(decisions),
         },
         updatedAt: Date.now(),
@@ -421,50 +452,166 @@ export function createDeliveryService(deps: {
 }
 
 function runAgentStep(
+  board: BoardService,
   agents: AgentRuntime,
   run: StoryDeliveryRun,
   item: WorkItem,
   step: StoryDeliveryStep,
-): { readonly output: unknown; readonly agentRunId: string } {
+  workspaceRoot: string,
+): { readonly output: unknown; readonly agentRunId: string; readonly taskReference: StoryDeliveryTaskReference } {
   if (step === 'plan') {
+    const methodId = resolvePlannerMethod(board, item);
     const planned = agents.startRun({
       agentId: 'planner',
-      executor: 'manual',
+      executor: 'huntianling-runtime',
       projectId: item.projectId,
       workItemId: item.id,
+      workspaceRoot,
+      depth: 1,
+      ...(methodId !== null ? { methodId } : {}),
       input: plannerInput(item),
     });
-    return { output: planned.output, agentRunId: planned.id };
+    return agentStepResult(step, planned);
   }
   if (step === 'implement') {
     const planned = asObject(run.checkpoint.decisions.plan);
     const generated = agents.startRun({
       agentId: 'generator',
-      executor: 'manual',
+      executor: 'huntianling-runtime',
       projectId: item.projectId,
       workItemId: item.id,
+      workspaceRoot,
       environmentReady: run.environmentReady,
       input: {
         outcome: typeof planned.outcome === 'string' ? planned.outcome : item.title,
         acceptance: run.checkpoint.acceptance,
+        repairFindings: repairFindings(run.checkpoint),
       },
     });
-    return { output: generated.output, agentRunId: generated.id };
+    return agentStepResult(step, generated);
   }
   const generated = asObject(run.checkpoint.decisions.implement);
   const evaluated = agents.startRun({
     agentId: 'evaluator',
-    executor: 'manual',
+    executor: 'huntianling-runtime',
     projectId: item.projectId,
     workItemId: item.id,
+    workspaceRoot,
+    environmentReady: run.environmentReady,
     input: {
       independent: true,
       outcome: typeof generated.outcome === 'string' ? generated.outcome : item.title,
       acceptance: run.checkpoint.acceptance,
       ...(generated.selfCheck !== undefined ? { selfCheck: generated.selfCheck } : {}),
+      ...(generated.artifactRefs !== undefined ? { artifactRefs: generated.artifactRefs } : {}),
+      ...(generated.candidateRevision !== undefined ? { candidateRevision: generated.candidateRevision } : {}),
+      ...(generated.provenanceLinks !== undefined ? { provenanceLinks: generated.provenanceLinks } : {}),
     },
   });
-  return { output: evaluated.output, agentRunId: evaluated.id };
+  return agentStepResult(step, evaluated);
+}
+
+function agentStepResult(
+  step: StoryDeliveryStep,
+  run: AgentRun,
+): { readonly output: unknown; readonly agentRunId: string; readonly taskReference: StoryDeliveryTaskReference } {
+  const execution = run.execution;
+  return {
+    output: run.output,
+    agentRunId: run.id,
+    taskReference: {
+      step,
+      agentRunId: run.id,
+      taskId: execution?.taskId ?? `agent-task:${run.id}`,
+      sessionId: execution?.sessionId ?? `local-session:${run.id}`,
+      toolCallIds: execution?.toolCallIds ?? [],
+      artifactRefs: execution?.artifactRefs ?? [],
+      candidateRevision: execution?.candidateRevision ?? null,
+    },
+  };
+}
+
+function resolvePlannerMethod(board: BoardService, item: WorkItem): string | null {
+  if (item.methodId !== null && item.methodId.trim() !== '') return item.methodId;
+  const project = board.listProjects({ includeArchived: true }).find((row) => row.id === item.projectId);
+  const methodId = project?.enabledMethodIds[0];
+  return methodId === undefined || methodId.trim() === '' ? null : methodId;
+}
+
+function repairFindings(checkpoint: StoryDeliveryCheckpoint): readonly string[] {
+  const evaluate = asObject(checkpoint.decisions.evaluate);
+  const reasons = stringArray(evaluate.failureReasons);
+  const criteria = Array.isArray(evaluate.criteria)
+    ? evaluate.criteria
+      .map((row) => asObject(row))
+      .filter((row) => row.result === 'fail')
+      .map((row) => typeof row.id === 'string' ? row.id : '')
+      .filter((id) => id !== '')
+    : [];
+  return [...reasons, ...criteria];
+}
+
+function executionCheckpointFields(
+  checkpoint: StoryDeliveryCheckpoint,
+  step: StoryDeliveryStep,
+  output: unknown,
+  taskReference: StoryDeliveryTaskReference,
+): Pick<StoryDeliveryCheckpoint, 'repositoryRevision' | 'candidateRevision' | 'artifactRefs' | 'taskReferences'> {
+  const record = asObject(output);
+  const outputArtifacts = stringArray(record.artifactRefs);
+  const outputRevision = typeof record.candidateRevision === 'string' ? record.candidateRevision : '';
+  const candidateRevision = outputRevision !== '' ? outputRevision : checkpoint.candidateRevision;
+  const artifactRefs = outputArtifacts.length > 0 ? outputArtifacts : checkpoint.artifactRefs;
+  return {
+    repositoryRevision: candidateRevision !== '' ? candidateRevision : checkpoint.repositoryRevision,
+    candidateRevision,
+    artifactRefs,
+    taskReferences: [
+      ...checkpoint.taskReferences.filter((ref) => !(ref.step === step && ref.agentRunId === taskReference.agentRunId)),
+      taskReference,
+    ],
+  };
+}
+
+function pendingEffectsFor(step: StoryDeliveryStep, output: unknown): readonly string[] {
+  const record = asObject(output);
+  if (step === 'plan') return ['implementation.pending'];
+  if (step === 'implement') {
+    const revision = typeof record.candidateRevision === 'string' && record.candidateRevision !== ''
+      ? `:${record.candidateRevision}`
+      : '';
+    return [`evaluation.pending${revision}`];
+  }
+  if (step === 'evaluate' && isRevisionRequired(output)) {
+    const revision = typeof record.candidateRevision === 'string' && record.candidateRevision !== ''
+      ? `:${record.candidateRevision}`
+      : '';
+    return [`repair.pending${revision}`];
+  }
+  return [];
+}
+
+function candidateReconciliationBlocker(checkpoint: StoryDeliveryCheckpoint, workspaceRoot: string): string | null {
+  if (checkpoint.candidateRevision === '' || checkpoint.artifactRefs.length === 0) return null;
+  const actual = candidateRevisionFor(workspaceRoot, checkpoint.artifactRefs);
+  if (actual === checkpoint.candidateRevision) return null;
+  return 'candidate revision changed after checkpoint';
+}
+
+function candidateRevisionFor(workspaceRoot: string, artifactRefs: readonly string[]): string {
+  const safeRefs = artifactRefs
+    .filter((ref) => ref.trim() !== '' && !ref.startsWith('/') && !ref.split('/').includes('..'))
+    .sort();
+  if (safeRefs.length === 0) return '';
+  const hash = createHash('sha256');
+  for (const ref of safeRefs) {
+    hash.update(ref);
+    hash.update('\0');
+    const file = join(workspaceRoot, ref);
+    hash.update(existsSync(file) ? readFileSync(file) : `missing:${ref}`);
+    hash.update('\0');
+  }
+  return hash.digest('hex').slice(0, 16);
 }
 
 function plannerInput(item: WorkItem): Record<string, unknown> {
@@ -498,6 +645,10 @@ function emptyCheckpoint(item: WorkItem, owner: string, revision: string): Story
     blockers: [],
     decisions: {},
     repositoryRevision: '',
+    candidateRevision: '',
+    artifactRefs: [],
+    taskReferences: [],
+    pendingEffects: [],
     evidenceRefs: [],
     budgetUsage: { steps: 0, retries: 0 },
     nextAction: 'plan',
@@ -618,6 +769,11 @@ function evidenceRefs(decisions: Readonly<Record<string, unknown>>): readonly st
 function asObject(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
 }
 
 function readyMessage(kind: string): string {

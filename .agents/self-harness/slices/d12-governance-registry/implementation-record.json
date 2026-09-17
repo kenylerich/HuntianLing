@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/governance/types.ts",
+    "src/host/governance/packs.ts",
+    "src/host/governance/store.ts",
+    "src/host/governance/service.ts",
+    "src/host/governance/plugin.ts",
+    "src/host/plugin.ts",
+    "src/host/board/types.ts",
+    "src/host/board/store.ts",
+    "src/host/web/plugin.ts",
+    "src/host/web/server.ts",
+    "test/unit/governance-d12.test.mjs",
+    "test/unit/contract.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

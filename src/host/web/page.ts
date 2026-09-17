@@ -2154,6 +2154,56 @@ export function renderBoardPage(): string {
       white-space: nowrap;
     }
 
+    .governance-dashboard {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .governance-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+      gap: 8px;
+    }
+
+    .governance-panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      gap: 10px;
+    }
+
+    .governance-panel {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-soft);
+      padding: 9px;
+    }
+
+    .governance-panel h3 {
+      margin: 0;
+      font-size: 0.92rem;
+    }
+
+    .governance-panel .row {
+      border-top: 1px solid var(--line);
+      padding: 0.4rem 0 0;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .governance-actions {
+      display: grid;
+      gap: 8px;
+    }
+
+    .governance-actions form {
+      display: grid;
+      gap: 6px;
+    }
+
     .workflow-board .coverage-row {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -3756,6 +3806,7 @@ export function renderBoardPage(): string {
       <button type="button" data-area-id="team">团队</button>
       <button type="button" data-area-id="workflow">工作流</button>
       <button type="button" data-area-id="evidence">证据</button>
+      <button type="button" data-area-id="governance">治理</button>
       <button type="button" data-area-id="settings">设置</button>
     </nav>
 
@@ -3958,6 +4009,7 @@ export function renderBoardPage(): string {
       workItems: [],
       cards: [],
       mainBoard: null,
+      governanceDashboard: null,
       projectId: new URLSearchParams(location.search).get('projectId') || '',
       selectedId: null,
       selectedIntakeSessionId: new URLSearchParams(location.search).get('intakeSessionId') || '',
@@ -4085,6 +4137,10 @@ export function renderBoardPage(): string {
         label: '门禁矩阵',
         description: '按代码、PR、Review、CI、治理、安全、可靠性和可信证据检查交付结论。',
       },
+      'governance-board': {
+        label: '治理和信任看板',
+        description: '查看义务、控制覆盖、残余风险、安全、可靠性、可信评估和已签名证据。',
+      },
       'admin-settings': {
         label: '访问设置',
         description: '管理项目、登录状态、认证区域和 API token。',
@@ -4175,6 +4231,18 @@ export function renderBoardPage(): string {
         views: ['evidence-board'],
         boardTitle: '证据治理工作区',
         emptyDetail: '选择一个工作项后查看交付证据和治理状态。',
+      },
+      governance: {
+        label: 'Governance',
+        navTitle: '治理和信任',
+        stage: 'Compliance review',
+        description: '在同一交付流程中查看义务、控制覆盖、残余风险、安全、可靠性、可信评估和已签名证据。',
+        owner: '合规/安全',
+        object: 'Governance Dashboard',
+        output: '签署结论',
+        views: ['governance-board'],
+        boardTitle: '治理和信任看板',
+        emptyDetail: '选择一个工作项后查看控制、缺证据、残余风险和 provenance。',
       },
       settings: {
         label: 'Admin',
@@ -7206,6 +7274,10 @@ export function renderBoardPage(): string {
         renderEvidenceBoard(root);
         return;
       }
+      if (state.viewId === 'governance-board') {
+        renderGovernanceDashboard(root);
+        return;
+      }
       if (!state.mainBoard || state.mainBoard.columns.length === 0) {
         root.className = 'empty';
         root.textContent = '当前项目暂无工作项。';
@@ -8387,6 +8459,7 @@ export function renderBoardPage(): string {
       const rollup = milestoneBoardRollup(board);
       const summary = document.createElement('div');
       summary.className = className;
+      const governance = state.governanceDashboard;
       summary.append(
         metric(String(rollup.milestones), '里程碑'),
         metric(String(rollup.deliveredWorkItems) + '/' + String(rollup.totalWorkItems), '工作项交付'),
@@ -8394,6 +8467,15 @@ export function renderBoardPage(): string {
         metric(String(board.openSlices || 0), '未完成切片'),
         metric(String(rollup.blockers), '阻塞'),
       );
+      if (governance && (governance.milestones || []).length) {
+        const ready = (governance.milestones || []).filter((row) =>
+          row.complianceReady && row.securityReady && row.reliabilityReady && row.trustReady,
+        ).length;
+        summary.append(
+          metric(String(ready) + '/' + String(governance.milestones.length), '治理 Ready'),
+          metric(String((governance.openExceptions || []).length), '开放例外'),
+        );
+      }
       return summary;
     }
 
@@ -9922,6 +10004,203 @@ export function renderBoardPage(): string {
       return section;
     }
 
+    function renderGovernanceDashboard(root) {
+      const data = state.governanceDashboard;
+      root.className = 'governance-dashboard';
+      if (!data) {
+        root.className = 'empty';
+        root.textContent = '当前项目暂无治理看板数据。';
+        return;
+      }
+      const unapproved = (data.obligations || []).filter((row) =>
+        row.status !== 'approved' && row.status !== 'active' && row.status !== 'retired',
+      ).length;
+      const coverage = data.controlCoverage || {};
+      const security = data.securityReadiness || {};
+      const reliability = data.reliabilityReadiness || {};
+      const reports = data.evidenceReports || [];
+      const strip = document.createElement('div');
+      strip.className = 'governance-strip';
+      strip.append(
+        metric(String((data.obligations || []).length), '适用义务'),
+        metric(String(coverage.evidenceCompleteControls || 0) + '/' + String(coverage.totalControls || 0), '控制覆盖'),
+        metric(String((data.riskRegister || []).length), '风险登记'),
+        metric(String((data.openExceptions || []).length), '开放例外'),
+        metric(security.ready ? 'Ready' : '未就绪', '安全准备'),
+        metric(reliability.ready ? 'Ready' : '未就绪', '可靠性准备'),
+        metric(String((data.trustAssessments || []).length), '可信评估'),
+        metric(String(reports.filter((row) => row.status === 'approved').length) + '/' + String(reports.length), '证据报告'),
+      );
+      const panels = document.createElement('div');
+      panels.className = 'governance-panels';
+      panels.append(
+        governancePanel('适用义务', (data.obligations || []).map((row) => row.title + ' · ' + row.status)),
+        governancePanel('控制覆盖', (coverage.controls || []).map((row) =>
+          row.controlId + ' · ' + (row.mapped ? '已映射' : '未映射'),
+        )),
+        governancePanel('风险登记', (data.riskRegister || []).map((row) => row.title + ' · ' + row.approver)),
+        governancePanel('开放例外', (data.openExceptions || []).map((row) => row.kind + ' · ' + row.title)),
+        governancePanel('安全准备', [
+          '高风险 ' + String(security.highRiskWorkItems || 0),
+          '威胁模型 ' + String(security.threatModelCount || 0),
+          '失败扫描 ' + String(security.failingScans || 0),
+        ]),
+        governancePanel('可靠性准备', [
+          'SLO ' + String(reliability.totalSlos || 0),
+          '生产缺观测 ' + String(reliability.productionFacingMissingObservability || 0),
+        ]),
+        governancePanel('可信评估', (data.trustAssessments || []).map((row) => row.summary + ' · ' + row.residualRisk)),
+        governancePanel('证据报告状态', reports.map((row) => row.scope + ' · ' + row.status)),
+        governancePanel('里程碑汇总', (data.milestones || []).map((row) =>
+          row.title
+            + ' · 合规 ' + (row.complianceReady ? 'Ready' : '阻塞')
+            + ' · 安全 ' + (row.securityReady ? 'Ready' : '阻塞')
+            + ' · 可靠性 ' + (row.reliabilityReady ? 'Ready' : '阻塞')
+            + ' · 可信 ' + (row.trustReady ? 'Ready' : '阻塞'),
+        )),
+      );
+      root.append(strip, panels, renderGovernanceActions(data), badge(unapproved ? '待审义务 ' + String(unapproved) : '义务已审', unapproved ? 'blocking' : 'ready'));
+    }
+
+    function governancePanel(title, rows) {
+      const section = document.createElement('section');
+      section.className = 'governance-panel';
+      const heading = document.createElement('h3');
+      heading.textContent = title;
+      section.append(heading);
+      if (!rows.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = '暂无记录。';
+        section.append(empty);
+        return section;
+      }
+      for (const text of rows) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.textContent = text;
+        section.append(row);
+      }
+      return section;
+    }
+
+    function renderGovernanceActions(data) {
+      const wrap = document.createElement('section');
+      wrap.className = 'governance-panel governance-actions';
+      const heading = document.createElement('h3');
+      heading.textContent = '评审、批准、接受风险和签署';
+      const review = document.createElement('form');
+      review.innerHTML = '<label>义务 <select name="obligationId"></select></label>'
+        + '<button type="submit">请求评审</button>'
+        + '<button type="button" data-action="approve">批准义务</button>';
+      for (const obligation of data.obligations || []) {
+        const option = document.createElement('option');
+        option.value = obligation.id;
+        option.textContent = obligation.title + ' · ' + obligation.status;
+        review.elements.obligationId.append(option);
+      }
+      review.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+          await api('/api/v1/compliance/obligations/' + encodeURIComponent(review.elements.obligationId.value) + '/request-review', {
+            method: 'POST',
+            body: '{}',
+          });
+          await loadBoard();
+          setMessage('已请求评审');
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+      review.querySelector('[data-action="approve"]').addEventListener('click', async () => {
+        try {
+          await api('/api/v1/compliance/obligations/' + encodeURIComponent(review.elements.obligationId.value) + '/approve', {
+            method: 'POST',
+            body: '{}',
+          });
+          await loadBoard();
+          setMessage('义务已批准');
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+      const risk = document.createElement('form');
+      risk.innerHTML = '<label>工作项 <select name="workItemId"></select></label>'
+        + '<label>标题 <input name="title" required></label>'
+        + '<label>批准人 <input name="approver" required></label>'
+        + '<label>原因 <input name="reason" required></label>'
+        + '<label>范围 <input name="scope" required></label>'
+        + '<button type="submit">接受残余风险</button>';
+      for (const item of data.workItems || []) {
+        const option = document.createElement('option');
+        option.value = item.workItemId;
+        option.textContent = item.title;
+        risk.elements.workItemId.append(option);
+      }
+      risk.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+          await api('/api/v1/work-items/' + encodeURIComponent(risk.elements.workItemId.value) + '/security/risk-acceptance', {
+            method: 'POST',
+            body: JSON.stringify({
+              title: risk.elements.title.value,
+              approver: risk.elements.approver.value,
+              reason: risk.elements.reason.value,
+              scope: risk.elements.scope.value,
+            }),
+          });
+          await loadBoard();
+          setMessage('残余风险已接受');
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+      const report = document.createElement('form');
+      report.innerHTML = '<label>范围 <select name="scope">'
+        + '<option value="project">project</option>'
+        + '<option value="milestone">milestone</option>'
+        + '<option value="work-item">work-item</option>'
+        + '<option value="release">release</option>'
+        + '<option value="certification">certification</option>'
+        + '</select></label>'
+        + '<button type="submit">起草证据报告</button>'
+        + '<label>草稿 <select name="reportId"></select></label>'
+        + '<button type="button" data-action="sign">签署证据报告</button>';
+      for (const item of (data.evidenceReports || []).filter((row) => row.status === 'draft')) {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.scope + ' · ' + item.id.slice(0, 8);
+        report.elements.reportId.append(option);
+      }
+      report.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+          await api('/api/v1/projects/' + encodeURIComponent(state.projectId) + '/evidence-reports', {
+            method: 'POST',
+            body: JSON.stringify({ scope: report.elements.scope.value }),
+          });
+          await loadBoard();
+          setMessage('证据报告已起草');
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+      report.querySelector('[data-action="sign"]').addEventListener('click', async () => {
+        try {
+          await api('/api/v1/evidence-reports/' + encodeURIComponent(report.elements.reportId.value) + '/sign', {
+            method: 'POST',
+            body: '{}',
+          });
+          await loadBoard();
+          setMessage('证据报告已签署');
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      });
+      wrap.append(heading, review, risk, report);
+      return wrap;
+    }
+
     function renderEvidenceBoard(root) {
       const board = state.mainBoard ? state.mainBoard.evidenceBoard : null;
       root.className = 'evidence-board';
@@ -10404,6 +10683,13 @@ export function renderBoardPage(): string {
         return;
       }
       const card = payload.card;
+      if (state.areaId === 'governance' || state.areaId === 'evidence') {
+        try {
+          payload.governance = await api('/api/v1/work-items/' + encodeURIComponent(item.id) + '/governance/dashboard');
+        } catch (error) {
+          setMessage(error.message, true);
+        }
+      }
       let auditEvents = [];
       try {
         auditEvents = await loadWorkItemAuditEvents(item.id);
@@ -10529,6 +10815,9 @@ export function renderBoardPage(): string {
       if (state.areaId === 'evidence') {
         return [['evidence', '证据'], ['governance', '治理'], ['summary', '摘要'], ['audit', '审计']];
       }
+      if (state.areaId === 'governance') {
+        return [['governance', '治理'], ['trust', '可信'], ['summary', '摘要'], ['audit', '审计']];
+      }
       if (state.areaId === 'settings' && state.viewId === 'audit-board') {
         return [['audit', '审计'], ['summary', '摘要']];
       }
@@ -10575,7 +10864,16 @@ export function renderBoardPage(): string {
       if (state.areaId === 'evidence') {
         return [
           evidenceField(card),
-          governanceField(card),
+          governanceField(card, payload.governance),
+          detailRollups(card),
+          auditField(auditEvents),
+          deliveryGateField(card, payload.milestonePlan),
+          statusActions(item, card, payload.milestonePlan),
+        ];
+      }
+      if (state.areaId === 'governance') {
+        return [
+          governanceField(card, payload.governance),
           detailRollups(card),
           auditField(auditEvents),
           deliveryGateField(card, payload.milestonePlan),
@@ -11281,11 +11579,11 @@ export function renderBoardPage(): string {
       }
     }
 
-    function governanceField(card) {
+    function governanceField(card, dashboard) {
       const section = document.createElement('section');
       section.className = 'field';
       const title = document.createElement('b');
-      title.textContent = '治理';
+      title.textContent = '治理与信任';
       const grid = document.createElement('div');
       grid.className = 'detail-grid';
       grid.append(
@@ -11306,6 +11604,22 @@ export function renderBoardPage(): string {
         }
       }
       section.append(title, grid, content);
+      const view = dashboard && dashboard.workItems ? dashboard.workItems[0] : null;
+      if (view) {
+        const extra = document.createElement('div');
+        extra.className = 'meta';
+        extra.append(
+          badge('必需控制 ' + String((view.requiredControls || []).length)),
+          badge('已映射检查 ' + String((view.mappedChecks || []).length)),
+          badge('缺证据 ' + String((view.missingEvidence || []).length), (view.missingEvidence || []).length ? 'blocking' : 'ready'),
+          badge('残余风险 ' + String((view.residualRisks || []).length)),
+          badge('待审批 ' + String((view.approvalRequirements || []).length), (view.approvalRequirements || []).length ? 'blocking' : 'ready'),
+          badge('provenance ' + String((view.provenance || []).length)),
+        );
+        for (const requirement of (view.approvalRequirements || []).slice(0, 6)) extra.append(badge(requirement, 'blocking'));
+        for (const missing of (view.missingEvidence || []).slice(0, 4)) extra.append(badge(missing, 'blocking'));
+        section.append(extra);
+      }
       return section;
     }
 
@@ -11949,6 +12263,7 @@ export function renderBoardPage(): string {
         state.businessCrud.loading = false;
         state.cards = [];
         state.mainBoard = null;
+        state.governanceDashboard = null;
         renderHealth();
         renderBoard();
         renderTree();
@@ -11978,6 +12293,16 @@ export function renderBoardPage(): string {
       if (state.areaId === 'intake') await loadIntake();
       if (state.areaId === 'settings' && state.viewId === 'business-crud') await loadBusinessCrudCoverage();
       if (state.areaId === 'settings' && state.viewId === 'audit-board') await loadProjectAuditEvents();
+      if (state.areaId === 'governance' || state.areaId === 'planning' || state.areaId === 'evidence') {
+        try {
+          state.governanceDashboard = await api(
+            '/api/v1/projects/' + encodeURIComponent(state.projectId) + '/governance/dashboard',
+          );
+        } catch (error) {
+          state.governanceDashboard = null;
+          setMessage(error.message, true);
+        }
+      }
       if (state.selectedId && !itemById(state.selectedId)) state.selectedId = null;
       renderHealth();
       renderBoard();

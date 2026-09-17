@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D13",
+      "source": "user"
+    }
+  ],
+  "goal": "Threat models, SLOs, provenance, and attestations block delivery when configured",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "WorkItems can be classified by security impact, data sensitivity, permission impact, exposed API surface, dependency risk, and deployment risk",
+    "configured high-risk WorkItems require a threat model before delivery",
+    "security evidence can be ingested from tests, code review, dependency scans, secret scans, static analysis, dynamic tests, and manual reviews",
+    "missing required security controls or evidence block delivery when configured",
+    "residual risk acceptance records approver, reason, scope, expiration, and compensating controls",
+    "a project can store SLOs with availability, latency, error budget, capacity, backup, restore, and dependency assumptions",
+    "configured production-facing WorkItems require an observability plan before delivery",
+    "reliability readiness rolls up to Project and Milestone views",
+    "agent-run provenance records source inputs, model identity, skill versions, tool calls, output, and verification",
+    "AI-generated analysis records confidence, assumptions, limitations, and open questions",
+    "missing provenance blocks automated delivery claims when configured",
+    "evidence reports cover Project, Milestone, WorkItem, release, and certification scopes",
+    "reports stay draft until a human owner approves them and snapshots include timestamp, actor, source version, and export hash",
+    "reports export as JSON and Markdown",
+    "customers cannot record threat models, risk acceptances, or approve attestations"
+  ],
+  "constraints": [
+    "Issue sync is out of scope",
+    "do not start Phase D chrome on the fused board cockpit"
+  ],
+  "nonGoals": [
+    "Issue sync",
+    "a dedicated governance dashboard",
+    "removing the fused board cockpit"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

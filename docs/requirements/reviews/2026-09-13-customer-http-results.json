@@ -1,0 +1,118 @@
+{
+  "reviewedCommit": "614dcd6",
+  "reviewedOn": "2026-09-13",
+  "executionOwner": "external-agent",
+  "suite": "customer-http-acceptance",
+  "result": "fail",
+  "results": [
+    {
+      "id": "unauthenticated-and-role-access",
+      "reqs": [
+        "REQ-AUTH-001",
+        "REQ-WEB-007"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "customer-project-isolation",
+      "reqs": [
+        "REQ-AUTH-001",
+        "REQ-WEB-007"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "customer-cannot-read-developer-records",
+      "reqs": [
+        "REQ-WEB-007"
+      ],
+      "result": "fail",
+      "detail": "Customer got 200; returned fields: project, jobs, teamMembers, authority, collect, design, progress\n\n200 !== 403\n"
+    },
+    {
+      "id": "intake-chat-and-plain-attachments",
+      "reqs": [
+        "REQ-INTAKE-001",
+        "REQ-INTAKE-002"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "candidate-approval-and-hierarchy",
+      "reqs": [
+        "REQ-BOARD-004",
+        "REQ-INTAKE-003"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "milestone-create-and-list",
+      "reqs": [
+        "REQ-MILESTONE-002"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "project-business-projections",
+      "reqs": [
+        "REQ-BOARD-003",
+        "REQ-WEB-006"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "workflow-static-canvas",
+      "reqs": [
+        "REQ-FLOW-006",
+        "REQ-FLOW-016"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "missing-evidence-blocks-delivery",
+      "reqs": [
+        "REQ-EVIDENCE-001"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "unprepared-story-is-blocked",
+      "reqs": [
+        "REQ-HARNESS-001"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "manual-ci-prefix-cannot-deliver",
+      "reqs": [
+        "REQ-HARNESS-003",
+        "REQ-EVIDENCE-001"
+      ],
+      "result": "fail",
+      "detail": "Forged evidence accepted: HTTP 200, state delivered"
+    },
+    {
+      "id": "session-logout-revokes-access",
+      "reqs": [
+        "REQ-AUTH-001"
+      ],
+      "result": "pass"
+    },
+    {
+      "id": "production-local-ci-executes-commands",
+      "reqs": [
+        "REQ-CI-001"
+      ],
+      "result": "fail",
+      "detail": "Local commands did not run: pnpm run typecheck: pending (runner not configured); pnpm run test: pending (runner not configured)"
+    }
+  ],
+  "notVerified": [
+    "live dsh agents",
+    "OAuth exchanges",
+    "hosted SCM/CI",
+    "PostgreSQL",
+    "browser interactions (separate Playwright review)",
+    "all backlog acceptance criteria"
+  ]
+}

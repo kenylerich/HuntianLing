@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "WorkItems can be classified by security impact, data sensitivity, permission impact, exposed API surface, dependency risk, and deployment risk",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "configured high-risk WorkItems require a threat model before delivery",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "security evidence can be ingested from tests, code review, dependency scans, secret scans, static analysis, dynamic tests, and manual reviews",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "missing required security controls or evidence block delivery when configured",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "residual risk acceptance records approver, reason, scope, expiration, and compensating controls",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "a project can store SLOs with availability, latency, error budget, capacity, backup, restore, and dependency assumptions",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "configured production-facing WorkItems require an observability plan before delivery",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "reliability readiness rolls up to Project and Milestone views",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "agent-run provenance records source inputs, model identity, skill versions, tool calls, output, and verification",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "AI-generated analysis records confidence, assumptions, limitations, and open questions",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "missing provenance blocks automated delivery claims when configured",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "evidence reports cover Project, Milestone, WorkItem, release, and certification scopes",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "reports stay draft until a human owner approves them and snapshots include timestamp, actor, source version, and export hash",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "reports export as JSON and Markdown",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    },
+    {
+      "id": "customers cannot record threat models, risk acceptances, or approve attestations",
+      "result": "pass",
+      "evidence": "test/unit/governance-d13.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

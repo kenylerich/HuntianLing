@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "接下来，请继续完成D18-D21的所有开发落地",
+      "source": "user"
+    },
+    {
+      "text": "D18 | Executable three-Agent delivery and repair | dsh tasks create working code and independently evaluate and repair a real failure",
+      "source": "docs/requirements/backlog.md#phase-d--later-only-with-a-measured-need"
+    },
+    {
+      "text": "D19 | Methods and Skill sensors in execution | Selected methods and depth steps constrain real tasks and detect invalid results",
+      "source": "docs/requirements/backlog.md#phase-d--later-only-with-a-measured-need"
+    },
+    {
+      "text": "D20 | Real run recovery and revision-bound evidence | Resume reconciles sessions and side effects; changed code invalidates affected evidence",
+      "source": "docs/requirements/backlog.md#phase-d--later-only-with-a-measured-need"
+    },
+    {
+      "text": "D21 | Fresh-project and self-development acceptance | Independent evidence proves intake, design, environment, coding, repair, and customer delivery",
+      "source": "docs/requirements/backlog.md#phase-d--later-only-with-a-measured-need"
+    }
+  ],
+  "goal": "Complete D18-D21 by turning Story Delivery into a verifiable local runtime loop with method sensors, revision-bound recovery, and fresh-project self-development acceptance.",
+  "actors": [
+    "Developer",
+    "Planner",
+    "Generator",
+    "Evaluator",
+    "Harness reviewer"
+  ],
+  "scenarios": [
+    "A prepared project Story invokes Planner, Generator, and Evaluator through huntianling-runtime and records task, session, tool, artifact, and candidate revision references.",
+    "The selected Planner method records versioned Skill depth steps and sensors, and invalid method output is rejected with a run record.",
+    "A candidate file changed after checkpoint blocks resume while evaluation is pending, but a recorded failed evaluation can resume into repair.",
+    "Harness self-development acceptance starts a fresh project, produces a real candidate failure, repairs it, independently re-evaluates it, and only then shows customer delivery."
+  ],
+  "constraints": [
+    "Do not weaken D16: manual, self-check, and demonstration evidence must not complete delivery.",
+    "Do not build a second model runtime; missing hosted live execution remains a visible gap.",
+    "Do not mark lint or hygiene pass while repository scripts are still probe blockers."
+  ],
+  "nonGoals": [
+    "Specialist agent expansion",
+    "distributed scheduler expansion",
+    "new board views",
+    "hosted live model fleet"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

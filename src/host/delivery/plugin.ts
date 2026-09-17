@@ -6,6 +6,7 @@ import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import type { AgentRuntime } from '../agents/runtime.js';
 import type { BoardService } from '../board/plugin.js';
+import type { EnvironmentService } from '../environment/service.js';
 import { resolveWorkspaceRoot } from '../board/workspace.js';
 import { createDeliveryService, type DeliveryService } from './service.js';
 import { resolveDeliveryConfig, type DeliveryConfig } from './types.js';
@@ -20,6 +21,7 @@ const DeliveryPlugin: Plugin<DeliveryConfig> = {
   apply(ctx: Context, config: DeliveryConfig = {}): void {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     const agents = ctx.get('huntianling.agents') as AgentRuntime | undefined;
+    const environment = ctx.get('huntianling.environment') as EnvironmentService | undefined;
     if (!board) throw new Error('huntianling.board is required');
     if (!agents) throw new Error('huntianling.agents is required');
     const configured = ctx.get('huntianling.workspaceRoot');
@@ -33,6 +35,7 @@ const DeliveryPlugin: Plugin<DeliveryConfig> = {
         board,
         agents,
         workspaceRoot,
+        ...(environment !== undefined ? { environment } : {}),
         config: resolveDeliveryConfig(config),
       }),
     );

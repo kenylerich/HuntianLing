@@ -1,8 +1,8 @@
 ---
 doc_status: active
-doc_version: 2026-09-11.5
+doc_version: 2026-09-12.1
 created: 2026-09-10
-last_reviewed: 2026-09-11
+last_reviewed: 2026-09-12
 review_after: 2026-12-10
 ---
 
@@ -14,13 +14,13 @@ A Cordis plugin for [DeepSeek Harness](https://github.com/kenylerich/deepseek-ha
 
 Start with [Harness Engineering Product Direction](docs/requirements/harness-engineering.md) for the background articles, scope assessment, requirement-to-code loop, and how this repository applies the same method to its own development.
 
-> Product baseline status: standard environment provisioning, the three built-in Agents, and executable method composition are planned; the available implementation is the board and supporting services.
+> Product baseline status: standard environment provisioning is partially implemented with project-scoped local command execution and readiness gates. Built-in Agent definitions and deterministic method composition exist; real dsh task/session/tool execution for Planner, Generator, and Evaluator remains planned for the next slices.
 
 > First product milestone: both faces together — customer/developer/admin shells, MKT collection with Skill boundary and depth, the standard development board that shows collection, design, and progress, and the invisible standard vibe-coding environment with Planner, Generator, Evaluator, and methods. Later capability seams stay planned and must not displace that baseline.
 
-> Status: internal board model in place. The host bundle loads, the local Board Service persists Projects, Milestones, WorkItems, Project team members, workflow board summaries, and delivery evidence summaries; computes Story priority queues and delivery evidence rollups; the Requirement Service manages decomposition and coverage; and the Web Service exposes the same data through a dsh browser surface plus JSON APIs with optional session authentication and API tokens. Full workflow orchestration, dispatch automation, resource leases, and real SCM/CI adapters are still planned.
+> Status: internal board model in place. The host bundle loads, the local Board Service persists Projects, Milestones, WorkItems, Project team members, workflow board summaries, and delivery evidence summaries; computes Story priority queues and delivery evidence rollups; the Requirement Service manages decomposition and coverage; the Environment Service resolves versioned profiles, runs project-scoped command checks, records redacted prepare artifacts, and gates Generator readiness; and the Web Service exposes the same data through a dsh browser surface plus JSON APIs with optional session authentication and API tokens. Full workflow orchestration, dispatch automation, resource leases, and real SCM/CI adapters are still planned.
 
-## Capability seams (planned)
+## Capability seams
 
 - **Requirement intake** — creates internal WorkItems from structured requirement submissions; GitHub Issues are optional projections, not the source of truth.
 - **Milestone management** — groups project work into releases, phases, MVPs, or delivery checkpoints with progress summaries on the board.
@@ -79,10 +79,11 @@ Governance work maps applicable laws, certification controls, security requireme
 
 ## Service APIs
 
-HuntianLing exposes three host-side Cordis services:
+HuntianLing exposes host-side Cordis services:
 
 - `huntianling.requirements` — requirement-management API. It creates and splits Epic, Feature, Requirement/Story, Task, Bug, and Research items; updates analysis/design text; maintains acceptance criteria; links child items to covered criteria; and reads requirement trees and coverage summaries.
 - `huntianling.board` — board-management API. It owns projects, milestones, team members, capacity summaries, WorkItem assignment, workflow board summaries, delivery evidence summaries, delivery evidence rollups, milestone delivery slices, WorkItem CRUD, status transitions, role claims, board views, milestone views, tree queries, coverage queries, and transition gates.
+- `huntianling.environment` — standard-environment API. It resolves the versioned Node/pnpm profile, runs configured prepare/check commands in a target workspace, records project-scoped readiness, command exits, redacted output, artifacts, capability probes, skill gaps, and fleet replacement results, and answers whether Generator can start from recorded evidence.
 - `huntianling.web` — browser/API API. It starts and stops the local HTTP server, returns the dsh display surface, produces board URLs for project-filtered views, and can require authenticated sessions or API tokens.
 
 Typical requirement-management calls:
@@ -144,6 +145,16 @@ board.updateDeliveryEvidenceSummary(item.id, {
   riskAcceptances,
 });
 board.getProjectDeliveryEvidenceRollup(project.id);
+```
+
+Typical environment-management calls:
+
+```ts
+const environment = ctx.get('huntianling.environment');
+
+const prepared = environment.prepare({ projectId: project.id, workspaceRoot });
+environment.canStartImplementation(workspaceRoot, project.id);
+environment.lastPrepare(project.id, workspaceRoot);
 ```
 
 Typical web-surface calls:
@@ -250,6 +261,16 @@ Versioned main board endpoints:
 | `GET` | `/api/v1/projects/:projectId/main-board/team` | Read Team board lanes with capacity, WIP, assigned cards, unassigned cards, and team warnings |
 | `GET` | `/api/v1/projects/:projectId/main-board/workflow` | Read Workflow board lanes, workflow summaries, Story queue, approvals, reviews, failed checks, and scheduler reasons |
 | `GET` | `/api/v1/projects/:projectId/main-board/evidence` | Read Evidence board lanes and Project rollups for code, PRs, reviews, CI, checks, obligations, risk acceptances, security, reliability, and trust |
+| `GET` | `/api/v1/projects/:projectId/governance/dashboard` | Read project obligations, control coverage, risk register, open exceptions, security/reliability/trust readiness, and evidence report status |
+| `GET` | `/api/v1/milestones/:milestoneId/governance/dashboard` | Read Milestone rollup of compliance, security, reliability, and trust readiness |
+| `GET` | `/api/v1/work-items/:workItemId/governance/dashboard` | Read WorkItem required controls, mapped checks, missing evidence, residual risks, approval requirements, and provenance |
+| `GET` | `/api/v1/issue-sync/catalog` | List GitHub, Gitea, and GitLab issue adapters and field ownership |
+| `POST` | `/api/v1/environment/prepare` | Prepare and verify a workspace for an optional Project, recording command results and artifacts |
+| `GET` | `/api/v1/environment/fleets` | List prepared local and replacement environment slots |
+| `POST` | `/api/v1/environment/replace` | Prepare a replacement environment while preserving or explicitly reporting uncommitted work |
+| `GET/POST` | `/api/v1/projects/:projectId/issue-trackers` | List or bind an optional issue tracker for a project |
+| `POST` | `/api/v1/projects/:projectId/issue-sync/import` | Import an external issue onto an internal WorkItem |
+| `POST` | `/api/v1/work-items/:workItemId/issue-sync/export` | Export a WorkItem onto the bound tracker |
 | `GET` | `/api/v1/projects/:projectId/delivery-evidence` | Read Project delivery evidence summaries and rollup counts |
 | `GET` | `/api/v1/projects/:projectId/unlinked-code` | Read unlinked external code discovered by configured SCM adapters |
 | `GET` | `/api/v1/projects/:projectId/workflow-runs` | Read project workflow board summaries as the current run list |

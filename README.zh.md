@@ -1,8 +1,8 @@
 ---
 doc_status: active
-doc_version: 2026-09-11.5
+doc_version: 2026-09-12.1
 created: 2026-09-10
-last_reviewed: 2026-09-11
+last_reviewed: 2026-09-12
 review_after: 2026-12-10
 ---
 
@@ -14,11 +14,11 @@ HuntianLing 是用于 [DeepSeek Harness](https://github.com/kenylerich/deepseek-
 
 请先阅读 [Harness Engineering 产品定位](docs/requirements/harness-engineering.zh.md)，了解背景原文、范围审视、需求到代码闭环，以及本仓库如何用同一方法开展自身开发。
 
-> 产品基线状态：标准环境准备、三个内置 Agent 和可执行方法组合仍在规划中；当前可用实现是看板及支撑服务。
+> 产品基线状态：标准环境准备已部分实现，支持按项目归属的本地命令执行和就绪门禁。内置 Agent 定义和确定性方法组合已经存在；Planner、Generator、Evaluator 对真实 dsh 任务、会话和工具执行的绑定仍在后续切片中完成。
 
 > 首个产品里程碑同时交付两面：客户/开发/管理员界面、带 Skill 边界和深度的 MKT 收集、展示收集/设计/进度的标准开发看板，以及包含 Planner、Generator、Evaluator 和方法的不可见标准 vibe coding 环境。后续能力面保持规划，不得取代该基线。
 
-> 状态：内部看板模型已经建立。Host bundle 可以加载，本地 Board Service 持久化 Projects、Milestones、WorkItems、Project team members、workflow board summaries 和 delivery evidence summaries，并计算 Story priority queues 和 delivery evidence rollups；Requirement Service 管理需求拆分和覆盖度；Web Service 通过 dsh 浏览器表面和 JSON API 暴露相同数据，并可启用 session 认证和 API tokens。完整工作流编排、自动调度、资源租约和真实 SCM/CI adapters 仍在规划中。
+> 状态：内部看板模型已经建立。Host bundle 可以加载，本地 Board Service 持久化 Projects、Milestones、WorkItems、Project team members、workflow board summaries 和 delivery evidence summaries，并计算 Story priority queues 和 delivery evidence rollups；Requirement Service 管理需求拆分和覆盖度；Environment Service 解析版本化 profile、运行按项目归属的命令检查、记录已脱敏准备产物，并以记录证据控制 Generator 就绪；Web Service 通过 dsh 浏览器表面和 JSON API 暴露相同数据，并可启用 session 认证和 API tokens。完整工作流编排、自动调度、资源租约和真实 SCM/CI adapters 仍在规划中。
 
 ## 能力面
 
@@ -79,10 +79,11 @@ Milestone 是项目级交付目标，不是需求树父节点。把 Epic 分配�
 
 ## Service APIs
 
-HuntianLing 暴露三个 host-side Cordis service：
+HuntianLing 暴露 host-side Cordis services：
 
 - `huntianling.requirements`：需求管理 API。创建和拆分 Epic、Feature、Requirement/Story、Task、Bug 和 Research；更新分析和设计文本；维护验收标准；把子项链接到已覆盖验收标准；读取需求树和覆盖度汇总。
 - `huntianling.board`：看板管理 API。管理项目、里程碑、团队成员、容量汇总、WorkItem 分配、workflow board summaries、delivery evidence summaries、delivery evidence rollups、里程碑交付切片、WorkItem CRUD、状态流转、角色认领、看板视图、里程碑视图、树查询、覆盖度查询和流转门禁。
+- `huntianling.environment`：标准环境 API。解析版本化 Node/pnpm profile，在目标工作区运行配置的准备/检查命令，记录按项目归属的就绪状态、命令退出、脱敏输出、产物、能力探针、Skill 缺口和环境替换结果，并根据记录证据回答 Generator 是否可以启动。
 - `huntianling.web`：浏览器/API API。启动和停止本地 HTTP 服务，返回 dsh 显示表面，生成按项目过滤的看板 URL，并可要求 session 或 API token 认证。
 
 典型需求管理调用：
@@ -144,6 +145,16 @@ board.updateDeliveryEvidenceSummary(item.id, {
   riskAcceptances,
 });
 board.getProjectDeliveryEvidenceRollup(project.id);
+```
+
+典型环境管理调用：
+
+```ts
+const environment = ctx.get('huntianling.environment');
+
+const prepared = environment.prepare({ projectId: project.id, workspaceRoot });
+environment.canStartImplementation(workspaceRoot, project.id);
+environment.lastPrepare(project.id, workspaceRoot);
 ```
 
 典型 Web 表面调用：
@@ -250,6 +261,16 @@ HTTP endpoints：
 | `GET` | `/api/v1/projects/:projectId/main-board/team` | 读取包含 capacity、WIP、已分配卡片、未分配卡片和团队告警的 Team board |
 | `GET` | `/api/v1/projects/:projectId/main-board/workflow` | 读取 Workflow board 泳道、workflow summaries、Story queue、approvals、reviews、failed checks 和 scheduler reasons |
 | `GET` | `/api/v1/projects/:projectId/main-board/evidence` | 读取 Evidence board 泳道，以及 code、PRs、reviews、CI、checks、obligations、risk acceptances、security、reliability 和 trust 的 Project rollups |
+| `GET` | `/api/v1/projects/:projectId/governance/dashboard` | 读取项目义务、控制覆盖、风险登记、开放例外、安全/可靠性/可信准备度和证据报告状态 |
+| `GET` | `/api/v1/milestones/:milestoneId/governance/dashboard` | 读取 Milestone 的合规、安全、可靠性和可信准备度汇总 |
+| `GET` | `/api/v1/work-items/:workItemId/governance/dashboard` | 读取 WorkItem 的必需控制、已映射检查、缺证据、残余风险、待审批项和 provenance |
+| `GET` | `/api/v1/issue-sync/catalog` | 列出 GitHub、Gitea、GitLab issue adapters 和字段所有权 |
+| `POST` | `/api/v1/environment/prepare` | 为可选 Project 准备并验证工作区，记录命令结果和产物 |
+| `GET` | `/api/v1/environment/fleets` | 列出已准备的本地和替换环境 slots |
+| `POST` | `/api/v1/environment/replace` | 准备替代环境，同时保留或明确报告未提交工作 |
+| `GET/POST` | `/api/v1/projects/:projectId/issue-trackers` | 列出或绑定项目的可选 issue tracker |
+| `POST` | `/api/v1/projects/:projectId/issue-sync/import` | 把外部 Issue 导入为内部 WorkItem |
+| `POST` | `/api/v1/work-items/:workItemId/issue-sync/export` | 把 WorkItem 导出到已绑定 tracker |
 | `GET` | `/api/v1/projects/:projectId/delivery-evidence` | 读取 Project delivery evidence summaries 和 rollup counts |
 | `GET` | `/api/v1/projects/:projectId/unlinked-code` | 读取配置的 SCM adapters 发现的未关联 external code |
 | `GET` | `/api/v1/projects/:projectId/workflow-runs` | 把项目 workflow board summaries 作为当前 run list 读取 |

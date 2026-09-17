@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "role": "generator",
+  "files": [
+    "src/host/board/types.ts",
+    "src/host/board/executed-evidence.ts",
+    "src/host/board/store.ts",
+    "src/host/agents/evidence.ts",
+    "src/host/agents/runtime.ts",
+    "src/host/tools/invoke.ts",
+    "src/host/web/server.ts",
+    "src/host/harness/service.ts",
+    "test/unit/gates-d16.test.mjs",
+    "test/unit/customer-progress.test.mjs",
+    "test/unit/agents-runtime.test.mjs",
+    "test/unit/story-delivery.test.mjs",
+    "test/unit/harness-measure.test.mjs",
+    "test/unit/web-harness.test.mjs",
+    "test/unit/board-store.test.mjs",
+    "test/unit/evidence-cr12.test.mjs",
+    "test/unit/gate-manifest.test.mjs",
+    "test/unit/web-service.test.mjs",
+    "test/unit/issue-sync-d15.test.mjs",
+    "test/unit/governance-d12.test.mjs",
+    "test/unit/tools-cr11.test.mjs",
+    "docs/requirements/backlog.md",
+    "docs/requirements/backlog.zh.md"
+  ],
+  "selfCheck": {
+    "typecheck": "pass",
+    "test": "pass",
+    "docSync": "pass",
+    "lint": "blocked",
+    "hygiene": "blocked"
+  }
+}

@@ -33,16 +33,22 @@ function readyCard(store, projectId) {
 function attachExecutedEvidence(store, card) {
   store.updateDeliveryEvidenceSummary(card.id, {
     checks: [{
-      id: 'evaluator:delivery-proof',
-      area: 'acceptance',
+      id: 'ci:delivery-proof',
+      area: 'ci',
       title: 'delivery proof',
       status: 'passing',
       required: true,
-      reason: 'executed',
-      evidenceIds: ['run-1'],
+      reason: 'exit 0',
+      evidenceIds: ['ci:tests'],
       acceptanceCriterionIds: [],
-      links: [],
-      producer: 'evaluator',
+      links: [{
+        kind: 'ci-run',
+        id: 'ci:tests',
+        label: 'pnpm test',
+        url: null,
+        acceptanceCriterionIds: [],
+      }],
+      producer: 'ci',
       executionKind: 'executed',
       designRevision: '',
     }],

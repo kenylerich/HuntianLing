@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D16",
+      "source": "user"
+    },
+    {
+      "text": "Simulated or unexecuted results cannot complete delivery or show customer delivery",
+      "source": "docs/requirements/backlog.md"
+    },
+    {
+      "text": "Recheck the isolated reproduction, then cover the production start/evaluate/transition APIs and customer progress. An empty application with failing checks, an unconfigured executor, and a simulated evaluator must each fail to produce accepted delivery.",
+      "source": "docs/requirements/backlog.md#D16"
+    },
+    {
+      "text": "Separate demonstration, self-check, manual, and executed evidence at the producing service. Caller declarations such as independent: true, environmentReady: true, or a producer label must not establish executed success. Existing affected evidence must be invalidated or excluded until revalidated.",
+      "source": "docs/requirements/backlog.md#D16"
+    },
+    {
+      "text": "Preserve legitimate external CI and evaluator evidence when it has verifiable provenance and satisfies project policy. Add negative regression tests and a positive verified-evidence case; do not merely hide the delivered label in the UI.",
+      "source": "docs/requirements/backlog.md#D16"
+    }
+  ],
+  "goal": "Simulated or unexecuted results cannot complete delivery or show customer delivery",
+  "actors": ["developer", "customer"],
+  "scenarios": [
+    "an empty application with failing checks cannot produce accepted delivery",
+    "an unconfigured executor cannot produce accepted delivery",
+    "a simulated evaluator cannot produce accepted delivery",
+    "demonstration, self-check, manual, and executed evidence stay distinct at the producing service",
+    "independent: true, environmentReady: true, or a producer label cannot establish executed success",
+    "existing simulated evidence is excluded until revalidated",
+    "verified CI or Git evidence with provenance can still complete delivery and customer progress",
+    "the transition API blocks delivered; the customer view is not the only gate"
+  ],
+  "constraints": [
+    "real Agent execution stays in a later slice",
+    "do not only hide the delivered label in the UI"
+  ],
+  "nonGoals": [
+    "real Agent execution",
+    "real standard environment preparation",
+    "replacing the internal board"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

@@ -83,5 +83,33 @@ test('root plugin provides board and requirement management services', () => {
   assert.equal(typeof services.get('huntianling.database')?.schemaVersion, 'function')
   assert.equal(typeof services.get('huntianling.workflow')?.plan, 'function')
   assert.equal(typeof services.get('huntianling.dispatch')?.recommend, 'function')
+  assert.equal(typeof services.get('huntianling.governance')?.listPacks, 'function')
+  assert.equal(typeof services.get('huntianling.issueSync')?.listProviders, 'function')
+  assert.deepEqual(services.get('huntianling.issueSync')?.listProviders(), ['github', 'gitea', 'gitlab'])
   assert.equal(disposers.length > 0, true)
+})
+
+test('root plugin wires environment profile config into the production composition', () => {
+  const services = new Map([
+    ['huntianling.workspaceRoot', mkdtempSync(join(tmpdir(), 'huntianling-plugin-env-'))],
+  ])
+  const ctx = {
+    get: (name) => services.get(name),
+    provide: (name, value) => {
+      services.set(name, value)
+    },
+    effect: () => undefined,
+    plugin: (plugin, config) => plugin.apply(ctx, config),
+  }
+
+  huntianling.apply(ctx, {
+    web: { autoStart: false },
+    environment: {
+      profile: {
+        version: 'contract-d17',
+      },
+    },
+  })
+
+  assert.equal(services.get('huntianling.environment')?.profile().version, 'contract-d17')
 })

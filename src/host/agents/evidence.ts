@@ -7,7 +7,14 @@ import {
   mergeChecksByProducer,
   workItemDesignRevision,
 } from '../board/executed-evidence.js';
-import type { DeliveryEvidenceCheck, WorkItemId } from '../board/types.js';
+import {
+  DELIVERY_EVIDENCE_LINK_KINDS,
+  type DeliveryEvidenceCheck,
+  type DeliveryEvidenceExecutionKind,
+  type DeliveryEvidenceLink,
+  type DeliveryEvidenceLinkKind,
+  type WorkItemId,
+} from '../board/types.js';
 
 export function persistGeneratorSelfCheck(
   board: BoardService,
@@ -48,6 +55,11 @@ export function persistEvaluatorEvidence(
   if (item === undefined) return;
   const record = asObject(output);
   const criteria = Array.isArray(record.criteria) ? record.criteria : [];
+  const outputLinks = asLinks(record.provenanceLinks);
+  const outputEvidenceRefs = stringArray(record.evidenceRefs);
+  const executionKind: DeliveryEvidenceExecutionKind = record.executionKind === 'executed'
+    ? 'executed'
+    : 'demonstration';
   const revision = workItemDesignRevision(item);
   const existing = board.listDeliveryEvidenceSummaries({ workItemId: item.id })[0];
   const existingChecks = existing?.checks ?? [];
@@ -58,6 +70,8 @@ export function persistEvaluatorEvidence(
       ? criterion.id
       : `criterion-${String(index + 1)}`;
     const passed = criterion.result === 'pass';
+    const links = asLinks(criterion.links);
+    const evidenceIds = stringArray(criterion.evidenceIds);
     return {
       id: `evaluator:${id}`,
       area: 'acceptance',
@@ -65,11 +79,11 @@ export function persistEvaluatorEvidence(
       status: passed ? 'passing' : 'failing',
       required: true,
       reason: typeof criterion.evidence === 'string' ? criterion.evidence : 'evaluator',
-      evidenceIds: [runId],
+      evidenceIds: evidenceIds.length > 0 ? evidenceIds : (outputEvidenceRefs.length > 0 ? outputEvidenceRefs : [runId]),
       acceptanceCriterionIds: [],
-      links: [],
+      links: links.length > 0 ? links : outputLinks,
       producer: 'evaluator',
-      executionKind: 'executed',
+      executionKind,
       designRevision: revision,
     };
   });
@@ -85,7 +99,7 @@ export function persistEvaluatorEvidence(
       acceptanceCriterionIds: [],
       links: [],
       producer: 'evaluator',
-      executionKind: 'executed',
+      executionKind: 'demonstration',
       designRevision: revision,
     });
   }
@@ -93,6 +107,7 @@ export function persistEvaluatorEvidence(
     checks: mergeChecksByProducer(existingChecks, checks, 'evaluator'),
     provenanceLinks: [
       ...existingProvenance.filter((link) => link.id !== 'evaluator-run'),
+      ...outputLinks.filter((link) => existingProvenance.every((existing) => existing.id !== link.id)),
       {
         kind: 'evidence-record',
         id: 'evaluator-run',
@@ -108,4 +123,27 @@ export function persistEvaluatorEvidence(
 function asObject(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
+}
+
+function asLinks(value: unknown): DeliveryEvidenceLink[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => asObject(item))
+    .filter((item) => typeof item.id === 'string' && typeof item.label === 'string' && isLinkKind(item.kind))
+    .map((item) => ({
+      kind: item.kind as DeliveryEvidenceLinkKind,
+      id: item.id as string,
+      label: item.label as string,
+      url: typeof item.url === 'string' ? item.url : null,
+      acceptanceCriterionIds: [],
+    }));
+}
+
+function isLinkKind(value: unknown): value is DeliveryEvidenceLinkKind {
+  return typeof value === 'string' && DELIVERY_EVIDENCE_LINK_KINDS.includes(value as DeliveryEvidenceLinkKind);
 }

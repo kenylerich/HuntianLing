@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": [
+    "REQ-ISSUE-001"
+  ],
+  "outcome": "External cards mirror WorkItems with provenance and conflict handling; they do not own the lifecycle",
+  "acceptance": [
+    "adapters for GitHub Issues, Gitea Issues, and GitLab Issues are available where configured",
+    "external issues map to internal WorkItems through stored external references",
+    "internal parent-child hierarchy, milestones, acceptance coverage, agent feedback, and evidence stay owned even when the tracker lacks those concepts",
+    "import, export, and sync conflict reporting are available",
+    "externally synchronized fields and internally owned fields are marked",
+    "projects run with no issue tracker integration",
+    "an external completed close is a recovery event unless internal delivery evidence and the gate result have been published onto the external card",
+    "customers cannot bind trackers or export WorkItems"
+  ],
+  "inScope": [
+    "optional issue tracker adapters and stored external references",
+    "import, export, and conflict reporting",
+    "field ownership marks",
+    "recovery of uncertified external completed closes"
+  ],
+  "outOfScope": [
+    "replacing the internal board",
+    "making GitHub Issues the source of truth"
+  ],
+  "assumptions": [
+    "hosted SCM already talks to GitHub, Gitea, and GitLab with call-time tokens",
+    "this repository's GitHub Issue lifecycle workflows stay a projection of HuntianLing's own Issues, not the product adapter"
+  ],
+  "openQuestions": []
+}

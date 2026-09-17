@@ -1,9 +1,9 @@
 ---
 doc_status: active
-doc_version: 2026-09-12.19
+doc_version: 2026-09-13.2
 created: 2026-09-10
-last_reviewed: 2026-09-12
-review_after: 2026-10-12
+last_reviewed: 2026-09-13
+review_after: 2026-10-13
 ---
 
 # HuntianLing 需求 Backlog
@@ -14,13 +14,15 @@ review_after: 2026-10-12
 
 | 状态 | 版本 | 创建日期 | 最近复审 | 下次复审 |
 | --- | --- | --- | --- | --- |
-| `active` | `2026-09-12.19` | 2026-09-10 | 2026-09-12 | 2026-10-12 |
+| `active` | `2026-09-13.2` | 2026-09-10 | 2026-09-13 | 2026-10-13 |
 
 ## 摘要
 
 HuntianLing 是 dsh 插件：界面是标准开发看板，后端准备标准 vibe coding 环境。登录后客户、开发和管理员界面共享 WorkItem 记录。MKT 收集原始需求；Planner、Generator 和 Evaluator 在开发看板背后运行。Skill 声明能力边界和深度，使弱模型仍能在传感器约束下完成有边界的切片。[Harness Engineering 产品定位](harness-engineering.zh.md) 说明原文背景、方向审视和自身开发方法。
 
 本文档收集已经讨论过的 HuntianLing 产品需求。它是未来 WorkItems 的规划来源；实现时可以把任何条目拆分为 Epics、Features、Requirements/Stories、Tasks、Bugs、Research 和 Milestones，并在内部看板继续跟踪。
+
+提交 `614dcd6` 的客户验收为 **revision-required**。[2026-09-13 评审](reviews/2026-09-13-customer-acceptance.zh.md) 记录了错误交付、执行缺口和客户 API 数据暴露。实现条目说明现有组件，不代表已验收能力。D16 和 D18-D21 仍未满足完整验收标准。
 
 ## 目录
 
@@ -72,7 +74,7 @@ HuntianLing 是 dsh 插件：界面是标准开发看板，后端准备标准 vi
 
 ### REQ-HARNESS-001: 可复现的项目环境
 
-状态：规划中。
+状态：部分实现。
 
 系统必须准备并验证 Agent 实现项目需求所需的环境。
 
@@ -90,6 +92,8 @@ HuntianLing 是 dsh 插件：界面是标准开发看板，后端准备标准 vi
 实现状态：
 
 - `huntianling.environment` 内置配置 `huntianling.node-pnpm` 1.0.0。准备报告就绪或阻塞，可用于第二个工作区，保留已有文件，只记录凭据名称不写秘密，并把 probe 的 lint/hygiene 记为阻塞。
+- 生产组合接受 `environment` profile 配置，用于命令、版本覆盖、命令超时/输出长度和本地执行策略。未传入测试 runner 时，准备会在目标工作区通过本地宿主进程运行 profile 命令，并在 `.huntianling/environment-runs/<prepareRunId>/` 下记录按项目归属的命令状态、退出码、脱敏输出和产物。
+- 就绪状态现在来自最近一次匹配 Project/workspace 的准备记录。`canStartImplementation` 不再创建合成通过结果；当必需命令、工具、Skill、依赖或执行器探针被阻塞时，Story Delivery 和 Generator 都会拒绝开始实现。
 - `POST /api/v1/environment/replace` 用同一份 profile 准备 replacement fleet slot。未提交工作默认复制；不带 `acceptUncommittedLoss` 就丢弃会阻塞。`GET /api/v1/environment/fleets` 列出 local 和 remote slots。
 
 关联需求：`REQ-AGENT-002`、`REQ-AGENT-004`、`REQ-TOOL-001`、`REQ-SKILL-003`、`REQ-SCM-001`。
@@ -138,6 +142,7 @@ Story 交付运行必须能够承受上下文压缩、Agent 中断和执行环�
 - Evaluator 运行会把每条验收标准的已执行检查写到所属 WorkItem。Generator 自检存为 `self_check`，不能把客户进度标为已交付。
 - 证据记录产生者和设计版本。更改分析、设计或验收会把先前通过的已执行检查标为过期并阻塞。
 - 客户可见的已交付要求当前版本上存在通过的 Evaluator、CI 或本地 Git 已执行检查。备注、未执行链接和缺失证据都不算。项目 Definition of Done 不能关闭这条已执行证据门。
+- Demonstration、self-check 和 manual 结果与 executed evidence 保持区分。`independent: true`、`environmentReady: true` 和 producer 标签不能证明已执行成功。确定性 Evaluator 输出存为 `demonstration`，不能完成 `delivered` 或客户已交付。声称 `executed` 但没有 CI 或 Git 出处的模拟记录会被降为 `demonstration`，直至重新验证。带出处的真实 CI 和 Git 证据仍可通过状态转换 API 完成交付。
 
 ### REQ-HARNESS-004: Harness 评价与持续改进
 
@@ -182,12 +187,13 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 实现状态：
 
 - `huntianling.harness` 会记录一次演示：用已交付的 Node/pnpm profile 准备全新工作区，再把一个 Story 跑过失败评价、修复、中断、恢复和 Evaluator 证据。客户可见的已交付由该证据更新。
+- 演示现在先为全新工作区写入按项目归属的环境准备结果，再通过这条记录驱动 Story Delivery，不再依赖调用方传入 ready 标志。
 - 演示步骤标为 `manual`、`external-agent` 或 `huntianling-runtime`。覆盖扫描和 live-model trial 步骤会被记录。lint 和 hygiene 保持 blocked。未绑定的真实模型是已标注缺口，不是通过的门禁。
 - 维护者专有的 OAuth 准备仍列为后续缺口，而不是通过的门禁。托管 SCM/CI 适配器已作为调用时可选集成存在。
 
 ### REQ-HARNESS-006: 内置三 Agent 开发系统
 
-状态：规划中。
+状态：部分实现；D18 客户验收失败。本地候选生成是确定性逻辑，不能证明 dsh Agent 执行。
 
 插件必须将 Planner、Generator 和 Evaluator 实现为标准开发环境中的三个可执行 Agent。
 
@@ -203,13 +209,16 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 实现状态：
 
-- `huntianling.agents` 提供有版本的 Planner、Generator、Evaluator 任务定义。确定性执行器校验输出、路由含 repair 的类型化交接、拒绝 Generator 自我验收，并恢复中断运行。真实模型执行仍在规划中。
+- `huntianling.agents` 提供有版本的 Planner、Generator、Evaluator 任务定义。运行会记录 execution reference、任务/会话 id、工具调用、产物和方法 trace。
+- Story Delivery 现在会在项目环境真实准备完成后，通过 `huntianling-runtime` 调用三个 Agent。Generator 写入候选文件和候选版本，Evaluator 独立检查候选版本及验收标记，失败评价会把有界修复路由回 Generator。
+- Evaluator 输出可凭生成的 `ci:`/`git:` id 和 changed-file 链接保存为 executed，并未核实实际执行。验收评审复现了异常候选与伪造证据仍能交付，此门禁需要修正。
+- 真实模型执行缺失。本地候选路径尚未满足所要求的客户交付闭环。
 
 关联需求：`REQ-AGENT-001`、`REQ-AGENT-002`、`REQ-FLOW-014`、`REQ-FLOW-020`、`REQ-HARNESS-001`、`REQ-HARNESS-003`。
 
 ### REQ-HARNESS-007: 可执行工程方法基线
 
-状态：规划中。
+状态：部分实现；D19 已有 Planner 元数据和输出传感器，但尚未验证实际 dsh 任务使用它们。
 
 标准环境必须内置可用的工程方法基线，指导三个 Agent 并约束其输出。
 
@@ -225,12 +234,14 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 实现状态：
 
 - 默认方法基线目前只含 User Story。启用该方法会在 Planner 输出中增加 `userStory` 产物；缺少方法 Skill 时 Planner 任务不能启动。
+- Agent 运行现在记录所选方法 id/版本、方法 Skill 版本、所选深度、已执行的 Skill 深度步骤、输入传感器、输出字段传感器和方法检查。无效 Planner 输出会被拒绝，并留下包含失败传感器和下一深度建议的 rejected run 记录。
+- Story Delivery 在计划步骤前解析项目默认方法或 WorkItem 所选方法，因此交付链会被看板展示的同一套方法和 Skill 记录约束。更多 Generator/Evaluator 方法包仍是后续扩展。
 
 关联需求：`REQ-METHOD-001`、`REQ-METHOD-002`、`REQ-SKILL-001`、`REQ-SKILL-002`、`REQ-FLOW-001`、`REQ-HARNESS-004`、`REQ-HARNESS-006`。
 
 ### REQ-HARNESS-008: 切片级商业质量
 
-状态：部分实现。
+状态：部分实现；D18-D21 客户验收为 revision-required。组件测试通过不能证明商业交付。
 
 商业质量的 vibe coding 在一条已确认的原始需求切片上证明，而不是一次模型调用生成整个产品。弱模型使用 Skill 深度和传感器，而不是假定模型很强。
 
@@ -246,8 +257,10 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 
 实现状态：
 
-- 切片把 Evaluator 的逐条标准证据写到所属 WorkItem。客户可见的已交付由该已执行证据更新，而不是 Generator 自检或手工备注。
-- 测试覆盖因缺少 coding 或 MKT Skill 覆盖被拦住的切片，以及校验反复失败后降档的切片。
+- 切片把 Evaluator 的逐条标准证据写到所属 WorkItem。客户可见的已交付由带出处的已执行 CI、Git 或 runtime Evaluator 证据更新，而不是 Generator 自检、demonstration Evaluator 输出、调用方声明或手工备注。
+- Story Delivery 检查点保留候选版本、产物引用、任务/会话/工具引用、待处理副作用、证据引用和预算使用。若中断后、评价前候选代码变化，恢复会阻塞；若评价已经失败并要求修复，恢复仍可进入 repair。
+- Harness 自身开发验收现在使用生产环境 runner 准备全新项目，驱动 Planner/Generator/Evaluator 经历真实候选失败、修复和独立复评，并且只在 executed 证据通过后把客户进度标为已交付。
+- 测试覆盖 runtime 交付通过、缺少 Skill/环境阻塞、方法传感器拒绝、反复校验失败降档、失败评价修复、基于版本的恢复阻塞，以及 Web 触发的自身开发验收。
 
 ## 当前基线
 
@@ -268,7 +281,7 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 | REQ-AUTH-001 | Web 登录和 Session 认证 | 已实现配置化 PBKDF2 用户、SQLite 用户目录、session cookies、API tokens、logout 和 login audit |
 | REQ-AUDIT-001 | Audit log | 已实现 Board Store write events、Project 或 WorkItem v1 API reads、login auth events 以及 Admin browser visualization 的基础能力 |
 | REQ-TRACE-001 | 从父项到子项的验收标准覆盖度 | 已支持 WorkItem 后代汇总 |
-| REQ-DATA-001 | Database service | 本地部署已实现 SQLite；PostgreSQL 仍在计划中 |
+| REQ-DATA-001 | Database service | 本地部署已实现 SQLite，并通过 `huntianling.database` 支持 PostgreSQL |
 | REQ-DATA-002 | 本地文件存储 | 已实现 workspace 文件系统上传，并由数据库保存 metadata |
 | REQ-AUTH-002 | 密码凭据安全 | Argon2id 为首选，bcrypt/PBKDF2 为 fallback，并支持 rotation 和 disable |
 | REQ-COLLAB-003 | 会话驱动的 Agent 任务管理 | 首个切片和 split/merge 任务类型、transfer 字段、runtime 拒绝、pending-approval gate，以及开发者可见的开放任务 |
@@ -288,6 +301,12 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 | REQ-SKILL-004 | 技术 Skill packs | 已实现可安装、带版本的 frontend、backend、database 及相关 packs，含扫描推荐、WorkItem 声明和按任务加载 |
 | REQ-AUTH-003 | 区域化登录策略 | 已实现 cn/global/auto、按域名路由、手动切换区域，以及登录事件记录 region |
 | REQ-AUTH-004 | OAuth 登录 Providers | 已实现 Google OIDC、GitHub OAuth 和微信 QR 的 start/callback/unlink，带 PKCE/state，identities 不写入看板记录 |
+| REQ-GOV-001 | Compliance obligation registry | 已实现项目级义务生命周期、reviewer 审批、WorkItem 关联和影响标记 |
+| REQ-GOV-002 | Certification control packs | 已实现 NIST CSF 2.0、OWASP ASVS、NIST AI RMF 和 ISO/IEC 42001 packs，以及自定义版本化 packs 和 certification readiness |
+| REQ-SEC-001 | Security requirement gates | 已实现 WorkItem 分类、威胁模型、扫描证据接入、残余风险接受和可配置交付阻断 |
+| REQ-REL-001 | Reliability and resilience gates | 已实现 SLO 记录、可观测性计划、production-facing 门禁，以及 Project/Milestone readiness |
+| REQ-TRUST-001 | AI trustworthiness and provenance | 已实现 agent-run provenance、confidence/assumption 记录、AI 风险评估和可配置 provenance 门禁 |
+| REQ-TRUST-002 | Evidence reports and attestations | 已实现从草稿到批准的报告、不可变快照以及 JSON/Markdown 导出 |
 
 ## 需求和看板管理
 
@@ -582,9 +601,9 @@ HuntianLing 必须支持真实数据库层保存生产数据，同时保留轻�
 
 实现状态：
 
-- `huntianling.database` 是内部持久化 service。本地部署通过 `node:sqlite` 使用 SQLite；PostgreSQL 仍在计划中，选中时会失败退出。
-- Schema migrations 记录在 `schema_migrations` 中，版本单调递增。
-- 打开 workspace 时，若数据库还没有 board document，会把 `.huntianling/board.json` 导入 SQLite 表。之后的读写以 SQLite 为 source of truth。
+- `huntianling.database` 是内部持久化 service。本地部署默认通过 `node:sqlite` 使用 SQLite。团队部署通过 `driver: postgresql` 和 `postgresUrl` 选择 PostgreSQL；缺失或无效的 PostgreSQL 设置会在加载时失败退出。
+- Schema migrations 记录在 `schema_migrations` 中，SQLite 和 PostgreSQL 都使用单调递增版本。
+- 打开 workspace 时，若数据库还没有 board document，会把 `.huntianling/board.json` 导入数据库表。之后的读写以所选 driver 为 source of truth。
 - 当前 board collections 持久化为 projects、work items、milestones、team members、delivery slices、workflow summaries、delivery evidence、intake records、audit events、acceptance criteria、coverage 和 links 表。
 - 大文件字节存储在数据库外部。文件 metadata、hashes、extracted-text status 和 storage-path references 保存在 `stored_files`。
 
@@ -2094,6 +2113,7 @@ HuntianLing 必须建模 agents 在 dsh 中可使用的 tools。
 实现状态：
 
 - 内置工具注册表按角色和任务类型允许 original-requirement 写入、typecheck、test、doc-sync、git、CI、`browser.navigate`、`image.analyze`、`document.parse`、`database.migrate` 和 `web-api.call`，拒绝越权使用，并在环境准备时记录调用。
+- 环境准备会记录命令级工具调用以及它们对交付的必需/可选影响；被阻塞的执行器和缺失工具会保留在准备结果中。
 - 调用剩余类别工具会写入 `ToolCallEvidence`。当调用影响交付时，WorkItem evidence summary 会写入 `tool` producer check。托管 browser fleets 会失败并报错。Web-api transport 仅在调用时使用，不持久化 secrets。
 
 Tool categories：
@@ -2321,7 +2341,8 @@ huntianling.issueSync
 - GitHub lifecycle policy 会阻止缺少 delivery gate certificate 的 `completed` workflow dispatch；没有该 certificate 的 completed native Issue close events 会重新打开 Issue，并把 Project card 恢复到之前的开放泳道或 In review。
 - 手动 `recover_closed` workflow event 会重新打开已经非法关闭的 Issue card，并把它返回 In review，让未完成 tasks、evidence 和 gate checks 继续可见。
 - `recover_illegal_closed` workflow event 和 scheduled lifecycle sweep 会批量恢复非法 completed closes，避免未完成 tasks 从 board 上消失。
-- 完整内部 issue-sync adapters、stored external references、import/export flows 和 conflict reporting 仍在计划中。
+- `huntianling.issueSync` 提供可选的 GitHub、Gitea 和 GitLab Issues adapters。Stored external references 把 tracker cards 映射到 WorkItems；title、body 和 state 可以同步，而 parent、milestone、acceptance、agent feedback、evidence 和 status 仍由内部拥有。
+- 支持 import、export 和 sync conflict reporting。项目可以不接 tracker。外部 completed close 在交付门禁证明尚未发布到外部卡片、或内部 gates 不允许交付时，会作为 recovery 重新打开。外部卡片不会把 WorkItems 标为 delivered。
 
 ## 治理、合规、安全、可靠性和可信
 
@@ -2355,7 +2376,9 @@ GET  /api/v1/work-items/:id/compliance
 - WorkItem delivery evidence summaries 可以保存 compliance obligation summaries，包含 jurisdiction、source、owner、reviewer、effective date、review date、status、control ids 和 evidence links。
 - WorkItem compliance 读取会暴露 obligations、governance checks、security checks、reliability checks、trust checks、risk acceptances 和当前 governance blockers。
 - 未批准 obligations 会阻止已配置的 WorkItem delivery transition 进入 `delivered`。
-- Project 级 obligation registries、approval workflows、framework pack selection 和 obligation lifecycle APIs 仍在计划中。
+- `huntianling.governance` 保存项目级义务，包含 kind、applicability reason、owner、reviewer、dates、status，以及关联的 controls、WorkItems、acceptance criteria、data categories、user roles、source documents、risks、checks 和 evidence。
+- 义务从 `draft` 开始，submit 后进入 `pending_review`，仅在指定 reviewer 批准后成为 `approved`，随后可激活为 enforcement policy 或退休。
+- WorkItems 可标记 regulated data、authentication、authorization、audit、retention、AI output、payment、security、privacy 或 availability。
 
 ### REQ-GOV-002: Certification Control Packs
 
@@ -2374,6 +2397,12 @@ GET  /api/v1/work-items/:id/compliance
 ```text
 huntianling.governance
 ```
+
+实现状态：
+
+- 内置版本化 packs 覆盖 NIST CSF 2.0、OWASP ASVS、NIST AI RMF 和 ISO/IEC 42001。项目可选择 pack version；也可添加 internal baseline 和 customer audit 的自定义 packs。
+- 注册更新版本后，旧 pack versions 仍留在目录中，使历史 mappings 可解释。
+- Controls 映射到 WorkItems，并关联 checks、code evidence、CI reports、manual approvals 和 audit events。Certification readiness 可按 Project、Milestone 或 WorkItem 读取。
 
 ### REQ-SEC-001: Security Requirement Gates
 
@@ -2400,7 +2429,9 @@ POST /api/v1/work-items/:id/security/risk-acceptance
 
 - WorkItem security 读取会从 delivery evidence summary 暴露 security checks 和 security risk acceptances。
 - 状态为 `missing`、`failing` 或 `blocked` 的 required security checks 会显示为看板 blockers，并阻止已配置的 delivery completion。
-- Threat model records、scan ingestion、security classification、compensating controls 和 dedicated risk-acceptance write APIs 仍在计划中。
+- WorkItems 可按 security impact、data sensitivity、permission impact、exposed API surface、dependency risk 和 deployment risk 分类。
+- 配置后，高风险 WorkItems 需要威胁模型。安全证据可从 tests、code review、dependency scans、secret scans、static analysis、dynamic tests 和 manual reviews 接入。
+- 残余风险接受记录 approver、reason、scope、expiration 和 compensating controls，并可豁免失败的安全证据门禁。
 
 ### REQ-REL-001: Reliability and Resilience Gates
 
@@ -2427,7 +2458,8 @@ POST /api/v1/work-items/:id/reliability/evidence
 
 - WorkItem reliability 读取会从 delivery evidence summary 暴露 reliability checks 和 reliability risk acceptances。
 - Required reliability checks 会汇总到 Project、Milestone、WorkItem 和 Evidence board 视图。
-- SLO records、load-test ingestion、observability plans、rollback evidence、backup checks、incident links 和 dedicated reliability write APIs 仍在计划中。
+- SLO 记录保存 availability、latency、error budget、capacity、backup、restore 和 dependency assumptions。配置后，production-facing WorkItems 在交付前需要 observability plan。
+- Reliability readiness 会汇总到 Project 和 Milestone 视图。
 
 ### REQ-TRUST-001: AI Trustworthiness and Provenance
 
@@ -2454,7 +2486,8 @@ POST /api/v1/work-items/:id/ai-risk-assessment
 
 - WorkItem trust 读取会从 delivery evidence summary 暴露 trust checks、trust risk acceptances、evidence links 和 provenance links。
 - Required trust checks 和 open risk acceptances 会汇总到 cards、Evidence board lanes、Project evidence rollups 和 delivery transition blockers。
-- Agent-run provenance records、prompt/model/tool-call capture、AI risk assessment writes、confidence/assumption capture 和 human correction workflows 仍在计划中。
+- Agent-run provenance 记录 source inputs、model identity、skill versions、tool calls、generated output 和 verification。AI 生成的分析可保存 confidence、assumptions、limitations 和 open questions。
+- 配置后，缺失 provenance 会阻止 automated delivery claims。可把 human correction notes 附加到 provenance。
 
 ### REQ-TRUST-002: Evidence Reports and Attestations
 
@@ -2476,6 +2509,11 @@ GET  /api/v1/evidence-reports/:id
 POST /api/v1/evidence-reports/:id/approve
 GET  /api/v1/evidence-reports/:id/export
 ```
+
+实现状态：
+
+- Evidence reports 可按 Project、Milestone、WorkItem、release 和 certification scopes 创建。它们在 human owner 批准前保持 draft。
+- 已批准快照保存 timestamp、actor、source data version 和 export hash。支持 JSON 和 Markdown 导出；PDF 可通过 document rendering adapter 增加。
 
 ## Web 和 API 扩展
 
@@ -2604,7 +2642,10 @@ Web 服务提供一次登录和三种人群界面，投影同一组 WorkItem 记
 
 - WorkItem detail 会在 delivery gate、Evidence 和 Governance panels 中显示 governance blocker counts，包含会阻止 delivery 的 unapproved obligations 和 open risk acceptances。
 - Evidence workspace 包含 governance risk queue，会在 delivery blocker queue 旁边展示带有 unapproved obligations、open risk acceptances 和 governance blockers 的 WorkItems。
-- Project-level governance dashboards、review requests、approval actions、residual-risk acceptance actions 和 signed evidence reports 仍在计划中。
+- 已认证治理看板位于 `/developer/governance`，融合看板的 Governance workspace 会显示 applicable obligations、control coverage、risk register、open exceptions、security readiness、reliability readiness、AI trust assessments 和 evidence report status。
+- 治理看板上的 WorkItem detail 会显示 required controls、mapped checks、missing evidence、residual risks、approval requirements 和 trust provenance。
+- Milestone view 会汇总 planned delivery scope 的 compliance、security、reliability 和 trust readiness。
+- 开发者可以 request review、approve obligations、accept residual risk 和 sign evidence reports；客户操作返回 403。
 
 ## 审计和合规
 
@@ -2632,7 +2673,7 @@ GET /api/v1/work-items/:id/audit-events
 - v1 Web API 暴露 Project-scoped audit reads，支持 actor、action、target、date range 和 limit filters，并提供 WorkItem-scoped audit reads。
 - 浏览器 Admin workspace 包含 Audit Trail view，支持 actor、action、target type、target id、date range 和 limit filters，并显示 Project event timeline 以及 action、object、actor summaries。
 - WorkItem detail panels 会使用 WorkItem audit API 显示 scoped audit timelines。
-- Login、failed login、logout 和 API-token 创建会持久化为 `auth_events`，并通过 `GET /api/v1/admin/auth-events` 列出。Governance policy audit writes 和 report signing audit records 仍在计划中。
+- Login、failed login、logout 和 API-token 创建会持久化为 `auth_events`，并通过 `GET /api/v1/admin/auth-events` 列出。Governance pack selection、obligation lifecycle、residual-risk acceptance 和 evidence-report signing 会写入看板审计事件。
 - `/admin` 管理员界面可列出用户、创建目录用户、分配人群、授予项目归属并写审计事件、查看登录审计、访问设置和最近一次环境准备，以及读取项目审计。开发者访问返回 403。
 
 ## 实现顺序
@@ -2725,7 +2766,16 @@ GET /api/v1/work-items/:id/audit-events
 
 ### D16–D21 — 缺陷修正验收
 
-六个切片均为待实现；审查发现不等于实现或验收记录。放在 D15 之后是用户要求的交付顺序；表中依赖列表示技术前置。预期实现者为 Grok。每个切片开始前，先读取关联审查，检查最新源码和既有修复证据，记录问题是否仍可复现。已独立验证的修复可以满足切片，无须重复实现。每份完成记录必须关联 REQ 编号、已审查设计、实际变更集、执行检查、审查决定和剩余阻塞。缺少真实执行时，即使确定性测试通过，仍保持阻塞。
+D16-D21 是缺陷修正切片。放在 D15 之后是用户要求的交付顺序；表中依赖列表示技术前置。审查发现不等于实现或验收记录。每个切片开始前，先读取关联审查，检查最新源码和既有修复证据，记录问题是否仍可复现。已独立验证的修复可以满足切片，无须重复实现。每份完成记录必须关联 REQ 编号、已审查设计、实际变更集、执行检查、审查决定和剩余阻塞。缺少托管 live 执行时，即使本地 runtime 闭环通过，也继续记录为缺口。
+
+2026-09-13 已记录的实现与验收状态：
+
+- D18：已有候选文件及标注为执行的记录，但 Generator 写入验收标记模板，Evaluator 只匹配文本。抛异常的候选仍通过；生成的任务、会话和工具 id 不能证明 dsh 执行。验收为 revision-required。
+- D19：已有方法版本、Skill 版本、深度记录和 Planner 输出传感器。验收仍需实际 Agent 执行和行为传感器。
+- D20：检查点保留候选哈希，并在待评价前拒绝版本漂移；但评价后修改代码，旧证据仍允许交付。验收为 revision-required。
+- D21：全新项目准备可以运行，但演示使用空检查、预填需求和标记模板，未证明客户功能实现或自身开发变更集。验收为 revision-required。
+
+[客户验收评审](reviews/2026-09-13-customer-acceptance.zh.md) 的修复义务：封堵 D16 证据伪造；按实际行为完成 D18-D21；接通本地 CI（`REQ-CI-001`）和 OAuth exchange（`REQ-AUTH-004`）；执行客户 API 投影隔离（`REQ-WEB-007`、`REQ-AUTH-001`）；连接确认与认证工作区（`REQ-MKT-001`、`REQ-WEB-006`、`REQ-WEB-007`）。此评审不授权交付或关闭 Issue。除插件烟测外须执行 `pnpm run test:e2e:customer`，失败检查继续阻止发布。
 
 #### D16 — 真实门禁
 

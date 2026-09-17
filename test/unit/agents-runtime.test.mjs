@@ -76,6 +76,43 @@ test('user-story method changes planner output', () => {
   assert.ok(withMethod.output.acceptance.length > 0);
 });
 
+test('method execution records method version, skill depth steps, and passing sensors', () => {
+  const agents = runtime();
+  const run = agents.startRun({
+    agentId: 'planner',
+    executor: 'huntianling-runtime',
+    methodId: 'user-story',
+    depth: 1,
+    input: original,
+  });
+  assert.equal(run.methodTrace.methodId, 'user-story');
+  assert.equal(run.methodTrace.methodVersion, '1.0.0');
+  assert.equal(run.methodTrace.depthLevel, 1);
+  assert.equal(run.methodTrace.sensors.every((sensor) => sensor.status === 'pass'), true);
+  assert.ok(run.methodTrace.sensors.some((sensor) => sensor.id === 'output:userStory'));
+  assert.ok(run.methodTrace.steps.some((step) => step.name === 'validate' && step.actor === 'tool'));
+});
+
+test('method sensors reject invalid planner output and keep a rejected run record', () => {
+  const agents = runtime();
+  assert.throws(
+    () =>
+      agents.startRun({
+        agentId: 'planner',
+        executor: 'huntianling-runtime',
+        runId: 'invalid-method-output',
+        methodId: 'user-story',
+        input: { ...original, omitMethodOutput: true },
+      }),
+    (error) => error instanceof AgentTaskError && error.code === 'VALIDATION' && /userStory/.test(error.message),
+  );
+  const rejected = agents.getRun('invalid-method-output');
+  assert.equal(rejected.status, 'rejected');
+  assert.equal(rejected.methodTrace.methodId, 'user-story');
+  assert.equal(rejected.methodTrace.sensors.some((sensor) => sensor.id === 'output:userStory' && sensor.status === 'fail'), true);
+  assert.equal(rejected.methodTrace.nextDepth, 0);
+});
+
 test('missing required method skill blocks the planner task', () => {
   const skills = createSkillService();
   skills.disableForProject('p1', SKILL_PLANNER_USER_STORY);
@@ -276,8 +313,9 @@ test('evaluator persists criterion checks and generator self-check cannot delive
     },
   });
   const passed = board.getDeliveryEvidenceSummary(story.id);
-  assert.equal(hasExecutedDeliveryEvidence(passed, story), true);
-  assert.equal(board.transitionWorkItem(story.id, 'delivered').status, 'delivered');
+  assert.equal(passed.checks.some((check) => check.producer === 'evaluator' && check.executionKind === 'demonstration'), true);
+  assert.equal(hasExecutedDeliveryEvidence(passed, story), false);
+  assert.throws(() => board.transitionWorkItem(story.id, 'delivered'), /executed evidence|blocking delivery evidence/);
 });
 
 test('interrupted handoff can be resumed', () => {

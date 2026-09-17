@@ -36,6 +36,16 @@ export function resolveEvidenceProducer(value: unknown): DeliveryEvidenceProduce
   return 'manual';
 }
 
+export const VERIFIED_EXECUTION_LINK_KINDS = [
+  'ci-run',
+  'ci-artifact',
+  'coverage-report',
+  'commit',
+  'pull-request',
+  'code-review',
+  'changed-file',
+] as const;
+
 export function resolveEvidenceExecutionKind(
   value: unknown,
   producer: DeliveryEvidenceProducer,
@@ -47,12 +57,36 @@ export function resolveEvidenceExecutionKind(
     return value as DeliveryEvidenceExecutionKind;
   }
   if (producer === 'generator') return 'self_check';
-  if (producer === 'evaluator' || producer === 'ci' || producer === 'scm') return 'executed';
+  if (producer === 'evaluator') return 'demonstration';
   return 'manual';
 }
 
 export function isExecutedProducer(producer: DeliveryEvidenceProducer): boolean {
   return producer === 'evaluator' || producer === 'ci' || producer === 'scm';
+}
+
+export function hasVerifiableExecutionProvenance(
+  check: Pick<DeliveryEvidenceCheck, 'links' | 'evidenceIds'>,
+): boolean {
+  if (check.links.some((link) => (VERIFIED_EXECUTION_LINK_KINDS as readonly string[]).includes(link.kind))) {
+    return true;
+  }
+  return check.evidenceIds.some((id) =>
+    id.startsWith('ci:') || id.startsWith('git:') || id.startsWith('scm:'),
+  );
+}
+
+export function coerceEvidenceExecutionKind(
+  check: Pick<DeliveryEvidenceCheck, 'executionKind' | 'producer' | 'links' | 'evidenceIds'>,
+): DeliveryEvidenceExecutionKind {
+  const kind = resolveEvidenceExecutionKind(check.executionKind, check.producer);
+  if (kind !== 'executed') return kind;
+  if (hasVerifiableExecutionProvenance(check)) return 'executed';
+  if (check.producer === 'generator') return 'self_check';
+  if (check.producer === 'evaluator' || check.producer === 'manual' || check.producer === 'tool') {
+    return 'demonstration';
+  }
+  return 'manual';
 }
 
 export function isStaleDeliveryEvidence(
@@ -67,8 +101,9 @@ export function isStaleDeliveryEvidence(
 
 export function isExecutedPassingCheck(check: DeliveryEvidenceCheck): boolean {
   return check.status === 'passing'
-    && check.executionKind === 'executed'
-    && isExecutedProducer(check.producer);
+    && coerceEvidenceExecutionKind(check) === 'executed'
+    && isExecutedProducer(check.producer)
+    && hasVerifiableExecutionProvenance(check);
 }
 
 export function hasExecutedDeliveryEvidence(

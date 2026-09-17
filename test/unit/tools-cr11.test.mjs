@@ -224,7 +224,7 @@ test('tool calls that affect delivery appear on the WorkItem evidence summary', 
   const summary = board.getDeliveryEvidenceSummary(item.id);
   const check = summary.checks.find((row) => row.producer === 'tool');
   assert.equal(check.status, 'passing');
-  assert.equal(check.executionKind, 'executed');
+  assert.equal(check.executionKind, 'demonstration');
   assert.equal(check.area, 'evidence');
 });
 

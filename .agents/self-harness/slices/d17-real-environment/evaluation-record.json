@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "criteria": [
+    {
+      "id": "production environment preparation runs configured commands through a real local command executor when no test runner is supplied",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "the same versioned profile prepares two project workspaces and records profile version, workspace identity, command status, exit code, and log artifacts",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "missing executors, denied tools, missing commands, or failed required checks remain visible blockers",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "canStartImplementation reads the latest recorded prepare result and never manufactures passing checks",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "Generator is blocked when the latest project environment is not ready even if a caller passes environmentReady true",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "a repaired workspace becomes ready after a later prepare with passing required checks",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "optional lint and hygiene checks remain blocked when they are unavailable or probe-blocked",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "command output persisted for environment evidence is redacted for secret environment values",
+      "result": "pass",
+      "evidence": "test/unit/environment-d17.test.mjs"
+    },
+    {
+      "id": "root plugin wires environment profile config into the production composition",
+      "result": "pass",
+      "evidence": "test/unit/contract.test.mjs"
+    }
+  ],
+  "decision": "pass",
+  "round": 1
+}

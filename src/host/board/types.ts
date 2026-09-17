@@ -514,7 +514,7 @@ export type DeliveryEvidenceArea =
   | 'trust';
 export type DeliveryEvidenceStatus = 'missing' | 'pending' | 'passing' | 'failing' | 'blocked' | 'waived';
 export type DeliveryEvidenceProducer = 'evaluator' | 'ci' | 'scm' | 'generator' | 'manual' | 'tool';
-export type DeliveryEvidenceExecutionKind = 'executed' | 'self_check' | 'manual';
+export type DeliveryEvidenceExecutionKind = 'executed' | 'self_check' | 'manual' | 'demonstration';
 export type DeliveryEvidenceLinkKind =
   | 'repository'
   | 'branch'
@@ -659,6 +659,7 @@ export const DELIVERY_EVIDENCE_EXECUTION_KINDS: readonly DeliveryEvidenceExecuti
   'executed',
   'self_check',
   'manual',
+  'demonstration',
 ];
 
 export const DELIVERY_EVIDENCE_LINK_KINDS: readonly DeliveryEvidenceLinkKind[] = [
@@ -691,6 +692,41 @@ export const GOVERNANCE_OBLIGATION_STATUSES: readonly GovernanceObligationStatus
   'active',
   'retired',
 ];
+
+export const GOVERNANCE_IMPACT_FLAGS = [
+  'regulated_data',
+  'authentication',
+  'authorization',
+  'audit',
+  'retention',
+  'ai_output',
+  'payment',
+  'security',
+  'privacy',
+  'availability',
+] as const;
+export type GovernanceImpactFlag = (typeof GOVERNANCE_IMPACT_FLAGS)[number];
+
+export const SECURITY_RISK_LEVELS = ['none', 'low', 'medium', 'high', 'critical'] as const;
+export type SecurityRiskLevel = (typeof SECURITY_RISK_LEVELS)[number];
+
+export interface SecurityClassification {
+  readonly securityImpact: SecurityRiskLevel;
+  readonly dataSensitivity: SecurityRiskLevel;
+  readonly permissionImpact: SecurityRiskLevel;
+  readonly exposedApiSurface: SecurityRiskLevel;
+  readonly dependencyRisk: SecurityRiskLevel;
+  readonly deploymentRisk: SecurityRiskLevel;
+}
+
+export const DEFAULT_SECURITY_CLASSIFICATION: SecurityClassification = {
+  securityImpact: 'none',
+  dataSensitivity: 'none',
+  permissionImpact: 'none',
+  exposedApiSurface: 'none',
+  dependencyRisk: 'none',
+  deploymentRisk: 'none',
+};
 
 export const DELIVERY_RISK_AREAS: readonly DeliveryRiskArea[] = [
   'security',
@@ -931,6 +967,8 @@ export interface DeliveryRiskAcceptance {
   readonly status: DeliveryRiskAcceptanceStatus;
   readonly approver: string;
   readonly reason: string;
+  readonly scope: string;
+  readonly compensatingControls: readonly string[];
   readonly expiresAt: number | null;
   readonly links: readonly DeliveryEvidenceLink[];
 }
@@ -1218,6 +1256,9 @@ export interface WorkItemCreateInput {
   readonly methodId?: string | null;
   readonly rankingInputs?: RankingInputs;
   readonly requiredSkillPackIds?: readonly string[];
+  readonly governanceFlags?: readonly GovernanceImpactFlag[];
+  readonly securityClassification?: SecurityClassification;
+  readonly productionFacing?: boolean;
 }
 
 export interface WorkItemUpdateInput {
@@ -1246,6 +1287,9 @@ export interface WorkItemUpdateInput {
   readonly rankingInputs?: RankingInputs;
   readonly rankingOverride?: RankingOverride | null;
   readonly requiredSkillPackIds?: readonly string[];
+  readonly governanceFlags?: readonly GovernanceImpactFlag[];
+  readonly securityClassification?: SecurityClassification;
+  readonly productionFacing?: boolean;
 }
 
 export interface WorkItemFilter {
@@ -1296,6 +1340,9 @@ export interface WorkItem {
   readonly rankingInputs: RankingInputs;
   readonly rankingOverride: RankingOverride | null;
   readonly requiredSkillPackIds: readonly string[];
+  readonly governanceFlags: readonly GovernanceImpactFlag[];
+  readonly securityClassification: SecurityClassification;
+  readonly productionFacing: boolean;
   readonly archivedAt: number | null;
 }
 

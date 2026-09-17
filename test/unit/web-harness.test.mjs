@@ -32,7 +32,7 @@ test('developer can compare skill depth and run the self-development demonstrati
   const requirements = createRequirementManagementService(board);
   const skills = createSkillService();
   const environment = createEnvironmentService({ skills, board });
-  const agents = createAgentRuntime({ skills, board });
+  const agents = createAgentRuntime({ skills, board, environment });
   const harness = createHarnessService({ skills, workspaceRoot: root, board, agents, environment });
   const hash = passwordHash();
   const web = createWebService(

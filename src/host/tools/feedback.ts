@@ -32,7 +32,7 @@ export function inspectTaskContext(deps: {
     ? item.acceptance
     : item.acceptanceCriteria.map((criterion) => criterion.text);
   const profile = deps.environment?.profile();
-  const lastPrepare = deps.environment?.lastPrepare();
+  const lastPrepare = deps.environment?.lastPrepare(item.projectId);
   const sourceDocuments = deps.board.listIntakeSessions({ projectId: item.projectId }).flatMap((session) =>
     deps.board.getIntakeSessionBundle(session.id).sourceDocuments.map((document) => ({
       id: document.id,

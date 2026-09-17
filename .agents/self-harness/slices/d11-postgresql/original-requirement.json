@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [
+    {
+      "text": "请继续下一步 D11",
+      "source": "user"
+    }
+  ],
+  "goal": "huntianling.database can use PostgreSQL; SQLite remains the local default",
+  "actors": ["developer", "admin"],
+  "scenarios": [
+    "local deployments keep SQLite when no driver is configured",
+    "team deployments select PostgreSQL through huntianling.database config",
+    "upper layers keep using one database service and do not import a concrete driver",
+    "schema migrations and version tracking work on PostgreSQL",
+    "board reads and writes persist through PostgreSQL as the source of truth",
+    "large file bytes stay outside the database",
+    "missing PostgreSQL connection settings fail loud at load"
+  ],
+  "constraints": [
+    "SQLite remains the local default",
+    "governance packs are out of scope",
+    "do not start Phase D chrome on the fused board cockpit"
+  ],
+  "nonGoals": [
+    "governance packs",
+    "removing the fused board cockpit",
+    "replacing SQLite for local deployments"
+  ],
+  "openQuestions": [],
+  "confirmed": true
+}

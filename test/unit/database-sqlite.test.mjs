@@ -12,15 +12,16 @@ function tempRoot() {
   return mkdtempSync(join(tmpdir(), 'huntianling-database-'));
 }
 
-test('upper layers use huntianling.database and do not import node:sqlite', () => {
+test('upper layers use huntianling.database and do not import a concrete driver', () => {
   const board = readFileSync(new URL('../../src/host/board/store.ts', import.meta.url), 'utf8');
   const boardPlugin = readFileSync(new URL('../../src/host/board/plugin.ts', import.meta.url), 'utf8');
   const rootPlugin = readFileSync(new URL('../../src/host/plugin.ts', import.meta.url), 'utf8');
   const web = readFileSync(new URL('../../src/host/web/server.ts', import.meta.url), 'utf8');
-  assert.equal(board.includes('node:sqlite'), false);
-  assert.equal(boardPlugin.includes('node:sqlite'), false);
-  assert.equal(rootPlugin.includes('node:sqlite'), false);
-  assert.equal(web.includes('node:sqlite'), false);
+  for (const source of [board, boardPlugin, rootPlugin, web]) {
+    assert.equal(source.includes('node:sqlite'), false);
+    assert.equal(source.includes("from 'pg'"), false);
+    assert.equal(source.includes('postgres-worker'), false);
+  }
   assert.match(boardPlugin, /huntianling\.database/);
   assert.match(rootPlugin, /databasePlugin/);
 });
@@ -35,10 +36,10 @@ test('local deployments persist through SQLite and record schema version', () =>
   db.close();
 });
 
-test('PostgreSQL and blank config fail loud', () => {
+test('unknown driver and blank config fail loud', () => {
   const root = tempRoot();
   assert.throws(
-    () => createDatabaseService({ workspaceRoot: root, config: { driver: 'postgresql' } }),
+    () => createDatabaseService({ workspaceRoot: root, config: { driver: 'mysql' } }),
     (error) => error instanceof DatabaseError && error.code === 'UNSUPPORTED_DRIVER',
   );
   assert.throws(
