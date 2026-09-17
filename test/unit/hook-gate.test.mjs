@@ -46,6 +46,16 @@ test('exit 0 passes', () => {
   assert.deepEqual(gate.run(card(), 'inbox', 'triaged'), { ok: true });
 });
 
+test('exit 0 still passes when the hook closes stdin before reading a large payload', () => {
+  const dir = tempDir();
+  const gate = createHookGate({
+    id: 'closed-stdin',
+    command: writeHook(dir, 'closed-stdin.sh', 'exec 0<&-\nexit 0'),
+  });
+  const largeCard = { ...card(), body: 'x'.repeat(1024 * 1024) };
+  assert.deepEqual(gate.run(largeCard, 'inbox', 'triaged'), { ok: true });
+});
+
 test('non-zero exit blocks and the last stderr line is the reason', () => {
   const dir = tempDir();
   const gate = createHookGate({
