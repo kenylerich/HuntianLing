@@ -1,6 +1,6 @@
 {
   "name": "@kenylerich/dsh-huntianling",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "description": "HuntianLing — a DeepSeek Harness plugin that delivers a vibe-coding development environment with Planner, Generator, and Evaluator Agents, engineering methods, and a standard development board.",
   "type": "module",
@@ -12,6 +12,7 @@
   "files": [
     "lib",
     "cordis.yml",
+    "cordis.patch.yml",
     "README.md",
     "README.zh.md",
     "docs"
@@ -24,9 +25,15 @@
       "default": "./lib/index.js"
     },
     "./cordis.yml": "./cordis.yml",
+    "./cordis.patch.yml": "./cordis.patch.yml",
     "./host": {
       "types": "./lib/host/plugin.d.ts",
       "default": "./lib/host/plugin.js"
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   },
   "scripts": {

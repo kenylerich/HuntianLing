@@ -5,7 +5,7 @@
 import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import type { BoardService } from '../board/plugin.js';
-import { resolveWorkspaceRoot } from '../board/workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 import { createIssueSyncService, type IssueSyncService } from './service.js';
 
 export type { IssueSyncService };
@@ -18,11 +18,7 @@ const IssueSyncPlugin: Plugin = {
   apply(ctx: Context): void {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     if (!board) throw new Error('huntianling.board is required');
-    const configured = ctx.get('huntianling.workspaceRoot');
-    const workspaceRoot = resolveWorkspaceRoot({
-      ...(typeof configured === 'string' ? { explicit: configured } : {}),
-      env: process.env,
-    });
+    const workspaceRoot = resolvePluginWorkspaceRoot(ctx);
     ctx.provide('huntianling.issueSync', createIssueSyncService({ board, workspaceRoot }));
   },
 };

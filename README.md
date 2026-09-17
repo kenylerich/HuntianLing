@@ -304,10 +304,12 @@ Versioned main board endpoints:
 HuntianLing is loaded by dsh as a host bundle:
 
 ```sh
-dsh --profile huntianling
+dsh plugin --profile huntianling-qualification add /absolute/path/to/deepseek-harness-plugin
+dsh --profile huntianling-qualification --dump-config
+dsh --profile huntianling-qualification
 ```
 
-The `cordis.yml` at the package root is the loader entry; it imports `@kenylerich/dsh-huntianling/host`, whose default export is the root `Plugin` (see `src/host/plugin.ts`).
+The package manifest declares `cordis.patch.yml` through `dsh.bundle.patch`. That patch inserts one stable `huntianling` loader row referencing `@kenylerich/dsh-huntianling/host`, whose default export is the root `Plugin` (see `src/host/plugin.ts`). The default bundle row keeps the separate HuntianLing HTTP server disabled; a profile-level patch must provide the complete row configuration when enabling it. The older `cordis.yml` remains only for compatibility with the repository's previous standalone loader test and is not the DSH profile layer.
 
 ## Repository layout
 
@@ -317,7 +319,8 @@ README.md            this file
 docs/                documentation map, requirements, reviews, and architecture notes
 package.json         npm manifest (@kenylerich/dsh-huntianling)
 tsconfig*.json       strict-mode TypeScript project refs
-cordis.yml           dsh host composition
+cordis.patch.yml     installable DSH bundle layer
+cordis.yml           legacy standalone composition fixture
 src/
   index.ts           package entry; re-exports the root plugin
   host/

@@ -6,7 +6,7 @@ import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import type { AuthorityService } from '../authority/service.js';
 import type { BoardService } from '../board/plugin.js';
-import { resolveWorkspaceRoot } from '../board/workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 import { createScmService, type ScmService } from './service.js';
 import { resolveScmConfig, type ScmConfig } from './types.js';
 
@@ -21,11 +21,7 @@ const ScmPlugin: Plugin<ScmConfig> = {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     if (!board) throw new Error('huntianling.board is required');
     const authority = ctx.get('huntianling.authority') as AuthorityService | undefined;
-    const configured = ctx.get('huntianling.workspaceRoot');
-    const workspaceRoot = resolveWorkspaceRoot({
-      ...(typeof configured === 'string' ? { explicit: configured } : {}),
-      env: process.env,
-    });
+    const workspaceRoot = resolvePluginWorkspaceRoot(ctx);
     ctx.provide(
       'huntianling.scm',
       createScmService({

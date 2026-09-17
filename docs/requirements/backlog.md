@@ -94,6 +94,7 @@ Acceptance criteria:
 Implementation state:
 
 - `huntianling.environment` ships profile `huntianling.node-pnpm` 1.0.0. Prepare reports ready or blocked, can initialize a second workspace, preserves existing files, records credential names without secrets, and treats probe lint/hygiene as blocked.
+- The package now declares an inert dsh bundle patch and has passed an isolated install, real host boot, authenticated HTTP, SQLite restart, remove/reinstall, and hot-reload qualification on dsh `0.1.3-alpha.1`. See the [DSH bundle integration record](reviews/2026-09-17-dsh-bundle-integration.md). This proves local host composition, not portable distribution or a complete Agent environment.
 - Production composition accepts `environment` profile config for commands, version overrides, command timeout/output limits, and local execution policy. When no test runner is supplied, preparation runs profile commands in the target workspace through the local host process and records project-scoped command status, exit code, redacted output, and artifacts under `.huntianling/environment-runs/<prepareRunId>/`.
 - Readiness now comes from the latest matching project/workspace prepare record. `canStartImplementation` no longer creates synthetic passing results, and Story Delivery plus Generator refuse implementation when required commands, tools, skills, dependencies, or the executor probe are blocked.
 - `POST /api/v1/environment/replace` prepares a replacement fleet slot from the same profile. Uncommitted work is copied by default; discarding it without `acceptUncommittedLoss` blocks. `GET /api/v1/environment/fleets` lists local and remote slots.
@@ -192,6 +193,7 @@ Implementation state:
 - The demonstration now prepares the fresh workspace with a project-scoped environment result and drives Story Delivery through that recorded readiness instead of a caller-provided ready flag.
 - Demonstration steps are labeled `manual`, `external-agent`, or `huntianling-runtime`. Coverage scan and live-model trial steps are recorded. Lint and hygiene stay blocked. An unbound live model is a labeled gap, not a passing gate.
 - Maintainer-only OAuth setup remains listed as a follow-up gap, not a passing gate. Hosted SCM/CI adapters already exist as optional call-time integrations.
+- The [DSH bundle integration record](reviews/2026-09-17-dsh-bundle-integration.md) proves that this package can run through a real dsh profile lifecycle. That external-agent qualification is infrastructure evidence; it is not the required live-model self-development demonstration.
 
 ### REQ-HARNESS-006: Built-In Three-Agent Development System
 

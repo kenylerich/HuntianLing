@@ -37,7 +37,7 @@ test('lib/index.js default export re-exports the root Plugin', async () => {
   assert.equal(root.default, huntianling)
 })
 
-test('root plugin provides board and requirement management services', () => {
+test('root plugin provides board and requirement management services', async () => {
   const services = new Map([
     ['huntianling.workspaceRoot', mkdtempSync(join(tmpdir(), 'huntianling-plugin-'))],
   ])
@@ -55,7 +55,7 @@ test('root plugin provides board and requirement management services', () => {
     plugin: (plugin, config) => plugin.apply(ctx, config),
   }
 
-  huntianling.apply(ctx, { web: { autoStart: false } })
+  await huntianling.apply(ctx, { web: { autoStart: false } })
 
   assert.equal(typeof services.get('huntianling.board')?.createWorkItem, 'function')
   assert.equal(typeof services.get('huntianling.board')?.createMilestone, 'function')
@@ -89,7 +89,7 @@ test('root plugin provides board and requirement management services', () => {
   assert.equal(disposers.length > 0, true)
 })
 
-test('root plugin wires environment profile config into the production composition', () => {
+test('root plugin wires environment profile config into the production composition', async () => {
   const services = new Map([
     ['huntianling.workspaceRoot', mkdtempSync(join(tmpdir(), 'huntianling-plugin-env-'))],
   ])
@@ -102,7 +102,7 @@ test('root plugin wires environment profile config into the production compositi
     plugin: (plugin, config) => plugin.apply(ctx, config),
   }
 
-  huntianling.apply(ctx, {
+  await huntianling.apply(ctx, {
     web: { autoStart: false },
     environment: {
       profile: {

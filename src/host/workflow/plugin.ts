@@ -6,7 +6,7 @@ import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import type { AgentRuntime } from '../agents/runtime.js';
 import type { BoardService } from '../board/plugin.js';
-import { resolveWorkspaceRoot } from '../board/workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 import type { CollabService } from '../collab/service.js';
 import type { DispatchService } from '../dispatch/service.js';
 import type { ScmService } from '../scm/service.js';
@@ -23,11 +23,7 @@ const WorkflowPlugin: Plugin = {
   apply(ctx: Context): void {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     if (!board) throw new Error('huntianling.board is required');
-    const configured = ctx.get('huntianling.workspaceRoot');
-    const workspaceRoot = resolveWorkspaceRoot({
-      ...(typeof configured === 'string' ? { explicit: configured } : {}),
-      env: process.env,
-    });
+    const workspaceRoot = resolvePluginWorkspaceRoot(ctx);
     const collab = ctx.get('huntianling.collab') as CollabService | undefined;
     const agents = ctx.get('huntianling.agents') as AgentRuntime | undefined;
     const dispatch = ctx.get('huntianling.dispatch') as DispatchService | undefined;

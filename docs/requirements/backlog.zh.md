@@ -94,6 +94,7 @@ HuntianLing 是 dsh 插件：界面是标准开发看板，后端准备标准 vi
 实现状态：
 
 - `huntianling.environment` 内置配置 `huntianling.node-pnpm` 1.0.0。准备报告就绪或阻塞，可用于第二个工作区，保留已有文件，只记录凭据名称不写秘密，并把 probe 的 lint/hygiene 记为阻塞。
+- 包现在声明默认不启动的 dsh bundle patch，并已在 dsh `0.1.3-alpha.1` 上通过隔离安装、真实宿主启动、认证 HTTP、SQLite 重启、卸载重装和热重载资格验证。详见 [DSH bundle 集成记录](reviews/2026-09-17-dsh-bundle-integration.zh.md)。这些证据证明本地宿主组合，不证明可移植分发或完整 Agent 环境。
 - 生产组合接受 `environment` profile 配置，用于命令、版本覆盖、命令超时/输出长度和本地执行策略。未传入测试 runner 时，准备会在目标工作区通过本地宿主进程运行 profile 命令，并在 `.huntianling/environment-runs/<prepareRunId>/` 下记录按项目归属的命令状态、退出码、脱敏输出和产物。
 - 就绪状态现在来自最近一次匹配 Project/workspace 的准备记录。`canStartImplementation` 不再创建合成通过结果；当必需命令、工具、Skill、依赖或执行器探针被阻塞时，Story Delivery 和 Generator 都会拒绝开始实现。
 - `POST /api/v1/environment/replace` 用同一份 profile 准备 replacement fleet slot。未提交工作默认复制；不带 `acceptUncommittedLoss` 就丢弃会阻塞。`GET /api/v1/environment/fleets` 列出 local 和 remote slots。
@@ -192,6 +193,7 @@ HuntianLing 必须在自身开发中使用并演示同一套需求到代码的�
 - 演示现在先为全新工作区写入按项目归属的环境准备结果，再通过这条记录驱动 Story Delivery，不再依赖调用方传入 ready 标志。
 - 演示步骤标为 `manual`、`external-agent` 或 `huntianling-runtime`。覆盖扫描和 live-model trial 步骤会被记录。lint 和 hygiene 保持 blocked。未绑定的真实模型是已标注缺口，不是通过的门禁。
 - 维护者专有的 OAuth 准备仍列为后续缺口，而不是通过的门禁。托管 SCM/CI 适配器已作为调用时可选集成存在。
+- [DSH bundle 集成记录](reviews/2026-09-17-dsh-bundle-integration.zh.md) 证明本包可以走完真实 dsh profile 生命周期。这项由外部 Agent 完成的资格验证属于基础设施证据，不是需求所要求的真实模型自身开发演示。
 
 ### REQ-HARNESS-006: 内置三 Agent 开发系统
 
