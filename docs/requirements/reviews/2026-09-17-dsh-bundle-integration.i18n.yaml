@@ -2,5 +2,5 @@
 # Update both documents, then run: pnpm run doc-sync:write
 source: docs/requirements/reviews/2026-09-17-dsh-bundle-integration.md
 target: docs/requirements/reviews/2026-09-17-dsh-bundle-integration.zh.md
-source_sha256: 2a1aca3bf253ca88e950d4ec3a922bd76f1f4b1e5d66385f8511919b875319e4
-target_sha256: cecde11bc631d5f127ce3e9c0c8305b0ab99d07ef25763cc464c039838676f98
+source_sha256: b693e72e81d91a0aef8fb88fe4e2c0ae9619085c7e4d3eb91db3306ac8af21c2
+target_sha256: 1afb8e994c2156c8598b5f6eb0d8a055c6dbbc63e1da41332c9e4c05359c1cd0

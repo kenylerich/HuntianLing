@@ -1,6 +1,6 @@
 {
   "name": "@kenylerich/dsh-huntianling",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "description": "HuntianLing — a DeepSeek Harness plugin that delivers a vibe-coding development environment with Planner, Generator, and Evaluator Agents, engineering methods, and a standard development board.",
   "type": "module",

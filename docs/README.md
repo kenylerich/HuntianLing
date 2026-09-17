@@ -30,11 +30,13 @@ This directory stores HuntianLing product, review, and architecture documents. U
 | [requirements/harness-engineering.md](requirements/harness-engineering.md) | `active` | `2026-09-11.8` | 2026-10-11 | Product direction, source articles, alignment assessment, and self-development method. |
 | [requirements/backlog.md](requirements/backlog.md) | `active` | `2026-09-13.2` | 2026-10-13 | Product requirement source for implementation. |
 | [requirements/reviews/2026-09-13-customer-acceptance.md](requirements/reviews/2026-09-13-customer-acceptance.md) | `active` | `2026-09-13.1` | 2026-09-27 | Customer HTTP and browser acceptance, runtime counterexamples, and open repair obligations. |
+| [requirements/reviews/2026-09-17-dsh-bundle-integration.md](requirements/reviews/2026-09-17-dsh-bundle-integration.md) | `active` | `2026-09-17.1` | 2026-10-01 | DSH bundle qualification, Web-profile promotion, checks, and remaining boundaries. |
 | [requirements/reviews/2026-09-12-runtime-alignment.md](requirements/reviews/2026-09-12-runtime-alignment.md) | `active` | `2026-09-12.2` | 2026-09-26 | Dated runtime findings, false-completion reproduction, and D16–D21 handoff. |
 | [requirements/reviews/2026-09-10.md](requirements/reviews/2026-09-10.md) | `active` | `2026-09-11.2` | 2026-09-24 | Dated review package; current delivery order is owned by the backlog. |
 | [architecture/main-board-design.md](architecture/main-board-design.md) | `active` | `2026-09-11.6` | 2026-10-10 | Main board information architecture, views, card model, APIs, and implementation slices. |
 | [architecture/web-shell-refactor.md](architecture/web-shell-refactor.md) | `active` | `2026-09-11.6` | 2026-10-11 | Browser UI diagnosis and audience-shell refactor slices. |
 | [architecture/workflow-orchestration-engine.md](architecture/workflow-orchestration-engine.md) | `active` | `2026-09-11.6` | 2026-10-10 | Workflow orchestration design, terminology, runtime model, visualization, testing, and extension model. |
+| [architecture/dsh-integration-boundaries.md](architecture/dsh-integration-boundaries.md) | `active` | `2026-09-17.1` | 2026-10-17 | Private bundle distribution policy and DSH/HuntianLing state and lifecycle ownership. |
 | [archive/README.md](archive/README.md) | `active` | `2026-09-10.1` | 2026-12-10 | Archive policy and index. |
 
 ## Placement Rules

@@ -13,9 +13,9 @@ English | [中文](2026-09-17-dsh-bundle-integration.zh.md)
 
 ## Decision
 
-The HuntianLing package is a locally qualified dsh bundle for dsh `0.1.3-alpha.1`. It declares `cordis.patch.yml` through `package.json#dsh.bundle.patch`; installation adds one stable `huntianling` Cordis row that imports `@kenylerich/dsh-huntianling/host`. The bundle default is inert. A profile must replace the complete row with explicit workspace, SQLite, authentication, host, and port settings before the HuntianLing HTTP surface starts.
+The HuntianLing package is a qualified private tarball dsh bundle for dsh `0.1.3-alpha.1`. It declares `cordis.patch.yml` through `package.json#dsh.bundle.patch`; installation adds one stable `huntianling` Cordis row that imports `@kenylerich/dsh-huntianling/host`. The bundle default is inert. A profile must replace the complete row with explicit workspace, SQLite, authentication, host, and port settings before the HuntianLing HTTP surface starts.
 
-This completes the bounded local-bundle integration slice of `REQ-HARNESS-001` and supplies real-host evidence for `REQ-HARNESS-005`. It does not complete either requirement: live model tasks, the three-Agent self-development run, portable publication, and customer delivery acceptance remain open.
+This completes the bounded internal bundle integration slice of `REQ-HARNESS-001` and supplies real-host evidence for `REQ-HARNESS-005`. It does not complete either requirement: live model tasks, the three-Agent self-development run, public/customer publication, and customer delivery acceptance remain open.
 
 ## Trigger, Implementation, and Rationale
 
@@ -48,6 +48,8 @@ Qualification used source revision `15efd66ec08726252640b6d1ceb955ed9db9997d` pl
 | Secret handling | The packaged row contains no secret. The write token was provided by process environment and was not stored in the bundle, profile patch, or this record. |
 | Normal Web profile | Immutable artifact `ca349f014507b9ca8ce4e10e3f303ce1e1073e3a5320b1d0054da9491acbb195`, built from commit `09cb93c`, was installed after exact rollback copies. Bundle order is base, web-app, HuntianLing, with one HuntianLing row. |
 | Shared-profile coexistence | A temporary boot placed DSH Web on 3081 and HuntianLing on 3878 without interrupting the running desktop profile. DSH Web required authentication; HuntianLing reads returned 200, an unauthenticated write returned 403, and an authenticated invalid write reached validation and returned 400. |
+| Portable artifact | Version `0.1.0-alpha.1` packed with prebuilt output and resolved Cordis dependency. Artifact SHA256 is `928d7562d68fb8dda99a4841361fb1df57793137220e95870887e4593792d7d9`. |
+| Clean DSH Home | A new disposable home installed the prior artifact, upgraded to `0.1.0-alpha.1`, retained one bundle row, downgraded to `0.0.0`, removed the bundle, preserved an external data sentinel, reinstalled the alpha artifact, and cold-booted until SQLite was ready without the source checkout. |
 
 The qualification profile patch hash after the port change was `2ff37e72570c625339055451fe0d5ac3022464ec1591c6faf84b43e203b3ee5d`. The profile and its disposable workspace are qualification artifacts, not product defaults.
 
@@ -72,7 +74,8 @@ The duplication result is a repository-wide open quality gate and is not reporte
 
 - The long-lived Web profile uses the immutable local artifact and a durable isolated workspace. Its write token remains an environment-only runtime value; without it, the surface is read-only.
 - Validate future dsh versions again because the qualified host is an alpha release and its bundle schema is not claimed compatible beyond `0.1.3-alpha.1`.
-- Add portable distribution metadata and a clean-machine install check before publication.
+- Public or customer distribution still requires a licensing decision and a wider compatibility matrix; the qualified artifact remains private and `UNLICENSED`.
+- Native integration ownership is defined in [DSH integration and ownership boundaries](../../architecture/dsh-integration-boundaries.md). Actual model-session, identity, or UI seam migrations require stable DSH APIs and separate compatibility evidence.
 - Complete the live-model Planner, Generator, and Evaluator self-development scenario before closing `REQ-HARNESS-005`.
 
-Acceptance result: **local dsh bundle integration and normal Web-profile promotion accepted; portable distribution and deeper native integration remain separate release actions.**
+Acceptance result: **DBI-0 through DBI-6 are complete for the private internal bundle boundary; live-model execution, public/customer distribution, and future native seam migrations remain separate work.**

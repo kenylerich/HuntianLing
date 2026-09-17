@@ -13,9 +13,9 @@ archive_after: 2026-12-17
 
 ## 结论
 
-HuntianLing 包已作为 dsh `0.1.3-alpha.1` 的本地 bundle 完成资格验证。包通过 `package.json#dsh.bundle.patch` 声明 `cordis.patch.yml`；安装后增加唯一、稳定的 `huntianling` Cordis 行，并导入 `@kenylerich/dsh-huntianling/host`。bundle 默认不启动服务。只有 profile 完整替换该行，明确工作区、SQLite、认证、主机和端口后，HuntianLing HTTP 界面才会启动。
+HuntianLing 包已作为 dsh `0.1.3-alpha.1` 的私有 tarball bundle 完成资格验证。包通过 `package.json#dsh.bundle.patch` 声明 `cordis.patch.yml`；安装后增加唯一、稳定的 `huntianling` Cordis 行，并导入 `@kenylerich/dsh-huntianling/host`。bundle 默认不启动服务。只有 profile 完整替换该行，明确工作区、SQLite、认证、主机和端口后，HuntianLing HTTP 界面才会启动。
 
-这完成了 `REQ-HARNESS-001` 中有界的本地 bundle 集成切片，并为 `REQ-HARNESS-005` 提供真实宿主证据。两项需求仍未整体完成：真实模型任务、三个 Agent 的自身开发运行、可移植发布以及客户交付验收仍然开放。
+这完成了 `REQ-HARNESS-001` 中有界的内部 bundle 集成切片，并为 `REQ-HARNESS-005` 提供真实宿主证据。两项需求仍未整体完成：真实模型任务、三个 Agent 的自身开发运行、公开/客户分发以及客户交付验收仍然开放。
 
 ## 触发条件、做法和理由
 
@@ -48,6 +48,8 @@ HuntianLing 包已作为 dsh `0.1.3-alpha.1` 的本地 bundle 完成资格验证
 | 秘密处理 | 打包行不含秘密；写 token 由进程环境提供，未写入 bundle、profile patch 或本文档。 |
 | 正常 Web profile | 保存精确回滚副本后，安装了由提交 `09cb93c` 构建、哈希为 `ca349f014507b9ca8ce4e10e3f303ce1e1073e3a5320b1d0054da9491acbb195` 的不可变工件。Bundle 顺序为 base、web-app、HuntianLing，且只有一条 HuntianLing 行。 |
 | 共享 profile 共存 | 临时启动时，DSH Web 使用 3081，HuntianLing 使用 3878，未中断已运行的 desktop profile。DSH Web 要求认证；HuntianLing 读接口返回 200，未认证写入返回 403，已认证但内容无效的写入到达校验并返回 400。 |
+| 可移植工件 | `0.1.0-alpha.1` 版本包含预构建输出和已解析 Cordis 依赖。工件 SHA256 为 `928d7562d68fb8dda99a4841361fb1df57793137220e95870887e4593792d7d9`。 |
+| 全新 DSH Home | 新的一次性 Home 安装旧工件、升级到 `0.1.0-alpha.1`、保持唯一 bundle 行、降级到 `0.0.0`、卸载 bundle 并保留外部数据标记；重新安装 alpha 工件后，在没有源码 checkout 的情况下冷启动至 SQLite 就绪。 |
 
 端口变更后资格 profile patch 的哈希为 `2ff37e72570c625339055451fe0d5ac3022464ec1591c6faf84b43e203b3ee5d`。该 profile 及其一次性工作区是资格验证产物，不是产品默认值。
 
@@ -72,7 +74,8 @@ HuntianLing 包已作为 dsh `0.1.3-alpha.1` 的本地 bundle 完成资格验证
 
 - 长期 Web profile 使用不可变本地工件及持久隔离工作区。写 token 继续只在运行时从环境读取；缺少它时，界面只能读取。
 - 未来 dsh 版本必须重新验证；当前验证对象是 alpha 版本，不声明 bundle schema 在 `0.1.3-alpha.1` 之外兼容。
-- 发布前补可移植分发元数据和干净机器安装检查。
+- 公开或客户分发仍需许可证决定和更广兼容矩阵；当前合格工件保持私有及 `UNLICENSED`。
+- 原生集成所有权已在 [DSH 集成与所有权边界](../../architecture/dsh-integration-boundaries.zh.md) 中确定。真实迁移模型 session、身份或 UI seam 前，仍需稳定 DSH API 和独立兼容证据。
 - 关闭 `REQ-HARNESS-005` 前，完成真实模型 Planner、Generator、Evaluator 的自身开发场景。
 
-验收结果：**本地 dsh bundle 集成及正常 Web profile 晋级已接受；可移植分发和更深的原生集成是后续独立发布动作。**
+验收结果：**私有内部 bundle 边界下的 DBI-0 至 DBI-6 已完成；真实模型执行、公开/客户分发以及未来原生 seam 迁移属于独立后续工作。**

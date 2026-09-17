@@ -30,11 +30,13 @@ review_after: 2026-12-10
 | [requirements/harness-engineering.zh.md](requirements/harness-engineering.zh.md) | `active` | `2026-09-11.8` | 2026-10-11 | 产品定位、背景原文、方向审视和自身开发方法。 |
 | [requirements/backlog.zh.md](requirements/backlog.zh.md) | `active` | `2026-09-13.2` | 2026-10-13 | 实现时使用的产品需求事实源。 |
 | [requirements/reviews/2026-09-13-customer-acceptance.zh.md](requirements/reviews/2026-09-13-customer-acceptance.zh.md) | `active` | `2026-09-13.1` | 2026-09-27 | 客户 HTTP 与浏览器验收、运行时反例及未完成修复义务。 |
+| [requirements/reviews/2026-09-17-dsh-bundle-integration.zh.md](requirements/reviews/2026-09-17-dsh-bundle-integration.zh.md) | `active` | `2026-09-17.1` | 2026-10-01 | DSH bundle 资格验证、Web profile 晋级、检查及剩余边界。 |
 | [requirements/reviews/2026-09-12-runtime-alignment.zh.md](requirements/reviews/2026-09-12-runtime-alignment.zh.md) | `active` | `2026-09-12.2` | 2026-09-26 | 按日期保存的运行能力问题、虚假完成复现及 D16–D21 交接。 |
 | [requirements/reviews/2026-09-10.zh.md](requirements/reviews/2026-09-10.zh.md) | `active` | `2026-09-11.2` | 2026-09-24 | 按日期保存的评审包；当前交付顺序由 backlog 负责。 |
 | [architecture/main-board-design.zh.md](architecture/main-board-design.zh.md) | `active` | `2026-09-11.6` | 2026-10-10 | 主看板信息架构、视图、卡片模型、API 和实现切片。 |
 | [architecture/web-shell-refactor.zh.md](architecture/web-shell-refactor.zh.md) | `active` | `2026-09-11.6` | 2026-10-11 | 浏览器 UI 诊断和人群界面重构切片。 |
 | [architecture/workflow-orchestration-engine.zh.md](architecture/workflow-orchestration-engine.zh.md) | `active` | `2026-09-11.6` | 2026-10-10 | 工作流编排设计、术语、运行模型、可视化、测试和扩展模型。 |
+| [architecture/dsh-integration-boundaries.zh.md](architecture/dsh-integration-boundaries.zh.md) | `active` | `2026-09-17.1` | 2026-10-17 | 私有 bundle 分发策略以及 DSH/HuntianLing 的状态和生命周期所有权。 |
 | [archive/README.zh.md](archive/README.zh.md) | `active` | `2026-09-10.1` | 2026-12-10 | 归档策略和索引。 |
 
 ## 放置规则

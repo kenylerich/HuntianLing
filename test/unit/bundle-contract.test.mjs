@@ -9,6 +9,9 @@ const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const declaredPatch = manifest.dsh?.bundle?.patch;
 
 test('package declares one packaged DSH bundle patch', () => {
+  assert.equal(manifest.version, '0.1.0-alpha.1');
+  assert.equal(manifest.private, true);
+  assert.equal(manifest.license, 'UNLICENSED');
   assert.equal(declaredPatch, './cordis.patch.yml');
   assert.ok(manifest.files.includes('cordis.patch.yml'));
   assert.equal(manifest.exports['./cordis.patch.yml'], './cordis.patch.yml');
