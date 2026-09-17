@@ -64,11 +64,11 @@ The qualification profile patch hash after the port change was `2ff37e72570c6253
 | `pnpm run test:e2e` | Passed against an installed dsh Cordis runtime and real SQLite child |
 | `pnpm run lint` | Passed |
 | `pnpm run hygiene` | Passed |
-| `pnpm run duplication` | Failed: 99 clones, 2.01%, against the existing zero threshold |
+| `pnpm run duplication` | Failed: 95 clones, 1.93%, against the existing zero threshold |
 
 The full test suite binds loopback listeners. A sandbox run returned `EPERM`; the authorized host retry passed. This is an execution-environment restriction, not a product pass from the failed sandbox attempt.
 
-The duplication result is a repository-wide open quality gate and is not reported as passing. The bundle change caused the repeated workspace-provider lookup in several composition adapters to become visible as one additional small clone group; resolving the 99-clone baseline belongs to the existing quality-gate repair scope.
+The duplication result is a repository-wide open quality gate and is not reported as passing. Consolidating the bundle workspace-provider lookup reduced the observed baseline from 99 clones / 2.01% to 95 / 1.93%; resolving the remaining baseline belongs to the existing quality-gate repair scope.
 
 ## Remaining Boundaries
 

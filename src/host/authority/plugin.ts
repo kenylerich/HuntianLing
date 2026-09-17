@@ -5,7 +5,7 @@
 import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import type { BoardService } from '../board/plugin.js';
-import { resolveWorkspaceRoot } from '../board/workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 import { createAuthorityService, type AuthorityService } from './service.js';
 import { resolveAuthorityConfig, type AuthorityConfig } from './types.js';
 
@@ -19,11 +19,7 @@ const AuthorityPlugin: Plugin<AuthorityConfig> = {
   apply(ctx: Context, config: AuthorityConfig = {}): void {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     if (!board) throw new Error('huntianling.board is required');
-    const configured = ctx.get('huntianling.workspaceRoot', false);
-    const workspaceRoot = resolveWorkspaceRoot({
-      ...(typeof configured === 'string' ? { explicit: configured } : {}),
-      env: process.env,
-    });
+    const workspaceRoot = resolvePluginWorkspaceRoot(ctx);
     ctx.provide(
       'huntianling.authority',
       createAuthorityService({

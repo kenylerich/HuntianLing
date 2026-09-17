@@ -7,7 +7,7 @@
 
 import type { Context, Plugin } from '@deepseek-ai/cordis';
 
-import { resolveWorkspaceRoot } from '../board/workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 import { createDatabaseService } from './service.js';
 import { resolveDatabaseConfig, type DatabaseConfig, type DatabaseService } from './types.js';
 
@@ -18,11 +18,7 @@ const DatabasePlugin: Plugin<DatabaseConfig> = {
   provide: 'huntianling.database',
 
   apply(ctx: Context, config: DatabaseConfig = {}): void {
-    const configured = ctx.get('huntianling.workspaceRoot', false);
-    const workspaceRoot = resolveWorkspaceRoot({
-      ...(typeof configured === 'string' ? { explicit: configured } : {}),
-      env: process.env,
-    });
+    const workspaceRoot = resolvePluginWorkspaceRoot(ctx);
     const resolved = resolveDatabaseConfig(config);
     const service = createDatabaseService({
       workspaceRoot,

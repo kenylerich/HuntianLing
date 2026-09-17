@@ -6,7 +6,7 @@ import type { Context, Plugin } from '@deepseek-ai/cordis';
 
 import type { AgentRuntime } from '../agents/runtime.js';
 import type { BoardService } from '../board/plugin.js';
-import { resolveWorkspaceRoot } from '../board/workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 import type { EnvironmentService } from '../environment/service.js';
 import type { SkillService } from '../skills/service.js';
 import { defaultHarnessLlmTransport } from './hosted.js';
@@ -31,11 +31,7 @@ const HarnessPlugin: Plugin<HarnessConfig> = {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     const agents = ctx.get('huntianling.agents') as AgentRuntime | undefined;
     const environment = ctx.get('huntianling.environment') as EnvironmentService | undefined;
-    const configured = ctx.get('huntianling.workspaceRoot', false);
-    const workspaceRoot = resolveWorkspaceRoot({
-      ...(typeof configured === 'string' ? { explicit: configured } : {}),
-      env: process.env,
-    });
+    const workspaceRoot = resolvePluginWorkspaceRoot(ctx);
     const endpoint = resolveHarnessLlmEndpoint(config, process.env);
     let liveModel: {
       readonly url: string;

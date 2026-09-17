@@ -8,7 +8,7 @@ import type { AuthorityService } from '../authority/service.js';
 import type { BoardService } from '../board/plugin.js';
 import { createCiService, type CiService } from './service.js';
 import type { CiConfig } from './types.js';
-import { resolveWorkspaceRoot } from '../board/workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 
 export type { CiService };
 
@@ -21,8 +21,7 @@ const CiPlugin: Plugin<CiConfig> = {
     const board = ctx.get('huntianling.board') as BoardService | undefined;
     if (!board) throw new Error('huntianling.board is required');
     const authority = ctx.get('huntianling.authority') as AuthorityService | undefined;
-    const configured = ctx.get('huntianling.workspaceRoot', false);
-    const workspaceRoot = resolveWorkspaceRoot({ ...(typeof configured === 'string' ? { explicit: configured } : {}), env: process.env });
+    const workspaceRoot = resolvePluginWorkspaceRoot(ctx);
     ctx.provide(
       'huntianling.ci',
       createCiService({

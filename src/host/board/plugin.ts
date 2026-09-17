@@ -85,7 +85,7 @@ import type {
 import type { DatabaseService } from '../database/types.js';
 import type { IntakeConfig } from '../intake/types.js';
 import { PRIORITIZATION_METHODS, type PrioritizationMethodDefinition } from './prioritization.js';
-import { resolveWorkspaceRoot } from './workspace.js';
+import { resolvePluginWorkspaceRoot } from '../workspace-context.js';
 
 export interface BoardService {
   /** Host producers record observed checks; this method is not exposed through HTTP or Agent tools. */
@@ -323,11 +323,7 @@ const BoardPlugin: Plugin<IntakeConfig> = {
   inject: ['huntianling.database'],
 
   apply(ctx: Context, config: IntakeConfig = {}): void {
-    const configured = ctx.get('huntianling.workspaceRoot', false);
-    const root = resolveWorkspaceRoot({
-      ...(typeof configured === 'string' ? { explicit: configured } : {}),
-      env: process.env,
-    });
+    const root = resolvePluginWorkspaceRoot(ctx);
     const database = ctx.get('huntianling.database') as DatabaseService | undefined;
     const service = createBoardService(root, {
       ...(database !== undefined ? { database } : {}),

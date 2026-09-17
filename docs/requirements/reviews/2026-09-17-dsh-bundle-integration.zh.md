@@ -64,11 +64,11 @@ HuntianLing 包已作为 dsh `0.1.3-alpha.1` 的私有 tarball bundle 完成资�
 | `pnpm run test:e2e` | 使用已安装 dsh Cordis runtime 和真实 SQLite 子项通过 |
 | `pnpm run lint` | 通过 |
 | `pnpm run hygiene` | 通过 |
-| `pnpm run duplication` | 失败：99 个 clone、2.01%，未达到既有的零阈值 |
+| `pnpm run duplication` | 失败：95 个 clone、1.93%，未达到既有的零阈值 |
 
 完整测试会绑定 loopback 监听器。sandbox 运行返回 `EPERM`；经授权在宿主重试后通过。失败的 sandbox 尝试只是执行环境限制，不能算作产品通过证据。
 
-重复度结果属于全仓仍开放的质量门禁，本文不把它报告为通过。bundle 变更使多个组合适配器中重复的 workspace provider 读取成为一个新增的小型 clone 组；清理 99 个 clone 的基线归入既有质量门禁修复范围。
+重复度结果属于全仓仍开放的质量门禁，本文不把它报告为通过。合并 bundle workspace provider 读取后，实测基线从 99 个 clone / 2.01% 降至 95 个 / 1.93%；清理其余基线归入既有质量门禁修复范围。
 
 ## 剩余边界
 
