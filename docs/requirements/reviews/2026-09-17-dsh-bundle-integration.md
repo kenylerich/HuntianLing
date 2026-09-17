@@ -46,6 +46,8 @@ Qualification used source revision `15efd66ec08726252640b6d1ceb955ed9db9997d` pl
 | Remove and reinstall | Removing the plugin removed its dependency, bundle entry, and generated row. Reinstall restored one entry and the service booted again. |
 | Hot reload | Changing the qualification profile listener from port 3877 to 3878 moved the service and released the old port. |
 | Secret handling | The packaged row contains no secret. The write token was provided by process environment and was not stored in the bundle, profile patch, or this record. |
+| Normal Web profile | Immutable artifact `ca349f014507b9ca8ce4e10e3f303ce1e1073e3a5320b1d0054da9491acbb195`, built from commit `09cb93c`, was installed after exact rollback copies. Bundle order is base, web-app, HuntianLing, with one HuntianLing row. |
+| Shared-profile coexistence | A temporary boot placed DSH Web on 3081 and HuntianLing on 3878 without interrupting the running desktop profile. DSH Web required authentication; HuntianLing reads returned 200, an unauthenticated write returned 403, and an authenticated invalid write reached validation and returned 400. |
 
 The qualification profile patch hash after the port change was `2ff37e72570c625339055451fe0d5ac3022464ec1591c6faf84b43e203b3ee5d`. The profile and its disposable workspace are qualification artifacts, not product defaults.
 
@@ -68,10 +70,9 @@ The duplication result is a repository-wide open quality gate and is not reporte
 
 ## Remaining Boundaries
 
-- Promote only a built, immutable package to a long-lived profile; a `/private/tmp` source link is qualification-only.
-- Keep the installed bundle inert in a shared profile until the operator supplies explicit authenticated runtime configuration.
+- The long-lived Web profile uses the immutable local artifact and a durable isolated workspace. Its write token remains an environment-only runtime value; without it, the surface is read-only.
 - Validate future dsh versions again because the qualified host is an alpha release and its bundle schema is not claimed compatible beyond `0.1.3-alpha.1`.
 - Add portable distribution metadata and a clean-machine install check before publication.
 - Complete the live-model Planner, Generator, and Evaluator self-development scenario before closing `REQ-HARNESS-005`.
 
-Acceptance result: **local dsh bundle integration accepted; shared-profile promotion and portable distribution remain separate release actions.**
+Acceptance result: **local dsh bundle integration and normal Web-profile promotion accepted; portable distribution and deeper native integration remain separate release actions.**

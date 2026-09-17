@@ -46,6 +46,8 @@ HuntianLing 包已作为 dsh `0.1.3-alpha.1` 的本地 bundle 完成资格验证
 | 卸载与重装 | 卸载删除依赖、bundle 条目及生成行；重装恢复唯一条目，服务再次成功启动。 |
 | 热重载 | 将资格 profile 的监听端口从 3877 改为 3878 后，服务迁移且旧端口释放。 |
 | 秘密处理 | 打包行不含秘密；写 token 由进程环境提供，未写入 bundle、profile patch 或本文档。 |
+| 正常 Web profile | 保存精确回滚副本后，安装了由提交 `09cb93c` 构建、哈希为 `ca349f014507b9ca8ce4e10e3f303ce1e1073e3a5320b1d0054da9491acbb195` 的不可变工件。Bundle 顺序为 base、web-app、HuntianLing，且只有一条 HuntianLing 行。 |
+| 共享 profile 共存 | 临时启动时，DSH Web 使用 3081，HuntianLing 使用 3878，未中断已运行的 desktop profile。DSH Web 要求认证；HuntianLing 读接口返回 200，未认证写入返回 403，已认证但内容无效的写入到达校验并返回 400。 |
 
 端口变更后资格 profile patch 的哈希为 `2ff37e72570c625339055451fe0d5ac3022464ec1591c6faf84b43e203b3ee5d`。该 profile 及其一次性工作区是资格验证产物，不是产品默认值。
 
@@ -68,10 +70,9 @@ HuntianLing 包已作为 dsh `0.1.3-alpha.1` 的本地 bundle 完成资格验证
 
 ## 剩余边界
 
-- 长期 profile 只能采用已构建、不可变的包；指向 `/private/tmp` 的源码链接仅用于资格验证。
-- 共享 profile 中安装后继续保持 bundle 不启动，直到操作者提供明确且经过认证的运行配置。
+- 长期 Web profile 使用不可变本地工件及持久隔离工作区。写 token 继续只在运行时从环境读取；缺少它时，界面只能读取。
 - 未来 dsh 版本必须重新验证；当前验证对象是 alpha 版本，不声明 bundle schema 在 `0.1.3-alpha.1` 之外兼容。
 - 发布前补可移植分发元数据和干净机器安装检查。
 - 关闭 `REQ-HARNESS-005` 前，完成真实模型 Planner、Generator、Evaluator 的自身开发场景。
 
-验收结果：**本地 dsh bundle 集成已接受；共享 profile 晋级和可移植分发是后续独立发布动作。**
+验收结果：**本地 dsh bundle 集成及正常 Web profile 晋级已接受；可移植分发和更深的原生集成是后续独立发布动作。**
