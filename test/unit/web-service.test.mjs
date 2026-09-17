@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { attachMockExecutionReceipt } from '../helpers/execution-receipt.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -297,6 +298,7 @@ test('web service serves the browser surface and board APIs', async (t) => {
       designRevision: '',
     }],
   });
+  attachMockExecutionReceipt(board, story.id);
   const blockedDelivery = await json(`${status.url}/api/work-items/${encodeURIComponent(story.id)}/transition`, {
     method: 'POST',
     body: JSON.stringify({ status: 'delivered' }),

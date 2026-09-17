@@ -1,6 +1,6 @@
 ---
 doc_status: active
-doc_version: 2026-09-13.1
+doc_version: 2026-09-13.5
 created: 2026-09-13
 last_reviewed: 2026-09-13
 review_after: 2026-09-27
@@ -23,6 +23,7 @@ Verification used a real Cordis root composition, SQLite, authenticated HTTP, an
 - [Blocking Findings](#blocking-findings)
 - [Business Coverage](#business-coverage)
 - [Repair Acceptance](#repair-acceptance)
+- [Repair Tracking](#repair-tracking)
 
 ## Evidence
 
@@ -88,3 +89,32 @@ The browser shows both a compact developer shell and a separate full board. Full
 The existing REQ ids retain ownership. First reject forged and stale evidence and prevent deterministic output from claiming executed delivery. Then connect dsh task/session/tool execution and real local CI, and verify customer behavior with an independent failing-then-passing check. Close customer API exposure and provide visible confirmation/approval navigation before repeating fresh-project acceptance.
 
 Keep D18-D21 partial or revision-required until their full criteria pass. Retain the failing HTTP cases and these counterexamples as regression inputs. A repair must prove both rejected invalid evidence and accepted genuine execution on the exact candidate revision. Follow with isolated PostgreSQL, real OAuth/provider integration, cross-milestone delivery, and concurrent-team scenarios before claiming complete customer capability.
+
+## Repair Tracking
+
+All six repair Issues remain open. The original findings above describe `614dcd6`; the local repair branch is `codex/customer-acceptance-repairs`. No full repair Issue is merged or accepted. Independent evaluations cover only the specific containment and gate behaviors below.
+
+| Issue | Remaining obligation | Local result |
+| --- | --- | --- |
+| [#91](https://github.com/kenylerich/HuntianLing/issues/91) | Real execution authority, candidate freshness, dsh tasks | Partial. Independent review verified missing-required-check rejection, latest-batch supersession, per-command source drift, executable-mode drift, and diagnostic-only native CI. Real dsh tasks remain missing. |
+| [#92](https://github.com/kenylerich/HuntianLing/issues/92) | Source approval and meaningful fresh-project delivery | Partial. Board-bound planning and implementation require a persisted, current intake approval. Plain WorkItems, caller confirmation flags, changed scope and stale resumes are rejected. The unapproved self-development demonstration cannot start. Meaningful fresh-project delivery remains open. |
+| [#93](https://github.com/kenylerich/HuntianLing/issues/93) | Customer isolation and accessible developer approval | Implemented locally. The developer entry exposes pending candidate review, the real approval action, and the project workbench. Customer labels distinguish open questions from developer review. Isolated browser flow and mobile layout passed; release gates remain unmet. |
+| [#94](https://github.com/kenylerich/HuntianLing/issues/94) | Production local CI runner | Partial. Opt-in scripts provide actual diagnostic results. Process groups do not contain detached descendants, so native CI cannot mint acceptance receipts, even after passing commands. Complete logs, sandbox integration, and hosted evidence remain open. |
+| [#95](https://github.com/kenylerich/HuntianLing/issues/95) | Production OAuth and logout | Partial. Browser logout revokes the session and protects subsequent navigation; OAuth remains open. |
+| [#96](https://github.com/kenylerich/HuntianLing/issues/96) | Quality checks and complete customer acceptance | Partial. ESLint and package hygiene pass; coverage and duplication execute and fail. Real PostgreSQL round-trip passed in a disposable container. Independent negative controls verify gate rejection; full customer acceptance remains incomplete. |
+
+Baseline checks at `1349752`: typecheck, build, lint, hygiene, and frozen offline installation passed. With a disposable PostgreSQL 16 container, `pnpm run test` returned 485 passed, zero skipped, zero failed; the container was removed afterward. Customer HTTP passed 14 cases, including real diagnostic failure/repair and rejection of acceptance without process containment. Browser evidence covers customer submission, developer approval, workbench navigation, mobile layout, and earlier logout verification. These scoped checks do not establish complete customer acceptance.
+
+Execution regression is in `test/unit/execution-receipts.test.mjs`: actual command failures and passes stay diagnostic. Explicit trusted-Host fixtures test batch completeness, supersession, source and executable-mode drift, and SQLite reload. They do not prove contained execution. Independent evaluation reran ten receipt tests and three native/HTTP probes, all passing. Native command results issued zero acceptance receipts, and an edited summary could not authorize delivery.
+
+Native execution defaults to disabled and accepts only declared package-script syntax in the configured workspace. Its process-group deadline cannot guarantee completion of detached descendants; enable diagnostics only for trusted scripts. Diagnostic results cannot authorize acceptance. Trusted-Host receipt storage does not prove dependency integrity, protected audit storage, independent review, or complete criterion coverage. Those obligations, genuine dsh sessions, configurable confirmation policies, OAuth, and broader customer scenarios remain open.
+
+The source-approval repair is tracked in `.agents/self-harness/slices/confirmed-intake-delivery/`. Nineteen focused tests cover forged input, authenticated approval identity, source and WorkItem changes, reapproval, rejection revocation, delivery and Agent recovery, source documents, and SQLite reload. Two Web tests cover late service registration and withdrawal, plus standalone runtime compatibility. Agents wait for Board and Environment; Web resolves optional Agents, Delivery and Harness services when handling requests. Existing isolated method tests use external-agent execution; board-bound tests explicitly promote intake fixtures. Demo tests require refusal rather than accepting a fabricated confirmation. This changes invalid demo behavior, not acceptance thresholds; real dsh execution and a working fresh-project demonstration remain unverified.
+
+Quality gates use ESLint, publint, TypeScript NodeNext, jscpd, and c8. Coverage force-builds and validates every source entry; missing, empty, stale, or unknown reports fail. Independent review observed ten rejected negative controls and two passing positive controls. Repository coverage at `1349752` failed: 90.40% lines, 70.94% branches, and 109 of 135 files below a per-file threshold. Full coverage has not been rerun for the source-approval repair, so that blocker remains open. Duplication still reports 98 clones, 2.00%, and fails the configured zero threshold. Required gates are not waived.
+
+Source-approval final checks: typecheck, build, lint, hygiene and bilingual sync passed. Repository regression returned 505 passed, zero failed and one PostgreSQL test skipped because no database URL was configured. Production Cordis HTTP passed 15 checks and verified that planning uses the registered Agent service. Independent evaluation passed all five slice criteria, 44 tests/probes and 15 HTTP checks after repairing session-rejection revocation. Logs are under `output/verification/confirmed-intake-delivery/`. These results do not certify Issue 92 or actual dsh execution.
+
+The PR workflow includes these gates, customer HTTP tests, PostgreSQL, and quality-report artifacts. This is a local configuration change, not evidence of a successful remote CI run. Baseline logs are retained locally under `output/verification/customer-acceptance-repairs/`; gate tools follow [typescript-eslint](https://typescript-eslint.io/getting-started/), [publint](https://publint.dev/docs/cli), and [c8](https://github.com/bcoe/c8) documentation.
+
+Verification used disposable local workspaces, not existing customer records or external accounts. No external security policies or Issue completion states were modified. Full-scope acceptance and required failing gates prevent push, merge, and completion certificates.

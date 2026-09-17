@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -29,7 +30,7 @@ function setup() {
   const agents = createAgentRuntime({ skills, board, environment, dispatch });
   const project = board.createProject({ name: 'p' });
   const milestone = board.createMilestone({ projectId: project.id, title: 'MVP' });
-  const parent = board.createWorkItem({
+  const parent = approvedWorkItem(board, {
     projectId: project.id,
     type: 'feature',
     title: '登录能力',
@@ -39,7 +40,7 @@ function setup() {
     acceptance: ['epic ok'],
     milestoneId: milestone.id,
   });
-  const item = board.createWorkItem({
+  const item = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '登录',
@@ -155,7 +156,7 @@ test('a completed agent run returns structured feedback fields', () => {
 });
 
 test('customers cannot inspect agent task context', async (t) => {
-  const { root, board, project, item, agents } = setup();
+  const { board, project, item, agents } = setup();
   const requirements = createRequirementManagementService(board);
   const hash = createPbkdf2PasswordHash('correct-password', { iterations: 1_000, salt: new Uint8Array(16).fill(7) });
   const web = createWebService(

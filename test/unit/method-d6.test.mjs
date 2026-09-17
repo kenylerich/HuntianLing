@@ -13,6 +13,7 @@ import { DESIGN_METHOD_SKILLS, SKILL_PLANNER_BDD } from '../../lib/host/skills/d
 import { createSkillService } from '../../lib/host/skills/service.js';
 import { createPbkdf2PasswordHash } from '../../lib/host/web/auth.js';
 import { createWebService } from '../../lib/host/web/server.js';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 
 const EXTRA_METHODS = [
   'use-case',
@@ -78,11 +79,16 @@ test('enabling a method pack lets a planner run produce that method\'s output fi
   const board = createBoardService(root);
   const project = board.createProject({ name: 'p' });
   board.updateProject(project.id, { enabledMethodIds: ['user-story', 'bdd'] });
+  const item = approvedWorkItem(board, {
+    projectId: project.id, type: 'story', title: plannerInput().goal,
+    body: plannerInput().quotes[0].text, acceptance: plannerInput().acceptance,
+  });
   const agents = createAgentRuntime({ skills: createSkillService(), board });
   const run = agents.startRun({
     agentId: 'planner',
     executor: 'manual',
     projectId: project.id,
+    workItemId: item.id,
     methodId: 'bdd',
     input: plannerInput(),
   });
@@ -96,7 +102,7 @@ test('a WorkItem records the method pack that produced it', () => {
   const board = createBoardService(root);
   const project = board.createProject({ name: 'p' });
   board.updateProject(project.id, { enabledMethodIds: ['user-story', 'use-case'] });
-  const item = board.createWorkItem({
+  const item = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '登录',
@@ -122,6 +128,10 @@ test('missing method skills are reported as skill gaps and block the planner run
   const board = createBoardService(root);
   const project = board.createProject({ name: 'p' });
   board.updateProject(project.id, { enabledMethodIds: ['user-story', 'bdd'] });
+  const item = approvedWorkItem(board, {
+    projectId: project.id, type: 'story', title: plannerInput().goal,
+    body: plannerInput().quotes[0].text, acceptance: plannerInput().acceptance,
+  });
   const skills = createSkillService();
   skills.disableForProject(project.id, SKILL_PLANNER_BDD);
   const agents = createAgentRuntime({ skills, board });
@@ -133,6 +143,7 @@ test('missing method skills are reported as skill gaps and block the planner run
         agentId: 'planner',
         executor: 'manual',
         projectId: project.id,
+        workItemId: item.id,
         methodId: 'bdd',
         input: plannerInput(),
       }),
@@ -144,6 +155,10 @@ test('disabling a pack prevents new planner runs with that method', () => {
   const root = mkdtempSync(join(tmpdir(), 'huntianling-d6-'));
   const board = createBoardService(root);
   const project = board.createProject({ name: 'p' });
+  const item = approvedWorkItem(board, {
+    projectId: project.id, type: 'story', title: plannerInput().goal,
+    body: plannerInput().quotes[0].text, acceptance: plannerInput().acceptance,
+  });
   const agents = createAgentRuntime({ skills: createSkillService(), board });
   assert.throws(
     () =>
@@ -151,6 +166,7 @@ test('disabling a pack prevents new planner runs with that method', () => {
         agentId: 'planner',
         executor: 'manual',
         projectId: project.id,
+        workItemId: item.id,
         methodId: 'adr',
         input: plannerInput(),
       }),

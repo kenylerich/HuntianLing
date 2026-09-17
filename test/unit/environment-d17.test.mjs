@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -56,7 +57,7 @@ function d17EnvironmentConfig(extra = {}) {
 
 function readyStory(board, projectId) {
   const milestone = board.createMilestone({ projectId, title: 'D17' });
-  return board.createWorkItem({
+  return approvedWorkItem(board, {
     projectId,
     milestoneId: milestone.id,
     type: 'story',

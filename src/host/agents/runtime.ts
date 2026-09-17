@@ -13,6 +13,7 @@ import type { DispatchService } from '../dispatch/service.js';
 import type { GovernanceService } from '../governance/service.js';
 import type { ProjectId, WorkItemId } from '../board/types.js';
 import type { EnvironmentService } from '../environment/service.js';
+import { confirmedRequirementRevision, resolveConfirmedRequirement } from '../intake/confirmation.js';
 import { inspectTaskContext } from '../tools/feedback.js';
 import { createToolRegistry, type ToolRegistry } from '../tools/registry.js';
 import type { TaskContextPacket } from '../tools/types.js';
@@ -42,7 +43,7 @@ interface AgentExecutionContext {
   readonly workspaceRoot?: string;
   readonly workItemId?: string;
   readonly environmentReady: boolean;
-  readonly observedExecution: boolean;
+  readonly localArtifactsEnabled: boolean;
   readonly startedAt: number;
 }
 
@@ -131,7 +132,7 @@ export function createAgentRuntime(deps: {
         throw new AgentTaskError('MISSING_INPUT', 'task inspect requires huntianling.board');
       }
       const method = input.methodId !== undefined ? requireMethod(input.methodId) : null;
-      return inspectTaskContext({
+      const context = inspectTaskContext({
         board: deps.board,
         tools,
         definition,
@@ -141,6 +142,18 @@ export function createAgentRuntime(deps: {
         ...(input.environmentReady !== undefined ? { environmentReady: input.environmentReady } : {}),
         ...(input.input !== undefined ? { input: input.input } : {}),
       }, input.workItemId);
+      if (definition.id !== 'planner' && definition.id !== 'generator') return context;
+      try {
+        const item = deps.board.getWorkItem(input.workItemId as WorkItemId);
+        if (item === undefined) throw new Error('approved WorkItem not found');
+        resolveConfirmedRequirement(deps.board, item);
+        return context;
+      } catch (error) {
+        return { ...context, ready: false, missing: [...context.missing, {
+          field: 'sourceApproval', blocking: true,
+          reason: error instanceof Error ? error.message : 'original requirement approval unavailable',
+        }] };
+      }
     },
     startRun(input) {
       let definition = runtime.resolveBinding(input.agentId);
@@ -148,6 +161,24 @@ export function createAgentRuntime(deps: {
       if (projectId === '' && input.workItemId !== undefined && input.workItemId !== '' && deps.board !== undefined) {
         const item = deps.board.getWorkItem(input.workItemId as WorkItemId);
         if (item !== undefined) projectId = item.projectId;
+      }
+      if (definition.id === 'planner' || definition.id === 'generator') {
+        if (deps.board !== undefined || input.workItemId !== undefined || input.executor === 'huntianling-runtime') {
+          const item = input.workItemId === undefined ? undefined
+            : deps.board?.getWorkItem(input.workItemId as WorkItemId);
+          if (item === undefined || deps.board === undefined || item.projectId !== projectId) {
+            throw new AgentTaskError('MISSING_INPUT', 'planning and implementation require an approved WorkItem in the current project');
+          }
+          let confirmed: Record<string, unknown>;
+          try {
+            confirmed = resolveConfirmedRequirement(deps.board, item);
+          } catch (error) {
+            throw new AgentTaskError('MISSING_INPUT', error instanceof Error ? error.message : 'original requirement approval unavailable');
+          }
+          input = { ...input, input: definition.id === 'planner'
+            ? { ...asObject(input.input), ...confirmed }
+            : { ...asObject(input.input), outcome: confirmed.goal, acceptance: confirmed.acceptance, sourceApproval: confirmed.sourceApproval } };
+        }
       }
       if (projectId !== '' && deps.board !== undefined) {
         const project = deps.board.listProjects({ includeArchived: true }).find((item) => item.id === projectId);
@@ -267,7 +298,7 @@ export function createAgentRuntime(deps: {
         : deps.skills.selectDepth(primarySkill, input.depth ?? definition.defaultDepth);
       const runId = input.runId ?? randomUUID();
       const startedAt = Date.now();
-      const observedExecution = input.executor === 'huntianling-runtime'
+      const localArtifactsEnabled = input.executor === 'huntianling-runtime'
         && deps.environment !== undefined
         && environmentReady === true
         && input.workspaceRoot !== undefined
@@ -299,12 +330,12 @@ export function createAgentRuntime(deps: {
           ...(input.workspaceRoot !== undefined ? { workspaceRoot: input.workspaceRoot } : {}),
           ...(input.workItemId !== undefined ? { workItemId: input.workItemId } : {}),
           environmentReady,
-          observedExecution,
+          localArtifactsEnabled,
           startedAt,
         });
         methodTrace = createMethodTrace(method, loaded, depth, input.input, output);
         assertMethodTrace(methodTrace);
-        execution = executionReference(runId, input.workspaceRoot, output, observedExecution, startedAt);
+        execution = executionReference(runId, input.workspaceRoot, output, startedAt);
         const handoff = handoffFor(definition.id, runId, output);
         const run: AgentRun = {
           id: runId,
@@ -397,6 +428,19 @@ export function createAgentRuntime(deps: {
       }
       if (existing.status !== 'interrupted') {
         return existing;
+      }
+      if (deps.board !== undefined && (existing.agentId === 'planner' || existing.agentId === 'generator')) {
+        const item = existing.workItemId === null ? undefined : deps.board.getWorkItem(existing.workItemId as WorkItemId);
+        if (item === undefined) throw new AgentTaskError('MISSING_INPUT', 'approved WorkItem not found');
+        let confirmed: Record<string, unknown>;
+        try {
+          confirmed = resolveConfirmedRequirement(deps.board, item);
+        } catch (error) {
+          throw new AgentTaskError('MISSING_INPUT', error instanceof Error ? error.message : 'original requirement approval unavailable');
+        }
+        if (confirmedRequirementRevision(confirmed) !== confirmedRequirementRevision(asObject(existing.input))) {
+          throw new AgentTaskError('MISSING_INPUT', 'original requirement approval changed; start a new Agent run');
+        }
       }
       if (existing.output !== null) {
         const restored: AgentRun = { ...existing, status: 'completed' };
@@ -716,14 +760,14 @@ function generate(input: unknown, context: AgentExecutionContext): unknown {
   }
   const repairFindings = stringArray(record.repairFindings);
   const fallbackFiles = Array.isArray(record.files) ? stringArray(record.files) : [`src/${slug(outcome)}.ts`];
-  if (!context.observedExecution || context.workspaceRoot === undefined) {
+  if (!context.localArtifactsEnabled || context.workspaceRoot === undefined) {
     return attachStructured('generator', {
       schemaVersion: 1,
       role: 'generator',
       files: fallbackFiles,
       selfCheck: {
-        typecheck: 'pass',
-        test: 'pass',
+        typecheck: 'skipped',
+        test: 'skipped',
         kind: 'self_check',
       },
       outcome,
@@ -740,16 +784,16 @@ function generate(input: unknown, context: AgentExecutionContext): unknown {
     candidateRevision,
     repositoryRevision: candidateRevision,
     selfCheck: {
-      typecheck: 'pass',
-      test: 'pass',
+      typecheck: 'skipped',
+      test: 'skipped',
       kind: 'self_check',
-      evidenceIds: [`ci:local-self-check:${context.runId}`],
+      evidenceIds: [],
     },
     outcome,
     acceptance,
     repairFindings,
-    evidenceRefs: [`ci:local-self-check:${context.runId}`, `git:candidate:${candidateRevision}`],
-    provenanceLinks: candidateLinks(context.runId, candidateRevision, artifactRefs),
+    evidenceRefs: [],
+    provenanceLinks: candidateLinks(artifactRefs),
   });
 }
 
@@ -859,7 +903,7 @@ function evaluateCandidate(
   const artifactRefs = stringArray(record.artifactRefs).length > 0
     ? stringArray(record.artifactRefs)
     : stringArray(record.files);
-  if (!context.observedExecution || context.workspaceRoot === undefined || artifactRefs.length === 0 || candidateRevision === '') {
+  if (!context.localArtifactsEnabled || context.workspaceRoot === undefined || artifactRefs.length === 0 || candidateRevision === '') {
     return {
       executed: false,
       artifactRefs,
@@ -888,12 +932,12 @@ function evaluateCandidate(
       }
     }
   }
-  const links = candidateLinks(context.runId, candidateRevision, artifactRefs);
+  const links = candidateLinks(artifactRefs);
   return {
-    executed: true,
+    executed: false,
     artifactRefs,
     candidateRevision,
-    evidenceRefs: [`ci:local-evaluator:${context.runId}`, `git:candidate:${candidateRevision}`],
+    evidenceRefs: [],
     links,
     failedCriteria: [...failedCriteria],
     failureReasons,
@@ -901,25 +945,9 @@ function evaluateCandidate(
 }
 
 function candidateLinks(
-  runId: string,
-  candidateRevision: string,
   artifactRefs: readonly string[],
 ): readonly Record<string, unknown>[] {
   return [
-    {
-      kind: 'ci-run',
-      id: `ci:local-evaluator:${runId}`,
-      label: `local evaluator ${runId}`,
-      url: null,
-      acceptanceCriterionIds: [],
-    },
-    ...(candidateRevision === '' ? [] : [{
-      kind: 'commit',
-      id: `git:candidate:${candidateRevision}`,
-      label: `candidate ${candidateRevision}`,
-      url: null,
-      acceptanceCriterionIds: [],
-    }]),
     ...artifactRefs.map((ref) => ({
       kind: 'changed-file',
       id: `file:${ref}`,
@@ -934,7 +962,6 @@ function executionReference(
   runId: string,
   workspaceRoot: string | undefined,
   output: unknown,
-  observedExecution: boolean,
   startedAt: number,
 ): AgentExecutionReference {
   const record = asObject(output);
@@ -944,27 +971,14 @@ function executionReference(
     : null;
   return {
     taskId: `agent-task:${runId}`,
-    sessionId: observedExecution ? `dsh-session:${runId}` : `local-session:${runId}`,
-    toolCallIds: toolCallIdsFor(record),
+    sessionId: `local-session:${runId}`,
+    toolCallIds: [],
     artifactRefs,
     workspaceRoot: workspaceRoot ?? null,
     candidateRevision,
     startedAt,
     completedAt: Date.now(),
   };
-}
-
-function toolCallIdsFor(record: Record<string, unknown>): readonly string[] {
-  switch (record.role) {
-    case 'planner':
-      return ['delivery-contract.write'];
-    case 'generator':
-      return ['implementation.write', 'typecheck.run', 'test.run'];
-    case 'evaluator':
-      return ['evaluation.write', 'test.run'];
-    default:
-      return [];
-  }
 }
 
 function createMethodTrace(

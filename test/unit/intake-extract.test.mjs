@@ -148,7 +148,7 @@ test('LLM analysis fails loud when no extractor is configured', () => {
 });
 
 test('customers can upload attachments and run analysis on their own intake sessions', async (t) => {
-  const { root, board, project, session } = setup();
+  const { board, project, session } = setup();
   const requirements = createRequirementManagementService(board);
   const hash = createPbkdf2PasswordHash('correct-password', { iterations: 1_000, salt: new Uint8Array(16).fill(3) });
   const web = createWebService(

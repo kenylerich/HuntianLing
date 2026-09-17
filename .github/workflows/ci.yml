@@ -1,10 +1,6 @@
 name: CI
 
-# HuntianLing's pull-request gate. Runs the lightweight gates declared in
-# AGENTS.md (Quality gates): typecheck, lint, build, unit tests. The
-# dsh-copied enterprise matrix (linux-primary / coverage / windows-wine
-# / docs / e2e) was removed in the right-sizing commit; this workflow
-# keeps only what HuntianLing's skeleton actually needs to stay green.
+# Required plugin quality checks and isolated customer/storage regression.
 
 on:
   pull_request:
@@ -25,6 +21,20 @@ jobs:
     name: ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: htl_test
+          POSTGRES_PASSWORD: fixture-only
+          POSTGRES_DB: htl_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U htl_test -d htl_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      HUNTIANLING_POSTGRES_URL: postgres://htl_test:fixture-only@127.0.0.1:5432/htl_test
     steps:
       - uses: actions/checkout@v4
 
@@ -56,11 +66,40 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Bilingual docs
+        run: pnpm run doc-sync
+
       - name: Build
         run: pnpm run build
+
+      - name: Package hygiene
+        run: pnpm run hygiene
 
       - name: Unit tests
         run: pnpm run test
 
+      - name: Customer HTTP regression
+        run: pnpm run test:e2e:customer
+
       - name: Issue lifecycle regression tests
         run: node --test .github/issue-management/policy.test.mjs
+
+      - name: Duplication
+        if: ${{ !cancelled() }}
+        run: pnpm run duplication
+
+      - name: Per-file coverage
+        if: ${{ !cancelled() }}
+        run: pnpm run test:coverage
+
+      - name: Retain quality reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: |
+            coverage/coverage-summary.json
+            output/verification/duplication/jscpd-report.json

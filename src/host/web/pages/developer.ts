@@ -2,6 +2,23 @@
  * Developer shell: Collect, Design, Progress, Channel, Environment.
  */
 
+const DEVELOPER_REVIEW_LABELS = {
+  workbench: '完整工作台',
+  pending: '待审核候选需求',
+  empty: '没有待审核候选需求',
+  requirements: '已提交需求',
+  approve: '批准候选需求',
+  approving: '正在批准',
+  approved: '候选需求已批准',
+  sources: '客户原文',
+  questions: '待确认问题',
+  acceptance: '验收标准',
+  analysis: '分析',
+  design: '设计',
+  reviewSession: '审核完整会话',
+  refresh: '刷新',
+} as const;
+
 export function renderDeveloperPage(): string {
   return `<!doctype html>
 <html lang="zh-CN">
@@ -22,6 +39,15 @@ export function renderDeveloperPage(): string {
     label { display: grid; gap: 0.25rem; margin: 0.5rem 0; font-size: 0.9rem; }
     textarea, input, select, button { font: inherit; padding: 0.35rem 0.5rem; }
     textarea { min-height: 4rem; width: 100%; box-sizing: border-box; }
+    header, nav { flex-wrap: wrap; gap: 0.75rem; }
+    main > * { min-width: 0; overflow-wrap: anywhere; }
+    h1, h2 { font-size: 1.1rem; }
+    .candidate { display: block; width: 100%; text-align: start; background: transparent; border: 0; border-top: 1px solid #d8e1e7; padding: 0.75rem 0; overflow-wrap: anywhere; }
+    .candidate:hover { background: #eef3f6; }
+    .review-detail { border: 0; padding: 0; border-radius: 0; }
+    .review-detail p { white-space: pre-wrap; }
+    #error { color: #b1423f; }
+    @media (max-width: 720px) { main { grid-template-columns: minmax(0, 1fr); } select { max-width: 100%; } header > div { min-width: 0; } }
   </style>
 </head>
 <body>
@@ -29,6 +55,7 @@ export function renderDeveloperPage(): string {
     <h1>开发界面</h1>
     <div>
       <label>项目 <select id="project-select"></select></label>
+      <a id="workbench" href="/board">${DEVELOPER_REVIEW_LABELS.workbench}</a>
       <a href="/developer/governance">治理和信任</a>
       <span id="who" class="muted"></span>
       <button id="logout" type="button">退出</button>
@@ -44,6 +71,8 @@ export function renderDeveloperPage(): string {
   <main>
     <section>
       <h2 id="job-title">收集</h2>
+      <p id="error" role="alert"></p>
+      <p id="notice" role="status"></p>
       <div id="canvas"></div>
     </section>
     <aside>
@@ -52,6 +81,7 @@ export function renderDeveloperPage(): string {
     </aside>
   </main>
   <script>
+    const reviewLabels = ${JSON.stringify(DEVELOPER_REVIEW_LABELS)};
     const jobs = {
       collect: '收集',
       design: '设计',
@@ -59,9 +89,15 @@ export function renderDeveloperPage(): string {
       channel: '频道',
       environment: '环境',
     };
-    const state = { job: jobFromPath(), projectId: '', board: null, conversationId: '' };
+    const state = { job: jobFromPath(), projectId: new URLSearchParams(location.search).get('projectId') || '', board: null, conversationId: '' };
 
     function $(id) { return document.getElementById(id); }
+    function showError(error) { $('error').textContent = error ? String(error.message || error) : ''; }
+    function workbenchUrl(sessionId) {
+      const params = new URLSearchParams({ projectId: state.projectId });
+      if (sessionId) { params.set('intakeSessionId', sessionId); params.set('areaId', 'intake'); }
+      return '/board?' + params;
+    }
     function jobFromPath() {
       const part = location.pathname.split('/')[2];
       return jobs[part] ? part : 'collect';
@@ -77,7 +113,7 @@ export function renderDeveloperPage(): string {
     }
     function setJob(job) {
       state.job = job;
-      history.replaceState({}, '', '/developer/' + job);
+      history.replaceState({}, '', '/developer/' + job + (state.projectId ? '?projectId=' + encodeURIComponent(state.projectId) : ''));
       for (const button of document.querySelectorAll('nav [data-job]')) {
         button.setAttribute('aria-current', button.getAttribute('data-job') === job ? 'page' : 'false');
       }
@@ -101,12 +137,17 @@ export function renderDeveloperPage(): string {
         option.textContent = project.name;
         select.append(option);
       }
-      state.projectId = select.value || state.projectId;
+      if ((payload.projects || []).some((project) => project.id === state.projectId)) select.value = state.projectId;
+      state.projectId = select.value;
       if (state.projectId) select.value = state.projectId;
     }
     async function loadBoard() {
       if (!state.projectId) return;
-      state.board = await api('/api/v1/projects/' + encodeURIComponent(state.projectId) + '/developer-board');
+      const projectId = state.projectId;
+      const board = await api('/api/v1/projects/' + encodeURIComponent(projectId) + '/developer-board');
+      if (state.projectId !== projectId) return;
+      state.board = board;
+      $('workbench').href = workbenchUrl();
       renderCanvas();
     }
     function renderCanvas() {
@@ -117,6 +158,31 @@ export function renderDeveloperPage(): string {
         return;
       }
       if (state.job === 'collect') {
+        const heading = document.createElement('h3');
+        heading.textContent = reviewLabels.pending;
+        const refresh = document.createElement('button');
+        refresh.type = 'button';
+        refresh.textContent = reviewLabels.refresh;
+        refresh.onclick = () => loadBoard().catch(showError);
+        canvas.append(heading, refresh);
+        const candidates = state.board.collect.candidates || [];
+        if (!candidates.length) {
+          const empty = document.createElement('p');
+          empty.className = 'muted';
+          empty.textContent = reviewLabels.empty;
+          canvas.append(empty);
+        }
+        for (const candidate of candidates) {
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'candidate';
+          row.textContent = candidate.title;
+          row.onclick = () => showCandidate(candidate);
+          canvas.append(row);
+        }
+        const requirements = document.createElement('h3');
+        requirements.textContent = reviewLabels.requirements;
+        canvas.append(requirements);
         for (const item of state.board.collect.requirements) {
           const row = document.createElement('div');
           row.className = 'item';
@@ -155,6 +221,53 @@ export function renderDeveloperPage(): string {
       $('compare-depth').onclick = compareDepth;
       $('self-demo').onclick = selfDemo;
       $('draft-skill').onclick = draftSkill;
+    }
+    function showCandidate(candidate) {
+      const inspector = $('inspector');
+      inspector.innerHTML = '';
+      showError('');
+      $('notice').textContent = '';
+      const heading = document.createElement('h3');
+      heading.textContent = candidate.title;
+      inspector.append(heading);
+      for (const [title, value] of [
+        [reviewLabels.sources, (candidate.sourceRefs || []).map((ref) => ref.quote).join('\\n')],
+        [reviewLabels.analysis, candidate.analysis],
+        [reviewLabels.design, candidate.design],
+        [reviewLabels.acceptance, (candidate.acceptance || []).join('\\n')],
+        [reviewLabels.questions, (candidate.openQuestions || []).join('\\n')],
+      ]) {
+        if (!value) continue;
+        const detail = panel(title, value);
+        detail.className = 'review-detail';
+        inspector.append(detail);
+      }
+      const session = document.createElement('a');
+      session.href = workbenchUrl(candidate.sessionId);
+      session.textContent = reviewLabels.reviewSession;
+      const approve = document.createElement('button');
+      approve.type = 'button';
+      approve.textContent = reviewLabels.approve;
+      approve.onclick = async () => {
+        approve.disabled = true;
+        approve.textContent = reviewLabels.approving;
+        showError('');
+        try {
+          await api('/api/v1/intake/sessions/' + encodeURIComponent(candidate.sessionId) + '/approve', {
+            method: 'POST',
+            body: JSON.stringify({ candidateIds: [candidate.id] }),
+          });
+          inspector.innerHTML = '';
+          $('notice').textContent = reviewLabels.approved;
+          await loadBoard();
+        } catch (error) {
+          showError(error);
+        } finally {
+          approve.disabled = false;
+          approve.textContent = reviewLabels.approve;
+        }
+      };
+      inspector.append(session, document.createElement('br'), approve);
     }
     function showDesign(item) {
       const inspector = $('inspector');
@@ -502,14 +615,18 @@ export function renderDeveloperPage(): string {
     }
     $('project-select').addEventListener('change', async (event) => {
       state.projectId = event.target.value;
-      await loadBoard();
+      state.board = null;
+      setJob(state.job);
+      showError('');
+      $('notice').textContent = '';
+      await loadBoard().catch(showError);
     });
     $('logout').onclick = async () => {
       await api('/api/auth/logout', { method: 'POST', body: JSON.stringify({}) });
       location.assign('/login');
     };
     setJob(state.job);
-    loadProjects().then(loadBoard);
+    loadProjects().then(loadBoard).catch(showError);
   </script>
 </body>
 </html>

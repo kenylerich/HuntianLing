@@ -55,6 +55,7 @@ export interface StoryDeliveryTaskReference {
 export interface StoryDeliveryCheckpoint {
   readonly seq: number;
   readonly designRevision: string;
+  readonly sourceApprovalRevision?: string;
   readonly acceptance: readonly string[];
   readonly completedSteps: readonly StoryDeliveryStep[];
   readonly pendingSteps: readonly StoryDeliveryStep[];

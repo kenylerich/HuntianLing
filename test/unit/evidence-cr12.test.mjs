@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
+import { attachMockExecutionReceipt } from '../helpers/execution-receipt.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -35,7 +37,7 @@ function setupBoard() {
 }
 
 function readyStory(board, project, milestone, extras = {}) {
-  return board.createWorkItem({
+  return approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '登录',
@@ -72,6 +74,7 @@ function attachExecutedEvidence(board, item, designRevision = '') {
       designRevision,
     }],
   });
+  if (designRevision === '') attachMockExecutionReceipt(board, item.id);
 }
 
 test('a project returns its Definition of Ready and Definition of Done policy', async (t) => {

@@ -27,7 +27,6 @@ import {
   type HarnessModelBinding,
   type HarnessScenario,
   type HarnessTrial,
-  type HarnessTrialKind,
   type ResolvedHarnessConfig,
 } from './types.js';
 
@@ -300,7 +299,7 @@ export function createHarnessService(deps: {
       second.resume(interrupted.id);
       const completed = second.drive(interrupted.id);
       const evidence = board.getDeliveryEvidenceSummary(story.id);
-      if (completed.status === 'completed') {
+      if (completed.status === 'completed' && evidence.checks.some(check => check.executionKind === 'executed' && check.status === 'passing')) {
         board.transitionWorkItem(story.id, 'delivered');
       }
       const delivered = board.getWorkItem(story.id as WorkItemId);
@@ -312,7 +311,7 @@ export function createHarnessService(deps: {
       const demonstration: HarnessDemonstration = {
         id: randomUUID(),
         reqIds: ['REQ-HARNESS-005', 'REQ-HARNESS-006', 'REQ-HARNESS-007', 'REQ-HARNESS-008'],
-        outcome: 'One Story completed environment prepare, real candidate failure, repair, interrupt/resume, independent evaluation, and evidence-based progress',
+        outcome: 'Deterministic workflow demonstration; real Agent execution and customer acceptance are not verified',
         owner: input.owner ?? 'developer',
         milestoneTitle: milestone.title,
         workItemId: story.id,

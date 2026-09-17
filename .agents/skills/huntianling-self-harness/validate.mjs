@@ -12,6 +12,8 @@ if (!file) {
 }
 
 const data = JSON.parse(readFileSync(file, 'utf8'));
+const scripts = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8')).scripts ?? {};
+const unavailableGate = (name) => typeof scripts[name] !== 'string' || scripts[name].includes('HUNTIANLING_PROBE');
 const errors = [];
 
 function requireKey(obj, key) {
@@ -72,7 +74,7 @@ switch (role) {
     requireKey(data, 'ready');
     if (data.commands && typeof data.commands === 'object') {
       for (const name of ['lint', 'hygiene']) {
-        if (data.commands[name] === 'pass') {
+        if (data.commands[name] === 'pass' && unavailableGate(name)) {
           errors.push(`${name} cannot be pass while the package script still probe-fails`);
         }
       }
@@ -91,7 +93,7 @@ switch (role) {
     forbidKeys(data, ['accepted', 'delivered']);
     if (data.selfCheck && typeof data.selfCheck === 'object') {
       for (const name of ['lint', 'hygiene']) {
-        if (data.selfCheck[name] === 'pass') {
+        if (data.selfCheck[name] === 'pass' && unavailableGate(name)) {
           errors.push(`selfCheck.${name} cannot be pass while the package script still probe-fails`);
         }
       }

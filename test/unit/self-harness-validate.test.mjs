@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,17 +36,35 @@ test('mkt fail example is rejected', () => {
   assert.match(result.stderr, /technicalDesign/);
 });
 
-test('generator cannot self-accept or pass probe lint', () => {
+test('generator cannot self-accept', () => {
   const result = run('generator-fail.json');
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /lint/);
   assert.match(result.stderr, /accepted/);
 });
 
-test('environment cannot record probe lint as pass', () => {
-  const result = run('environment-fail.json');
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /lint cannot be pass/);
+test('environment and generator cannot record missing or probe gates as pass', t => {
+  const fixture = mkdtempSync(join(tmpdir(), 'htl-gate-sensor-'));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const sensor = join(fixture, '.agents/skills/huntianling-self-harness/validate.mjs');
+  mkdirSync(dirname(sensor), { recursive: true });
+  writeFileSync(sensor, readFileSync(validate));
+  for (const scripts of [{}, { lint: 'echo HUNTIANLING_PROBE; exit 1' }]) {
+    writeFileSync(join(fixture, 'package.json'), JSON.stringify({ scripts }));
+    for (const name of ['environment-fail.json', 'generator-fail.json']) {
+      const result = spawnSync(process.execPath, [sensor, join(examples, name)], { encoding: 'utf8' });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /lint cannot be pass/);
+    }
+  }
+});
+
+test('real gate scripts permit reporting observed lint and hygiene passes', t => {
+  const fixture = mkdtempSync(join(tmpdir(), 'htl-gate-record-'));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const artifact = join(fixture, 'record.json');
+  writeFileSync(artifact, JSON.stringify({ role: 'generator', files: ['package.json'], selfCheck: { lint: 'pass', hygiene: 'pass' } }));
+  const result = spawnSync(process.execPath, [validate, artifact], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
 });
 
 test('repair loop writes evaluation on pass and handoff on fail', () => {

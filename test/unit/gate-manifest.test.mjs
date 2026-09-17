@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { attachMockExecutionReceipt } from '../helpers/execution-receipt.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, chmodSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -53,6 +54,7 @@ function attachExecutedEvidence(store, card) {
       designRevision: '',
     }],
   });
+  attachMockExecutionReceipt(store, card.id);
 }
 
 test('no manifest means no gates', () => {

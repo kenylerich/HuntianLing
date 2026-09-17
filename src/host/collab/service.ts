@@ -74,8 +74,9 @@ export function createCollabService(deps: { readonly board: BoardService }): Col
 
   const service: CollabService = {
     createConversation(input) {
-      deps.board.listProjects().find((project) => project.id === input.projectId)
-        ?? failNotFound(`project not found: ${input.projectId}`);
+      if (!deps.board.listProjects().some((project) => project.id === input.projectId)) {
+        failNotFound(`project not found: ${input.projectId}`);
+      }
       const conversation: ChannelConversation = {
         id: randomUUID(),
         projectId: input.projectId,

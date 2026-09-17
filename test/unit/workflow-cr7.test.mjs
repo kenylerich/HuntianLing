@@ -327,7 +327,7 @@ test('project rollups show overloaded roles and release readiness', () => {
 });
 
 test('customers cannot replace templates, manage reviews, or accept handoffs', async (t) => {
-  const { root, board, project, workflow } = setup();
+  const { board, project, workflow } = setup();
   const item = story(board, project.id);
   const run = workflow.plan(item.id, 'dev');
   workflow.start(run.id, 'dev');

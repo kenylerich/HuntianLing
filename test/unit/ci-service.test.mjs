@@ -13,7 +13,7 @@ function board() {
   return createBoardService(root);
 }
 
-test('local typecheck and test write executed ci checks', () => {
+test('injected status-only results are not executed evidence', () => {
   const store = board();
   const project = store.createProject({ name: 'p' });
   const story = store.createWorkItem({
@@ -39,7 +39,7 @@ test('local typecheck and test write executed ci checks', () => {
   });
   assert.equal(summary.ciRuns.length, 2);
   assert.equal(summary.checks.filter((check) => check.producer === 'ci' && check.status === 'passing').length, 2);
-  assert.equal(hasExecutedDeliveryEvidence(summary, story), true);
+  assert.equal(hasExecutedDeliveryEvidence(summary, story), false);
 });
 
 test('failed local checks are failing executed evidence', () => {

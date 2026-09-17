@@ -36,16 +36,6 @@ export function resolveEvidenceProducer(value: unknown): DeliveryEvidenceProduce
   return 'manual';
 }
 
-export const VERIFIED_EXECUTION_LINK_KINDS = [
-  'ci-run',
-  'ci-artifact',
-  'coverage-report',
-  'commit',
-  'pull-request',
-  'code-review',
-  'changed-file',
-] as const;
-
 export function resolveEvidenceExecutionKind(
   value: unknown,
   producer: DeliveryEvidenceProducer,
@@ -65,15 +55,25 @@ export function isExecutedProducer(producer: DeliveryEvidenceProducer): boolean 
   return producer === 'evaluator' || producer === 'ci' || producer === 'scm';
 }
 
+const verifiedChecks = new WeakMap<object, () => boolean>();
+
+/** Attach a host-record lookup to one check; JSON cannot carry this capability. */
+export function withExecutionVerification(check: DeliveryEvidenceCheck, verify: () => boolean): DeliveryEvidenceCheck {
+  const copy = structuredClone(check);
+  const original = JSON.stringify(copy);
+  verifiedChecks.set(copy, () => JSON.stringify(copy) === original && verify());
+  return copy;
+}
+
 export function hasVerifiableExecutionProvenance(
   check: Pick<DeliveryEvidenceCheck, 'links' | 'evidenceIds'>,
 ): boolean {
-  if (check.links.some((link) => (VERIFIED_EXECUTION_LINK_KINDS as readonly string[]).includes(link.kind))) {
-    return true;
+  try {
+    return verifiedChecks.get(check)?.() === true;
+  } catch {
+    // Missing or unreadable execution artifacts cannot authorize delivery.
+    return false;
   }
-  return check.evidenceIds.some((id) =>
-    id.startsWith('ci:') || id.startsWith('git:') || id.startsWith('scm:'),
-  );
 }
 
 export function coerceEvidenceExecutionKind(
@@ -112,7 +112,11 @@ export function hasExecutedDeliveryEvidence(
 ): boolean {
   if (summary === undefined || summary === null) return false;
   if (item !== undefined && isStaleDeliveryEvidence(summary, item)) return false;
-  return summary.checks.some(isExecutedPassingCheck);
+  if (summary.checks.some(check => check.required && check.status !== 'passing')) return false;
+  if (summary.checks.some(check => check.required
+    && (check.producer === 'ci' || check.producer === 'evaluator') && !isExecutedPassingCheck(check))) return false;
+  return summary.checks.some(check => check.required
+    && (check.producer === 'ci' || check.producer === 'evaluator') && isExecutedPassingCheck(check));
 }
 
 export function mergeChecksByProducer(

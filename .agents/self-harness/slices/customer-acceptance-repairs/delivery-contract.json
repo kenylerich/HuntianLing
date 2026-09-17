@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "role": "planner",
+  "reqIds": ["REQ-EVIDENCE-001", "REQ-HARNESS-002", "REQ-HARNESS-003", "REQ-HARNESS-005", "REQ-HARNESS-006", "REQ-HARNESS-008", "REQ-MKT-001", "REQ-WEB-007", "REQ-AUTH-001", "REQ-AUTH-004", "REQ-CI-001"],
+  "outcome": "Each acceptance blocker has a tracked repair with truthful verification and explicit remaining dependencies.",
+  "acceptance": [
+    "Forged or stale execution claims cannot authorize delivery through Board or HTTP",
+    "Unconfigured runtime execution cannot fabricate code, checks, session references, or accepted delivery",
+    "Unconfirmed intake cannot be synthesized into confirmed Planner input",
+    "Customers cannot access developer-only records through legacy or versioned APIs",
+    "Workflow Lab logout uses the session revocation endpoint",
+    "Production integration and quality-gate gaps remain open until independently verified"
+  ],
+  "executionOwner": "external-agent",
+  "issues": [91, 92, 93, 94, 95, 96]
+}

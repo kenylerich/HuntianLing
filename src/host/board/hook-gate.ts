@@ -45,7 +45,13 @@ export function createHookGate(options: HookGateOptions): TransitionGate {
       if (outcome.error?.message.includes('ETIMEDOUT') ?? outcome.signal === 'SIGTERM') {
         return { ok: false, reason: `hook timed out after ${String(timeoutMs)}ms` };
       }
-      if (outcome.error !== undefined) {
+      // A hook may deliberately exit without reading stdin. On Linux, Node 24
+      // can report EPIPE while still returning the child's real exit status.
+      // Preserve that status instead of turning a successful exit into a
+      // spawn failure; an EPIPE without a status remains a hard failure.
+      const outcomeError = outcome.error as NodeJS.ErrnoException | undefined;
+      const closedInputAfterExit = outcomeError?.code === 'EPIPE' && outcome.status !== null;
+      if (outcome.error !== undefined && !closedInputAfterExit) {
         return { ok: false, reason: `hook failed to run: ${outcome.error.message}` };
       }
       if (outcome.status === 0) return { ok: true };

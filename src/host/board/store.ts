@@ -31,6 +31,7 @@ import {
 import { createDatabaseService } from '../database/service.js';
 import type { BoardDocument, DatabaseService } from '../database/types.js';
 import { extractIntakeSource, type ImageUnderstandingAdapter } from '../intake/extract.js';
+import { candidateScopeRevision, intakeSourceRevision, originalWorkItemRevision } from '../intake/confirmation.js';
 import { createHostedIntakeAdapters } from '../intake/hosted.js';
 import type { IntakeConfig, IntakeHostedTransport, IntakeOcrAdapter } from '../intake/types.js';
 import { buildIntakeCandidates, type IntakeLlmExtractor } from '../intake/candidates.js';
@@ -100,7 +101,6 @@ import {
   type DeliveryEvidenceSummary,
   type DeliveryEvidenceSummaryFilter,
   type DeliveryEvidenceSummaryInput,
-  type DeliveryEvidenceStatus,
   type DeliveryRiskAcceptance,
   type IntakeApprovalInput,
   type IntakeApprovalResult,
@@ -110,27 +110,22 @@ import {
   type IntakeAnalyzeInput,
   type IntakeCandidateSourceRef,
   type IntakeCandidateStatus,
-  type IntakeCandidateType,
   type IntakeCandidateUpdateInput,
   type IntakeFollowUpInput,
   type IntakeMessage,
   type IntakeMessageCreateInput,
   type IntakeMessageId,
-  type IntakeMessageRole,
   type IntakeSession,
   type IntakeSessionBundle,
   type IntakeSessionCreateInput,
   type IntakeSessionFilter,
   type IntakeSessionId,
-  type IntakeSessionStatus,
   type IntakeSessionUpdateInput,
   type IntakeSourceChunk,
   type IntakeSourceChunkId,
   type IntakeSourceDocument,
   type IntakeSourceDocumentCreateInput,
   type IntakeSourceDocumentId,
-  type IntakeSourceKind,
-  type IntakeSourceParseStatus,
   type Milestone,
   type MilestoneBoard,
   type MilestoneBoardLane,
@@ -142,7 +137,6 @@ import {
   type MilestoneDeliverySliceUpdateInput,
   type MilestoneFilter,
   type MilestoneId,
-  type MilestoneStatus,
   type MilestoneSummary,
   type MilestoneUpdateInput,
   type DeliveryGateInspection,
@@ -165,7 +159,6 @@ import {
   type TeamWipKind,
   type TeamWipPolicy,
   type TeamWipPolicyInput,
-  type WipResourceKind,
   type WorkItemWipResource,
   type RankingOverride,
   type StoryPriorityQueue,
@@ -175,7 +168,6 @@ import {
   type WorkItemCreateInput,
   type WorkItemFilter,
   type WorkItemId,
-  type WorkItemPriority,
   type WorkItemTreeNode,
   type WorkItemUpdateInput,
   type WorkItemStatus,
@@ -191,11 +183,14 @@ import {
 } from './types.js';
 import {
   coerceEvidenceExecutionKind,
+  hasExecutedDeliveryEvidence,
   resolveEvidenceExecutionKind,
   resolveEvidenceProducer,
   staleExecutedChecks,
   workItemDesignRevision,
+  withExecutionVerification,
 } from './executed-evidence.js';
+import { ExecutionRecords } from './execution-records.js';
 import { runTransitionGates, type TransitionGate } from './gates.js';
 import {
   isForbiddenTransition,
@@ -318,8 +313,6 @@ const EMPTY: BoardSnapshot = {
 
 const DELIVERY_SLICE_PARENT_TYPES = ['epic', 'feature', 'requirement', 'story'] as const;
 const CLOSED_WORK_ITEM_STATUSES: readonly WorkItemStatus[] = ['delivered', 'rejected', 'stopped'];
-const TEXT_INTAKE_SOURCE_KINDS: readonly IntakeSourceKind[] = ['text', 'markdown', 'plain-text'];
-const PENDING_INTAKE_SOURCE_KINDS: readonly IntakeSourceKind[] = ['image', 'word', 'pdf'];
 const MAX_INTAKE_TEXT_LENGTH = 20_000;
 const MAX_INTAKE_QUOTE_LENGTH = 180;
 
@@ -570,34 +563,6 @@ function percentDelivered(total: number, delivered: number): number {
 
 function isOpenWorkItem(item: WorkItem): boolean {
   return !CLOSED_WORK_ITEM_STATUSES.includes(item.status);
-}
-
-function priorityScore(priority: WorkItemPriority | null): number {
-  switch (priority) {
-    case 'p0':
-      return 0;
-    case 'p1':
-      return 1;
-    case 'p2':
-      return 2;
-    case 'p3':
-      return 3;
-    case null:
-      return 4;
-    default: {
-      const _never: never = priority;
-      return _never;
-    }
-  }
-}
-
-function compareStoryQueueItems(left: WorkItem, right: WorkItem): number {
-  const priority = priorityScore(left.priority) - priorityScore(right.priority);
-  if (priority !== 0) return priority;
-  const leftDue = left.dueDate ?? Number.MAX_SAFE_INTEGER;
-  const rightDue = right.dueDate ?? Number.MAX_SAFE_INTEGER;
-  if (leftDue !== rightDue) return leftDue - rightDue;
-  return left.sortOrder - right.sortOrder;
 }
 
 function isActiveWorkflowRun(status: WorkflowRunStatus): boolean {
@@ -957,12 +922,7 @@ function normalizeStoredDeliveryEvidenceCheck(check: DeliveryEvidenceCheck): Del
     acceptanceCriterionIds: check.acceptanceCriterionIds ?? [],
     links: check.links ?? [],
     producer,
-    executionKind: coerceEvidenceExecutionKind({
-      executionKind: resolveEvidenceExecutionKind(check.executionKind, producer),
-      producer,
-      links: check.links ?? [],
-      evidenceIds: check.evidenceIds ?? [],
-    }),
+    executionKind: resolveEvidenceExecutionKind(check.executionKind, producer),
     designRevision: check.designRevision ?? '',
   };
 }
@@ -1126,6 +1086,7 @@ function normalizeStoredIntakeCandidateRequirement(
     assumptions: stringList(candidate.assumptions),
     status,
     workItemId: candidate.workItemId ?? null,
+    approval: candidate.approval ?? null,
     createdAt: candidate.createdAt ?? 0,
     updatedAt: candidate.updatedAt ?? candidate.createdAt ?? 0,
   };
@@ -1194,16 +1155,6 @@ function clampIntakeText(value: string): string {
   return value.length > MAX_INTAKE_TEXT_LENGTH ? value.slice(0, MAX_INTAKE_TEXT_LENGTH) : value;
 }
 
-function defaultIntakeParseStatus(
-  kind: IntakeSourceKind,
-  extractedText: string,
-): IntakeSourceParseStatus {
-  if (extractedText.trim().length > 0) return 'parsed';
-  if (PENDING_INTAKE_SOURCE_KINDS.includes(kind)) return 'pending';
-  if (TEXT_INTAKE_SOURCE_KINDS.includes(kind)) return 'failed';
-  return 'unsupported';
-}
-
 function createIntakeSourceChunks(
   sourceDocumentId: IntakeSourceDocumentId,
   extractedText: string,
@@ -1247,23 +1198,6 @@ function compactIntakeQuote(value: string): string {
     : quote;
 }
 
-function extractAcceptanceFromText(text: string): readonly string[] {
-  const candidates = text
-    .split(/\r?\n/)
-    .map((line) => line.replace(/^\s*[-*#\d.)]+/, '').trim())
-    .filter((line) => line.length >= 6)
-    .filter((line) =>
-      /验收|标准|必须|需要|能够|可以|should|must|acceptance|criteria|requirement/i.test(line),
-    )
-    .slice(0, 5);
-  if (candidates.length > 0) return candidates;
-  return [
-    '产品负责人可以确认需求目标和业务范围。',
-    '拆分出的 Story 可以覆盖核心用户场景。',
-    '交付证据可以回链到来源材料和验收标准。',
-  ];
-}
-
 export interface BoardStoreOptions {
   readonly database?: DatabaseService;
   readonly intakeLlm?: IntakeLlmExtractor;
@@ -1275,6 +1209,7 @@ export interface BoardStoreOptions {
 }
 
 export class BoardStore {
+  private readonly executionRecords: ExecutionRecords;
   private snapshot: BoardSnapshot;
   private gates: TransitionGate[] = [];
   private readonly database: DatabaseService;
@@ -1287,6 +1222,7 @@ export class BoardStore {
     options: BoardStoreOptions = {},
   ) {
     this.database = options.database ?? createDatabaseService({ workspaceRoot });
+    this.executionRecords = new ExecutionRecords(this.database);
     const hosted = createHostedIntakeAdapters({
       ...(options.intake !== undefined ? { config: options.intake } : {}),
       ...(options.env !== undefined ? { env: options.env } : {}),
@@ -1811,13 +1747,32 @@ export class BoardStore {
   ): readonly DeliveryEvidenceSummary[] {
     return [...this.snapshot.deliveryEvidenceSummaries]
       .filter((item) => matchesDeliveryEvidenceSummaryFilter(item, filter))
+      .map((summary) => this.verifyDeliverySummary(summary))
       .sort((left, right) => left.updatedAt - right.updatedAt);
   }
 
   getDeliveryEvidenceSummary(workItemId: WorkItemId): DeliveryEvidenceSummary {
     const item = this.requireCard(workItemId);
-    return this.snapshot.deliveryEvidenceSummaries.find((summary) => summary.workItemId === item.id)
-      ?? this.createDefaultDeliveryEvidenceSummary(item);
+    return this.verifyDeliverySummary(this.snapshot.deliveryEvidenceSummaries.find((summary) => summary.workItemId === item.id)
+      ?? this.createDefaultDeliveryEvidenceSummary(item));
+  }
+
+  recordExecutionEvidence(workItemId: WorkItemId, checks: readonly DeliveryEvidenceCheck[], root: string, revision: string): void {
+    const item = this.requireCard(workItemId);
+    this.executionRecords.record(item, this.copyDeliveryEvidenceChecks(checks, item), root, revision);
+  }
+
+  beginExecutionEvidence(workItemId: WorkItemId): void {
+    this.executionRecords.begin(this.requireCard(workItemId));
+  }
+
+  private verifyDeliverySummary(summary: DeliveryEvidenceSummary): DeliveryEvidenceSummary {
+    return { ...structuredClone(summary), checks: summary.checks.map((stored) => {
+      const check = withExecutionVerification(stored, () =>
+        this.executionRecords.verify(this.requireCard(summary.workItemId), stored, summary.checks));
+      const executionKind = coerceEvidenceExecutionKind(check);
+      return executionKind === check.executionKind ? check : { ...check, executionKind };
+    }) };
   }
 
   updateDeliveryEvidenceSummary(
@@ -1878,7 +1833,7 @@ export class BoardStore {
       changedFields: changedInputFields(input),
     });
     this.write();
-    return next;
+    return this.verifyDeliverySummary(next);
   }
 
   getProjectDeliveryEvidenceRollup(
@@ -1895,7 +1850,8 @@ export class BoardStore {
     const readyWorkItemIds = workItems
       .filter((item) => {
         const summary = this.getDeliveryEvidenceSummary(item.id);
-        return summary.checks.some((check) => check.required) && summary.checks.every(deliveryCheckSatisfied);
+        return hasExecutedDeliveryEvidence(summary, item) && summary.checks.every(deliveryCheckSatisfied)
+          && this.deliveryEvidenceBlocks(item).length === 0;
       })
       .map((item) => item.id);
     const warnings = [
@@ -2066,6 +2022,9 @@ export class BoardStore {
     this.snapshot = {
       ...this.snapshot,
       intakeSessions: this.snapshot.intakeSessions.map((item) => (item.id === next.id ? next : item)),
+      intakeCandidates: this.snapshot.intakeCandidates.map((candidate) =>
+        candidate.sessionId === session.id && (session.status === 'rejected' || next.status === 'rejected')
+          ? { ...candidate, approval: null } : candidate),
     };
     this.appendAuditEvent({
       projectId: next.projectId,
@@ -2279,6 +2238,9 @@ export class BoardStore {
     if (input.status !== undefined && !INTAKE_CANDIDATE_STATUSES.includes(input.status)) {
       throw new Error(`invalid intake candidate status: ${input.status}`);
     }
+    if (input.status === 'approved') {
+      throw new Error('use intake approval to approve a candidate');
+    }
     if (input.title !== undefined) this.assertNonBlank(input.title, 'intake candidate title');
     if (input.parentCandidateId !== undefined && input.parentCandidateId !== null) {
       this.requireIntakeCandidateInSession(candidate.sessionId, input.parentCandidateId);
@@ -2311,6 +2273,7 @@ export class BoardStore {
       ...(input.confidence !== undefined ? { confidence: normalizeConfidence(input.confidence) } : {}),
       ...(input.openQuestions !== undefined ? { openQuestions: [...input.openQuestions] } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
+      approval: null,
       updatedAt: Date.now(),
     };
     this.validateIntakeCandidateHierarchy(next);
@@ -2344,6 +2307,19 @@ export class BoardStore {
     if (!selectedCandidates.some((candidate) => candidate.status !== 'rejected')) {
       throw new Error('at least one selected intake candidate must be approvable');
     }
+    if (input.actorId !== undefined) this.assertNonBlank(input.actorId, 'approval actor');
+    for (const candidate of selectedCandidates) {
+      if (candidate.workItemId === null || candidate.status === 'rejected') continue;
+      const item = this.requireCard(candidate.workItemId);
+      const parentId = candidate.parentCandidateId === null ? null
+        : candidates.find((parent) => parent.id === candidate.parentCandidateId)?.workItemId;
+      if (item.projectId !== candidate.projectId || item.type !== candidate.type || item.parentId !== parentId
+        || item.title !== candidate.title || item.body !== candidate.body
+        || item.sourceInput !== summarizeIntakeCandidateSourceInput(candidate)
+        || JSON.stringify(item.acceptance) !== JSON.stringify(candidate.acceptance)) {
+        throw new Error('candidate and WorkItem scope differ; reconcile both before approval');
+      }
+    }
     const workItemByCandidate = new Map<IntakeCandidateId, WorkItemId>();
     const approvedUpdates = new Map<IntakeCandidateId, WorkItemId>();
     const workItems: WorkItem[] = [];
@@ -2354,6 +2330,7 @@ export class BoardStore {
       if (candidate.status === 'rejected') continue;
       if (candidate.workItemId !== null) {
         workItems.push(this.requireCard(candidate.workItemId));
+        approvedUpdates.set(candidate.id, candidate.workItemId);
         continue;
       }
       const parentId = candidate.parentCandidateId === null
@@ -2380,13 +2357,22 @@ export class BoardStore {
       workItems.push(workItem);
     }
     const updatedAt = Date.now();
+    const sourceRevision = intakeSourceRevision(this.getIntakeSessionBundle(session.id));
     const nextCandidates = this.snapshot.intakeCandidates.map((candidate) => {
       const workItemId = approvedUpdates.get(candidate.id);
       if (workItemId === undefined) return candidate;
+      const workItem = this.requireCard(workItemId);
       return {
         ...candidate,
         status: 'approved' as IntakeCandidateStatus,
         workItemId,
+        approval: {
+          actorId: input.actorId ?? 'developer',
+          approvedAt: updatedAt,
+          candidateRevision: candidateScopeRevision(candidate),
+          workItemRevision: originalWorkItemRevision(workItem),
+          sourceRevision,
+        },
         updatedAt,
       };
     });
@@ -3743,12 +3729,7 @@ export class BoardStore {
       }
       const producer = resolveEvidenceProducer(check.producer);
       const links = this.copyDeliveryEvidenceLinks(check.links, item);
-      const executionKind = coerceEvidenceExecutionKind({
-        executionKind: resolveEvidenceExecutionKind(check.executionKind, producer),
-        producer,
-        links,
-        evidenceIds: check.evidenceIds,
-      });
+      const executionKind = resolveEvidenceExecutionKind(check.executionKind, producer);
       if (!DELIVERY_EVIDENCE_PRODUCERS.includes(producer)) {
         throw new Error(`invalid delivery evidence check producer: ${producer}`);
       }
@@ -4205,7 +4186,7 @@ export class BoardStore {
   private doneContext(item: WorkItem, policy: ProjectDeliveryPolicy) {
     return {
       policy,
-      evidence: this.snapshot.deliveryEvidenceSummaries.find((summary) => summary.workItemId === item.id) ?? null,
+      evidence: this.getDeliveryEvidenceSummary(item.id),
       children: this.childrenOf(item.id),
     };
   }

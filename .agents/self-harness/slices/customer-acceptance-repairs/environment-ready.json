@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "role": "environment",
+  "commands": { "typecheck": "pass", "test": "pass", "lint": "blocked", "hygiene": "blocked" },
+  "ready": true,
+  "evidence": ["pnpm run typecheck", "node --test test/unit/gates-d16.test.mjs: 8 passed after isolated loopback EPERM retry"],
+  "limits": ["Existing tests omit prefix forgery", "Production runtime, OAuth, CI and quality checks are not accepted"]
+}

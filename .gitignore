@@ -31,6 +31,7 @@ Thumbs.db
 coverage/
 .nyc_output/
 output/playwright/
+output/verification/
 .playwright-cli/
 .impeccable/review/
 

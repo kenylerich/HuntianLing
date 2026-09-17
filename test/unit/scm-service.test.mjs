@@ -35,7 +35,7 @@ test('inspect reports local branch and HEAD without GitHub', () => {
   assert.deepEqual(inspect.remotes, []);
 });
 
-test('linkHead writes an executed scm check onto the WorkItem', () => {
+test('linkHead records a code reference without authorizing delivery', () => {
   const store = board();
   const project = store.createProject({ name: 'p' });
   const story = store.createWorkItem({
@@ -53,8 +53,8 @@ test('linkHead writes an executed scm check onto the WorkItem', () => {
   assert.equal(summary.codeLinks[0].label, 'abc123def456');
   const check = summary.checks.find((item) => item.producer === 'scm');
   assert.equal(check.status, 'passing');
-  assert.equal(check.executionKind, 'executed');
-  assert.equal(hasExecutedDeliveryEvidence(summary, story), true);
+  assert.equal(check.executionKind, 'manual');
+  assert.equal(hasExecutedDeliveryEvidence(summary, story), false);
 });
 
 test('git failure is loud', () => {

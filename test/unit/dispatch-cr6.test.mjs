@@ -90,7 +90,7 @@ function setup() {
 }
 
 test('a member who owns the WorkItem branch ranks higher in dispatch recommendation', () => {
-  const { board, project, scm, dispatch, alice, bob, item } = setup();
+  const { project, scm, dispatch, alice, bob, item } = setup();
   scm.registerRepository({ projectId: project.id, name: 'app', workspaceRoot: project.id });
   scm.createBranch({ workItemId: item.id, actor: alice.id, role: 'generator' });
   const recommendation = dispatch.recommend(project.id, item.id);
@@ -125,7 +125,7 @@ test('transferring work writes a transfer event instead of a new assignment even
 });
 
 test('Code View shows active lease badges for the WorkItem', async (t) => {
-  const { root, board, project, dispatch, item, alice } = setup();
+  const { board, dispatch, item, alice } = setup();
   dispatch.claim(item.id, alice.id, 'pm');
   const requirements = createRequirementManagementService(board);
   const hash = createPbkdf2PasswordHash('correct-password', { iterations: 1_000, salt: new Uint8Array(16).fill(6) });
@@ -200,7 +200,7 @@ test('a workflow step does not start when an exclusive lease or foreign branch o
 });
 
 test('customers cannot transfer dispatched work', async (t) => {
-  const { root, board, project, dispatch, item, alice, bob } = setup();
+  const { board, project, dispatch, item, alice, bob } = setup();
   dispatch.claim(item.id, alice.id, 'pm');
   const requirements = createRequirementManagementService(board);
   const hash = createPbkdf2PasswordHash('correct-password', { iterations: 1_000, salt: new Uint8Array(16).fill(6) });

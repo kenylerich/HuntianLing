@@ -1,8 +1,13 @@
 /**
- * Local and hosted CI adapters: run checks and record executed evidence.
+ * Local and hosted CI adapters: collect checks with independently verified provenance.
  */
 
 import type { AuthorityService } from '../authority/service.js';
+import { randomUUID } from 'node:crypto';
+import { existsSync, realpathSync } from 'node:fs';
+import { workspaceRevision } from '../board/execution-records.js';
+import { resolveCiConfig, runLocalCheck } from './local.js';
+import type { CiConfig } from './types.js';
 import { AuthorityError } from '../authority/types.js';
 import type { BoardService } from '../board/plugin.js';
 import {
@@ -44,14 +49,13 @@ export function createCiService(deps: {
   readonly tools?: ToolRegistry;
   readonly authority?: AuthorityService;
   readonly env?: NodeJS.ProcessEnv;
+  readonly workspaceRoot?: string;
+  readonly config?: CiConfig;
 }): CiService {
+  const config = resolveCiConfig(deps.config);
   const tools = deps.tools ?? createToolRegistry();
   const hosted = deps.hosted ?? defaultHostedCiTransport;
   const env = deps.env ?? process.env;
-  const defaultRunner = deps.runner ?? (() => ({
-    status: 'skipped' as const,
-    output: 'runner not configured',
-  }));
 
   function runHosted(input: CiRunInput, role: string): DeliveryEvidenceSummary {
     const item = deps.board.getWorkItem(input.workItemId as WorkItemId);
@@ -79,6 +83,7 @@ export function createCiService(deps: {
       throw new CiError('VALIDATION', `hosted ${target.provider} requires workflow`);
     }
     const token = resolveHostedCiToken(target.provider, input.token, env);
+    deps.board.beginExecutionEvidence(item.id);
     const collected = hostedTriggerAndCollect({
       transport: hosted,
       target,
@@ -276,7 +281,7 @@ export function createCiService(deps: {
           role,
           taskType: 'ci.production',
           affectsDelivery: true,
-          result: 'ran',
+          result: 'allowed',
           detail: 'production ci authorized',
         });
       } else {
@@ -293,7 +298,16 @@ export function createCiService(deps: {
       if (commands.length === 0) {
         throw new CiError('VALIDATION', 'CI run requires at least one command');
       }
-      const runner = input.runner ?? defaultRunner;
+      const root = deps.workspaceRoot ?? input.workspaceRoot;
+      if (root === undefined) throw new CiError('VALIDATION', 'CI workspace is not configured');
+      if (deps.workspaceRoot !== undefined && input.workspaceRoot !== undefined
+        && realpathSync(input.workspaceRoot) !== realpathSync(deps.workspaceRoot)) {
+        throw new CiError('VALIDATION', 'CI workspace differs from configured workspace');
+      }
+      const runner = input.runner ?? deps.runner ?? ((command: string) => runLocalCheck(command, root, config));
+      const native = input.runner === undefined && deps.runner === undefined;
+      deps.board.beginExecutionEvidence(item.id);
+      const candidateRevision = native && config.localExecution === 'enabled' && existsSync(root) ? workspaceRevision(root) : null;
       const revision = workItemDesignRevision(item);
       const existing = deps.board.listDeliveryEvidenceSummaries({ workItemId: item.id })[0];
       const existingChecks = existing?.checks ?? [];
@@ -301,9 +315,14 @@ export function createCiService(deps: {
       const existingProvenance = existing?.provenanceLinks ?? [];
       const ciRuns: DeliveryEvidenceLink[] = [];
       const checks: DeliveryEvidenceCheck[] = [];
+      let candidateChanged = false;
       for (const spec of commands) {
+        const before = candidateRevision === null ? null : workspaceRevision(root);
         const ran = runner(spec.command);
-        const runId = `ci:${spec.id}`;
+        if (candidateRevision !== null && (before !== candidateRevision || workspaceRevision(root) !== candidateRevision)) candidateChanged = true;
+        const runId = `ci:${randomUUID()}:${spec.id}`;
+        const observed = candidateRevision !== null && typeof ran.exitCode === 'number' && ran.timedOut !== true && !ran.signal;
+        const status = observed && ran.exitCode !== 0 && ran.status === 'pass' ? 'fail' : ran.status;
         ciRuns.push({
           kind: 'ci-run',
           id: runId,
@@ -315,14 +334,14 @@ export function createCiService(deps: {
           id: `ci-${spec.id}`,
           area: 'ci',
           title: spec.command,
-          status: ciStatus(ran.status),
+          status: ciStatus(status),
           required: spec.required,
           reason: ran.output.trim() === '' ? ran.status : ran.output.trim().slice(0, 240),
           evidenceIds: [runId],
           acceptanceCriterionIds: [],
           links: [],
           producer: 'ci',
-          executionKind: 'executed',
+          executionKind: observed ? 'executed' : 'demonstration',
           designRevision: revision,
         });
         tools.recordCall({
@@ -330,9 +349,25 @@ export function createCiService(deps: {
           role: 'ci',
           taskType: 'ci.run',
           affectsDelivery: spec.required,
-          result: 'ran',
+          result: ran.status === 'skipped' || ran.status === 'blocked' ? 'allowed' : 'ran',
           detail: `${spec.id}:${ran.status}`,
         });
+      }
+      const executed = checks.filter(check => check.executionKind === 'executed');
+      if (executed.length > 0 && candidateRevision !== null) {
+        if (!candidateChanged && workspaceRevision(root) === candidateRevision
+          && checks.every(check => check.executionKind === 'executed')) {
+          for (let index = 0; index < checks.length; index += 1) {
+            checks[index] = { ...checks[index]!, executionKind: 'manual',
+              reason: `${checks[index]!.reason}; diagnostic only: process containment is unverified` };
+          }
+        }
+        else {
+          for (let index = 0; index < checks.length; index += 1) {
+            checks[index] = { ...checks[index]!, status: 'blocked', executionKind: 'demonstration',
+              reason: 'candidate changed during CI; rerun on a stable revision' };
+          }
+        }
       }
       return deps.board.updateDeliveryEvidenceSummary(item.id, {
         ciRuns: [

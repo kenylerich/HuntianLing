@@ -256,7 +256,7 @@ export function renderWorkflowLabPage(): string {
       }
     };
     $('logout').onclick = async () => {
-      await api('/api/auth/password/logout', { method: 'POST' });
+      await api('/api/auth/logout', { method: 'POST' });
       location.assign('/login');
     };
     loadTemplates().catch((error) => { $('issues').textContent = error.message; });

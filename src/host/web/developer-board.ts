@@ -46,6 +46,9 @@ export function createDeveloperBoard(
     collect: {
       sessions: collect.sessions,
       requirements: collect.requirements,
+      candidates: board.listIntakeCandidates({ projectId }).filter((candidate) =>
+        candidate.status === 'draft' && candidate.workItemId === null,
+      ),
     },
     design: {
       items: items.map((item) => ({

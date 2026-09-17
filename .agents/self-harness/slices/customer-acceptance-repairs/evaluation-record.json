@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "role": "evaluator",
+  "independent": true,
+  "assessedBy": "external-agent",
+  "executionOwner": "external-agent",
+  "assessedAt": "2026-09-13T09:48:21Z",
+  "deliveryContract": ".agents/self-harness/slices/customer-acceptance-repairs/delivery-contract.json",
+  "deliveryContractSha256": "24856270ebda0694f4851cdfa492456e5bae6145ed93f1718714bb88c87e71e8",
+  "reqIds": [
+    "REQ-EVIDENCE-001",
+    "REQ-HARNESS-002",
+    "REQ-HARNESS-003",
+    "REQ-HARNESS-005",
+    "REQ-HARNESS-006",
+    "REQ-HARNESS-008",
+    "REQ-MKT-001",
+    "REQ-WEB-007",
+    "REQ-AUTH-001",
+    "REQ-AUTH-004",
+    "REQ-CI-001"
+  ],
+  "scope": "Independent acceptance-gating containment reevaluation, with every delivery-contract criterion assessed. Unverified full-scope behavior is failed for acceptance. This is an external-agent evaluation, not Generator self-acceptance or a HuntianLing-runtime Evaluator run.",
+  "criteria": [
+    {
+      "id": "AC-1",
+      "acceptance": "Forged or stale execution claims cannot authorize delivery through Board or HTTP",
+      "result": "pass",
+      "assessmentBasis": "independently-executed",
+      "evidence": "E1-E4: the temporary build passed; all 10 current execution-receipts tests and three independent probes passed. Passing native commands returned passing/manual with an explicit unverified-containment reason, made zero receipt-writer calls, and invalidated prior Host receipts. Replaying older checks after SQLite reload could not authorize delivery. Native and mocked-Host required-check omission through authenticated HTTP both left the Story verifying: the PATCH returned 200, and the delivered transition returned 400. The mocked-Host response named missing executed evidence. Required-batch digests, altered fields, cross-item replay, source drift, and executable permissions were covered. This pass is limited to the tested acceptance-gating containment; trusted Host mocks do not establish a production execution producer or descendant cleanup."
+    },
+    {
+      "id": "AC-2",
+      "acceptance": "Unconfigured runtime execution cannot fabricate code, checks, session references, or accepted delivery",
+      "result": "fail",
+      "assessmentBasis": "partial-source-inspection-and-unverified-full-scope",
+      "evidence": "src/host/agents/runtime.ts:718-731 still returns fallback file names when local artifacts are unavailable, without creating those files. The repaired code reports skipped self-checks, local-session identifiers, empty tool-call references, and demonstration evaluation; E1-E4 establish that diagnostic execution cannot authorize delivery. These repairs do not verify the complete runtime criterion. Real dsh task/session/tool execution and independent Agent evaluation remain incomplete; no fresh-project runtime acceptance was executed by this evaluator."
+    },
+    {
+      "id": "AC-3",
+      "acceptance": "Unconfirmed intake cannot be synthesized into confirmed Planner input",
+      "result": "fail",
+      "assessmentBasis": "source-inspected-defect",
+      "evidence": "src/host/delivery/service.ts:617-625 constructs Planner input from WorkItem sourceInput or body and sets confirmed: true without checking an approved intake record. src/host/agents/runtime.ts:608-609 requires the supplied flag, so that guard does not establish original-requirement confirmation. This is a source-inspected remaining defect; no new intake execution test was run for this record."
+    },
+    {
+      "id": "AC-4",
+      "acceptance": "Customers cannot access developer-only records through legacy or versioned APIs",
+      "result": "fail",
+      "assessmentBasis": "unverified",
+      "evidence": "The independent HTTP probes used a developer session and tested evidence omission and delivery denial. They did not execute a customer authorization matrix across legacy and versioned APIs. Another agent's UI or customer-access results and the Generator implementation record are not independent evidence from this evaluator. This criterion remains unverified, not a newly reproduced customer-access defect."
+    },
+    {
+      "id": "AC-5",
+      "acceptance": "Workflow Lab logout uses the session revocation endpoint",
+      "result": "pass",
+      "assessmentBasis": "source-inspection",
+      "evidence": "Source inspection confirms src/host/web/pages/workflow-lab.ts:258-260 awaits POST /api/auth/logout before navigating to /login; its api helper at lines 71-78 forwards the method and rejects unsuccessful responses. src/host/web/server.ts:1824-1827 handles that POST with auth.manager.logout(req). src/host/web/auth.ts:495-510 removes the stored session and returns an expired cookie. This passes the endpoint-wiring criterion by source inspection only; this evaluator did not independently replay the browser logout workflow."
+    },
+    {
+      "id": "AC-6",
+      "acceptance": "Production integration and quality-gate gaps remain open until independently verified",
+      "result": "fail",
+      "assessmentBasis": "incomplete-and-unverified",
+      "evidence": "Production and release readiness are not established. Native commands remain diagnostic because descendant containment is unverified; hosted revision-bound receipts, the lifecycle adapter, real dsh execution, OAuth integration, and fresh-project acceptance were not independently established here. The user reports per-file coverage failing for 109 of 135 files and the zero-threshold duplication gate failing; those measurements were not rerun by this evaluator. They remain blockers, not passing evidence. This record keeps those gaps open and records the full-scope criterion as failed for acceptance."
+    }
+  ],
+  "decision": "revision-required",
+  "containmentDecision": "pass",
+  "fullScopeAccepted": false,
+  "pushMergeReady": false,
+  "executionEvidence": [
+    {
+      "id": "E1",
+      "workingDirectory": "/private/tmp/htl-independent-review.UQLpJm",
+      "command": "./node_modules/.bin/tsc -p tsconfig.src.json",
+      "exitCode": 0,
+      "result": "pass",
+      "observed": "Built the refreshed isolated source copy successfully."
+    },
+    {
+      "id": "E2",
+      "workingDirectory": "/private/tmp/htl-independent-review.UQLpJm",
+      "command": "env TMPDIR=/private/tmp/htl-independent-review.UQLpJm/tmp node --test test/unit/execution-receipts.test.mjs",
+      "exitCode": 0,
+      "result": "pass",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "observed": "Forged claims, diagnostic-only native results, mocked Host receipt persistence, workspace and shell rejection, timeout/output/credential handling, altered fields, cross-item replay, mixed checks, required-check omission, superseded passes, intermediate source edits, and executable-permission drift were exercised. Positive receipt fixtures explicitly mock a trusted Host."
+    },
+    {
+      "id": "E3",
+      "workingDirectory": "/private/tmp/htl-independent-review.UQLpJm",
+      "command": "env TMPDIR=/private/tmp/htl-independent-review.UQLpJm/tmp node --test --test-name-pattern='^diagnostic-only native passes' review-probes.test.mjs",
+      "exitCode": 0,
+      "result": "pass",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "observed": {
+        "checks": [["passing", "manual"], ["passing", "manual"]],
+        "receiptWriterCalls": 0,
+        "oldReceiptValid": false,
+        "deliveryDenied": true,
+        "replayAfterSqliteReloadDenied": true,
+        "customerProgressWithDeliveredStatus": "in_development"
+      }
+    },
+    {
+      "id": "E4",
+      "workingDirectory": "/private/tmp/htl-independent-review.UQLpJm",
+      "command": "env TMPDIR=/private/tmp/htl-independent-review.UQLpJm/tmp node --test --test-name-pattern='^authenticated HTTP' review-probes.test.mjs",
+      "exitCode": 0,
+      "result": "pass",
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "executionPermissions": "Previously approved narrow loopback execution escalation after listen EPERM; no safety settings changed.",
+      "observed": "Both native-summary and explicitly mocked Host-batch omission probes returned HTTP 400 for the delivered transition and retained verifying status. The mocked Host-batch PATCH returned 200 and removed executed eligibility; its transition response stated that delivery requires executed evidence."
+    }
+  ],
+  "evidenceRetention": {
+    "results": "Independent tool outputs from this evaluation task, transcribed above; no Generator self-check results are counted as independent passes.",
+    "probePath": "/private/tmp/htl-independent-review.UQLpJm/review-probes.test.mjs",
+    "probeSha256": "04cd84b11d01e44bb280334ff98cdbca46085f4f3e0b7b13cdacdf353277e92f",
+    "limitation": "The replay script and compiled copy are temporary local artifacts, not committed fixtures. Detached-descendant probes were deliberately excluded from this final reevaluation."
+  },
+  "verifiedSourceSha256": {
+    "src/host/board/execution-records.ts": "5e87e23fcdf77e810ea193e67ee99d4a085b4c9b562a4d4e76e6813196775826",
+    "src/host/board/executed-evidence.ts": "bbd7f85da93c68275ceeaf4acc6ff16289d54e01c3ceae87602f8b8ae42f8b87",
+    "src/host/board/store.ts": "fe2cea596d9dbf4c095f51b201cb5e49aa96f6e27d7ca01ba4508f438fa63234",
+    "src/host/board/plugin.ts": "299f20eebdc2fa47137404e2737081bb9f6f203258ebb41cc27670e1004d76f1",
+    "src/host/ci/service.ts": "6dcac04b9c13becb77d5f0265cb876991065e40d69b35d2bf62c61832fd0047d",
+    "src/host/ci/local.ts": "c21e2741453595489862a01590335f012dfd1f80ce356841361268e086216d48",
+    "src/host/ci/local-worker.ts": "0dc6e4e3f1fd44bb5393c9fafc9f5ae402ce4a864df424159aca01f4fe0784ba",
+    "src/host/web/server.ts": "2a1baac710dc1e8fec84beb77b70f55d0c7016246207ec9e9335c53f32b5571c",
+    "test/unit/execution-receipts.test.mjs": "b4469154a7f5d87ce5c6ee29c3a2f4f1b63d3b70123612d82f908037b0fb03ba"
+  },
+  "remainingBlockers": [
+    "Full runtime criterion remains incomplete; skipped checks and local references do not establish actual dsh Agent execution.",
+    "Planner input still synthesizes confirmed: true from WorkItem fields.",
+    "Customer authorization across legacy and versioned APIs lacks independent verification by this evaluator.",
+    "Native diagnostic scripts do not have a descendant cleanup guarantee and cannot provide acceptance-grade receipts.",
+    "Hosted revision-bound evidence, production integration, OAuth, and fresh-project acceptance remain incomplete or unverified.",
+    "User-reported per-file coverage and zero-threshold duplication failures block push and merge; this evaluator did not rerun those gates."
+  ],
+  "limitations": [
+    "No D18-D21 full acceptance, customer delivery, Issue closure, or #94 completion is authorized by this record.",
+    "Workflow Lab logout passed source inspection only; no independent browser rerun is claimed.",
+    "Hosted receipt invalidation was source-inspected, not verified against a real provider.",
+    "Only evaluation-record.json is written by this recording step; no repair-handoff, product, documentation, or safety-setting edits are made."
+  ]
+}

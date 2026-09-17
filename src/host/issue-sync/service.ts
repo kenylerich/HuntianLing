@@ -25,16 +25,13 @@ import {
   ISSUE_PROVIDERS,
   IssueSyncError,
   type CloseIngestResult,
-  type ExportWorkItemInput,
   type ExternalIssueRef,
   type ExternalIssueSnapshot,
   type HostedIssueTransport,
-  type ImportIssueInput,
   type IssueProvider,
   type IssueSyncService,
   type IssueTrackerBinding,
   type SyncConflict,
-  type SyncReport,
 } from './types.js';
 
 export type { IssueSyncService };

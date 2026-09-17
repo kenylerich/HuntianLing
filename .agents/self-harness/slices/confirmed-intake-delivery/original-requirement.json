@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "role": "mkt",
+  "rawQuotes": [{ "text": "请继续", "source": "user, continuing the proposed unconfirmed-intake repair" }],
+  "goal": "Prevent unconfirmed or changed original requirements from starting planning and delivery.",
+  "confirmed": true,
+  "constraints": ["Use persisted approval, not a caller-supplied boolean", "Keep incomplete Issues open"],
+  "executionOwner": "external-agent"
+}

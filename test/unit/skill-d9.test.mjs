@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { approvedWorkItem } from '../helpers/approved-intake.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -125,7 +126,7 @@ test('the agent runtime loads only the relevant installed pack skills for the se
   const project = board.createProject({ name: 'p' });
   skills.installPack(project.id, 'tech.frontend-web');
   skills.installPack(project.id, 'tech.qa-automation');
-  const item = board.createWorkItem({
+  const item = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '登录',
@@ -162,7 +163,7 @@ test('a missing required pack blocks the agent run', () => {
   const board = createBoardService(root);
   const skills = createSkillService();
   const project = board.createProject({ name: 'p' });
-  const item = board.createWorkItem({
+  const item = approvedWorkItem(board, {
     projectId: project.id,
     type: 'story',
     title: '登录',

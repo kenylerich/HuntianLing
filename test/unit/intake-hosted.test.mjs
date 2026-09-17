@@ -202,7 +202,7 @@ test('human approval is still required before candidates become WorkItems', () =
 
 test('customers can upload attachments and run llm analysis on their own intake sessions', async (t) => {
   const { transport } = recordingTransport();
-  const { root, board, project, session } = setup(transport, {
+  const { board, project, session } = setup(transport, {
     HUNTIANLING_OCR_TOKEN: 'ocr-secret',
     HUNTIANLING_INTAKE_LLM_TOKEN: 'llm-secret',
   });

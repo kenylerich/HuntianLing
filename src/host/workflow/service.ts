@@ -758,8 +758,9 @@ export function createWorkflowService(deps: {
       return found;
     },
     enablePack(projectId, packId, actor) {
-      deps.board.listProjects().find((project) => project.id === projectId)
-        ?? fail(`project not found: ${projectId}`);
+      if (!deps.board.listProjects().some((project) => project.id === projectId)) {
+        fail(`project not found: ${projectId}`);
+      }
       const pack = requirePack(packId);
       const latest = [...conformanceReports].reverse().find((item) => item.packId === packId);
       if (latest === undefined || latest.status !== 'passed') {
@@ -833,8 +834,9 @@ export function createWorkflowService(deps: {
       if (template.state !== 'published' && template.builtin === false && template.state !== 'draft') {
         throw new WorkflowError('VALIDATION', `template ${templateId} is not selectable`);
       }
-      deps.board.listProjects().find((project) => project.id === projectId)
-        ?? fail(`project not found: ${projectId}`);
+      if (!deps.board.listProjects().some((project) => project.id === projectId)) {
+        fail(`project not found: ${projectId}`);
+      }
       const current = selectionFor(projectId);
       writeSelection({
         ...current,
@@ -1557,8 +1559,9 @@ export function createWorkflowService(deps: {
       return rejections.filter((item) => item.runId === runId);
     },
     projectRollups(projectId) {
-      deps.board.listProjects().find((project) => project.id === projectId)
-        ?? fail(`project not found: ${projectId}`);
+      if (!deps.board.listProjects().some((project) => project.id === projectId)) {
+        fail(`project not found: ${projectId}`);
+      }
       return buildRollups(projectId);
     },
   };
@@ -2186,8 +2189,9 @@ export function createWorkflowService(deps: {
     if (!TEMPLATE_REPLACE_MODES.includes(input.mode)) {
       throw new WorkflowError('VALIDATION', `invalid replace mode: ${input.mode}`);
     }
-    deps.board.listProjects().find((project) => project.id === projectId)
-      ?? fail(`project not found: ${projectId}`);
+    if (!deps.board.listProjects().some((project) => project.id === projectId)) {
+      fail(`project not found: ${projectId}`);
+    }
     const current = selectionFor(projectId);
     const from = requireTemplate(current.templateId);
     const to = requireTemplate(input.templateId);

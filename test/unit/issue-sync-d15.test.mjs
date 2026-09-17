@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { attachMockExecutionReceipt } from '../helpers/execution-receipt.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -141,6 +142,7 @@ function passGates(board, item) {
       designRevision: 'rev-1',
     }],
   });
+  attachMockExecutionReceipt(board, item.id);
 }
 
 test('adapters for GitHub Issues, Gitea Issues, and GitLab Issues are available where configured', () => {
